@@ -1,0 +1,87 @@
+#include <chrono>
+#include <boost/thread.hpp>
+#include <boost/bind.hpp>
+#include <boost/lexical_cast.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
+#include <csi_kafka/avro/avro_producer.h>
+
+#include <boost/accumulators/accumulators.hpp>
+#include <boost/accumulators/statistics/stats.hpp>
+#include <boost/accumulators/statistics/rolling_mean.hpp>
+#include <boost/accumulators/statistics/mean.hpp>
+
+#include "contact_info.h"
+#include "contact_info_key.h"
+
+void create_message(std::vector<std::pair<sample::contact_info_key, sample::contact_info>>& v, int32_t& cursor)
+{
+    v.clear();
+    for (int i = 0; i != 1000; ++i, ++cursor)
+    {
+        std::string email = std::string("nisse") + boost::lexical_cast<std::string>(cursor)+"@csi.se";
+
+        sample::contact_info_key key;
+        key.md5 = email; // ugly but works as md5 for now is just a string in the json
+
+        sample::contact_info value;
+        value.care_of.set_null();
+        value.city.set_string("stockholm");
+        value.country.set_string("sweden");
+        value.date_of_birth.set_null();
+        value.email.set_string(email);
+        value.family_name.set_string("gul");
+        value.given_name.set_string(std::string("nisse") + boost::lexical_cast<std::string>(cursor));
+        value.nin.set_null();
+        value.postal_code.set_string("111 11");
+        value.street_address.set_string("street 7a");
+        v.push_back(std::pair<sample::contact_info_key, sample::contact_info>(key, value));
+    }
+}
+
+int main(int argc, char** argv)
+{
+    int64_t total = 0;
+    std::string hostname = (argc >= 2) ? argv[1] : "192.168.247.130";
+    //std::string hostname = (argc >= 2) ? argv[1] : "kafka-dev";
+    std::string port = (argc >= 3) ? argv[2] : "9092";
+
+    boost::asio::io_service io_service;
+    std::auto_ptr<boost::asio::io_service::work> work(new boost::asio::io_service::work(io_service));
+    boost::thread bt(boost::bind(&boost::asio::io_service::run, &io_service));
+
+    //print out statistics
+    boost::thread do_log([&total]
+    {
+        boost::accumulators::accumulator_set<double, boost::accumulators::stats<boost::accumulators::tag::rolling_mean> > acc(boost::accumulators::tag::rolling_window::window_size = 10);
+        while (true)
+        {
+            uint64_t last_total = total;
+            boost::this_thread::sleep(boost::posix_time::seconds(1));
+            acc((double)total - last_total);
+            std::cerr << boost::accumulators::rolling_mean(acc) << " (ms)/s " << total << std::endl;
+        }
+    });
+
+
+    csi::kafka::avro_producer2<sample::contact_info_key, sample::contact_info> producer(io_service, hostname, port, "sample_avro_key_value", 0);
+    producer.start();
+
+    int32_t cursor=0;
+
+
+    //produce messages
+    while (true)
+    {
+        std::vector<std::pair<sample::contact_info_key, sample::contact_info>> v;
+        create_message(v, cursor);
+        producer.send_sync(0, 1000, v, 0, NULL);
+        total += v.size();
+        if (cursor > 10000000)
+            cursor = 0;
+    }
+
+
+    work.reset();
+    io_service.stop();
+    return EXIT_SUCCESS;
+}

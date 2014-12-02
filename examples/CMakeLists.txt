@@ -1,0 +1,9 @@
+add_subdirectory(csi_kafka_sample1)
+add_subdirectory(csi_kafka_sample2)
+add_subdirectory(csi_kafka_avro_consumer_sample)
+add_subdirectory(csi_kafka_avro_producer_sample)
+add_subdirectory(csi_kafka_avro_kv_producer_sample)
+add_subdirectory(csi_kafka_avro_kv_consumer_sample)
+
+
+

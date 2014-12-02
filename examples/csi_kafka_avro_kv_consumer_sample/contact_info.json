@@ -1,0 +1,17 @@
+{
+    "type": "record", 
+    "name": "contact_info",
+    "fields" : [
+        {"name": "email", "type": ["string", "null"]},    
+        {"name": "nin",   "type" : ["string", "null"]}
+		{"name": "given_name", "type" : ["string", "null"]}
+        {"name": "family_name", "type" : ["string", "null"]}
+        {"name": "date_of_birth", "type" : ["string", "null"]}
+        {"name": "care_of", "type" : ["string", "null"]}
+	    {"name": "street_address", "type" : ["string", "null"]}
+        {"name": "postal_code", "type" : ["string", "null"]}		
+        {"name": "city", "type" : ["string", "null"]}				
+        {"name": "country", "type" : ["string", "null"]}						
+    ]
+}
+
