@@ -7,8 +7,8 @@
 int main(int argc, char** argv)
 {
     std::stringstream stream;
-    //std::string hostname = (argc >= 2) ? argv[1] : "192.168.247.130";
-    std::string hostname = (argc >= 2) ? argv[1] : "kafka-dev";
+    std::string hostname = (argc >= 2) ? argv[1] : "192.168.91.131";
+    //std::string hostname = (argc >= 2) ? argv[1] : "kafka-dev";
     std::string port = (argc >= 3) ? argv[2] : "9092";
 
     boost::asio::io_service io_service;

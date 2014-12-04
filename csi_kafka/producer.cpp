@@ -34,21 +34,23 @@ namespace csi
 
         void producer::send_async(int32_t required_acks, int32_t timeout, const std::vector<basic_message>& v, int32_t correlation_id, callback cb)
         {
-            _client.perform_async(csi::kafka::create_produce_request(_topic_name, _partition_id, required_acks, timeout, v, correlation_id), [cb](csi::kafka::error_codes ec, csi::kafka::basic_call_context::handle handle)
+            _client.perform_async(csi::kafka::create_produce_request(_topic_name, _partition_id, required_acks, timeout, v, correlation_id), [cb](csi::kafka::error_codes error, csi::kafka::basic_call_context::handle handle)
             {
                 if (cb)
-                    cb(parse_produce_response(handle));
+                    cb(error, parse_produce_response(handle));
             });
         }
 
+        /*
         std::shared_ptr<csi::kafka::produce_response> producer::send_sync(int32_t required_acks, int32_t timeout, const std::vector<basic_message>& v, int32_t correlation_id, callback cb)
         {
             auto handle = _client.perform_sync(csi::kafka::create_produce_request(_topic_name, _partition_id, required_acks, timeout, v, correlation_id), NULL);
             auto result = parse_produce_response(handle);
             if (cb)
-                cb(result);
+                cb(0, result);
             return result;
         }
+        */
 
         void producer::_on_retry_timer(const boost::system::error_code& ec)
         {

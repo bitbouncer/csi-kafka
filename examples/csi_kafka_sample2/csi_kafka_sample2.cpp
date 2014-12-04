@@ -6,7 +6,7 @@
 
 int main(int argc, char** argv)
 {
-    std::string hostname = (argc >= 2) ? argv[1] : "kafka-dev";
+    std::string hostname = (argc >= 2) ? argv[1] : "192.168.91.131";
     std::string port = (argc >= 3) ? argv[2] : "9092";
 
     boost::asio::io_service io_service;
@@ -47,9 +47,12 @@ int main(int argc, char** argv)
 
     for (int i = 0; i != 100; ++i)
     {
-        producer.send_async(1, 1000, x, 0, [](std::shared_ptr<csi::kafka::produce_response> response)
+        producer.send_async(1, 1000, x, 0, [](csi::kafka::error_codes error, std::shared_ptr<csi::kafka::produce_response> response)
         {
-            std::cerr << ".";
+            if (error)
+                std::cerr << "¨-";
+            else
+                std::cerr << "+";
         });
     }
 

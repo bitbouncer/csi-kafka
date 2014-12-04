@@ -127,6 +127,7 @@ namespace csi
                 csi::kafka::producer::send_async(required_acks, timeout, src2, correlation_id, cb);
             }
 
+            /*
             std::shared_ptr<csi::kafka::produce_response> send_sync(int32_t required_acks, int32_t timeout, const std::vector<std::pair<K, V>>& src, int32_t correlation_id, callback cb)
             {
                 std::vector<csi::kafka::basic_message> src2;
@@ -165,6 +166,7 @@ namespace csi
                 }
                 return csi::kafka::producer::send_sync(required_acks, timeout, src2, correlation_id, cb);
             }
+            */
         };
     }
 }

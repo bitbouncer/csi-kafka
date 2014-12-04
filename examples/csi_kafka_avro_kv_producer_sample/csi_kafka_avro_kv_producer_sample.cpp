@@ -41,8 +41,7 @@ void create_message(std::vector<std::pair<sample::contact_info_key, sample::cont
 int main(int argc, char** argv)
 {
     int64_t total = 0;
-    std::string hostname = (argc >= 2) ? argv[1] : "192.168.247.130";
-    //std::string hostname = (argc >= 2) ? argv[1] : "kafka-dev";
+    std::string hostname = (argc >= 2) ? argv[1] : "192.168.91.131";
     std::string port = (argc >= 3) ? argv[2] : "9092";
 
     boost::asio::io_service io_service;
@@ -70,6 +69,7 @@ int main(int argc, char** argv)
 
 
     //produce messages
+    /*
     while (true)
     {
         std::vector<std::pair<sample::contact_info_key, sample::contact_info>> v;
@@ -79,6 +79,7 @@ int main(int argc, char** argv)
         if (cursor > 10000000)
             cursor = 0;
     }
+    */
 
 
     work.reset();

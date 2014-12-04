@@ -380,7 +380,7 @@ namespace csi
         //ErrorCode = > int16
         std::shared_ptr<offset_fetch_response> parse_offset_fetch_response(const char* buffer, size_t len)
         {
-            assert(false); // not working in kafka head yet
+            //assert(false); // not working in kafka head yet
 
             boost::iostreams::stream<boost::iostreams::array_source> str(buffer, len);
             std::shared_ptr<offset_fetch_response> response(new offset_fetch_response());

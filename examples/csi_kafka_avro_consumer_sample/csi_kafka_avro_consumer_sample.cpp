@@ -25,15 +25,14 @@ int main(int argc, char** argv)
     bin/kafka-topics.sh --list --zookeeper localhost:2181
     */
 
-    //std::string hostname = (argc >= 2) ? argv[1] : "192.168.247.130";
-    std::string hostname = (argc >= 2) ? argv[1] : "kafka-dev";
+    std::string hostname = (argc >= 2) ? argv[1] : "192.168.91.135";
     std::string port = (argc >= 3) ? argv[2] : "9092";
 
     boost::asio::io_service io_service;
     std::auto_ptr<boost::asio::io_service::work> work(new boost::asio::io_service::work(io_service));
     boost::thread bt(boost::bind(&boost::asio::io_service::run, &io_service));
 
-    csi::kafka::avro_consumer<sample::syslog> consumer(io_service, hostname, port, "sample-avro-syslog1", 0);
+    csi::kafka::avro_consumer<sample::syslog> consumer(io_service, hostname, port, "sample-avro-syslog2", 0);
 
     //consumer.start(csi::kafka::earliest_available_offset, [](csi::kafka::error_codes ec, const sample::syslog& log)
     consumer.start(csi::kafka::latest_offsets, [](csi::kafka::error_codes ec, const sample::syslog& log)

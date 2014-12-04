@@ -53,8 +53,7 @@ int main(int argc, char** argv)
     bin/kafka-topics.sh --list --zookeeper localhost:2181
     */
 
-    //std::string hostname = (argc >= 2) ? argv[1] : "192.168.247.130";
-    std::string hostname = (argc >= 2) ? argv[1] : "kafka-dev";
+    std::string hostname = (argc >= 2) ? argv[1] : "192.168.91.135";
     std::string port = (argc >= 3) ? argv[2] : "9092";
 
     boost::asio::io_service io_service;
@@ -62,7 +61,7 @@ int main(int argc, char** argv)
     boost::thread bt(boost::bind(&boost::asio::io_service::run, &io_service));
     boost::thread log_thread(boost::bind(write_logs));
 
-    csi::kafka::avro_producer<sample::syslog> producer(io_service, hostname, port, "sample-avro-syslog1", 0);
+    csi::kafka::avro_producer<sample::syslog> producer(io_service, hostname, port, "sample-avro-syslog2", 0);
     producer.start();
 
 
@@ -72,9 +71,12 @@ int main(int argc, char** argv)
         std::vector<sample::syslog> x;
         create_message(x);
         size_t items_in_message = x.size();
-        producer.send_async(0, 1000, x, 0, [items_in_message](std::shared_ptr<csi::kafka::produce_response> response)
+        producer.send_async(0, 1000, x, 0, [items_in_message](csi::kafka::error_codes error, std::shared_ptr<csi::kafka::produce_response> response)
         {
-            total += items_in_message;
+            if (error)
+                std::cerr << "error " << error << std::endl;
+            else
+                total += items_in_message;
         });
     }
  
