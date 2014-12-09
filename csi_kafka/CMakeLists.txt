@@ -1,5 +1,5 @@
 SET(LIB_SRCS
-	avro/avro_consumer.h
+	avro/decoder.h
 	avro/avro_producer.h
 	low_level/client.h
 	low_level/client.cpp
@@ -10,12 +10,16 @@ SET(LIB_SRCS
 	low_level/spinlock.cpp
 	low_level/spinlock.h
 	low_level/utility.h
-	consumer.cpp
-	consumer.h
+	low_level/consumer.cpp
+	low_level/consumer.h
+	low_level/producer.cpp
+	low_level/producer.h
+    high_level_consumer.h
+    high_level_consumer.cpp
+    high_level_producer.h
+    high_level_producer.cpp
 	kafka.h
 	kafka.cpp
-	producer.cpp
-	producer.h
 	)
 	
 add_library (csi_kafka STATIC ${LIB_SRCS})

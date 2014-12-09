@@ -15,7 +15,7 @@ namespace csi
         {
         public:
             typedef typename std::map<key_type, std::shared_ptr<value_type>, key_compare>::iterator	       iterator;
-            typedef typename std::map<key_type, std::shared_ptr<value_type>, key_compare>::const_iterator	 const_iterator;
+            typedef typename std::map<key_type, std::shared_ptr<value_type>, key_compare>::const_iterator  const_iterator;
 
             void put(const key_type& key, std::shared_ptr<value_type>& v)
             {

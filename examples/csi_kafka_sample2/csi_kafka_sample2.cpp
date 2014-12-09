@@ -1,23 +1,32 @@
 #include <boost/thread.hpp>
 #include <boost/bind.hpp>
-#include <csi_kafka/consumer.h>
-#include <csi_kafka/producer.h>
-#include <csi_kafka/low_level/client.h>
+#include <csi_kafka/low_level/consumer.h>
+#include <csi_kafka/low_level/producer.h>
 
 int main(int argc, char** argv)
 {
     std::string hostname = (argc >= 2) ? argv[1] : "192.168.91.131";
     std::string port = (argc >= 3) ? argv[2] : "9092";
+    boost::asio::ip::tcp::resolver::query query(hostname, port);
 
     boost::asio::io_service io_service;
     std::auto_ptr<boost::asio::io_service::work> work(new boost::asio::io_service::work(io_service));
     boost::thread bt(boost::bind(&boost::asio::io_service::run, &io_service));
 
 
-    csi::kafka::consumer consumer(io_service, hostname, port, "test", 0);
+    csi::kafka::lowlevel_consumer consumer(io_service, query, "saka.test.sample2", 0);
 
-    consumer.start(csi::kafka::earliest_available_offset, [](const csi::kafka::fetch_response::topic_data::partition_data& data)
+    boost::system::error_code ec1 = consumer.connect();
+    csi::kafka::error_codes   ec2 = consumer.set_offset(csi::kafka::earliest_available_offset);
+
+    consumer.open_stream([](csi::kafka::error_codes error, const csi::kafka::fetch_response::topic_data::partition_data& data)
     {
+        if (error)
+        {
+            std::cerr << "  fetch next failed ec:" << csi::kafka::to_string(error) << std::endl;
+            return;
+        }
+
         if (data.error_code == 0)
         {
             for (std::vector<csi::kafka::basic_message>::const_iterator i = data.messages.begin(); i != data.messages.end(); ++i)
@@ -35,8 +44,10 @@ int main(int argc, char** argv)
         }
     });
 
-    csi::kafka::producer producer(io_service, hostname, port, "test", 0);
-    producer.start();
+
+    csi::kafka::producer producer(io_service, query, "saka.test.sample2", 0);
+
+    boost::system::error_code ec3 = producer.connect();
 
     std::vector<csi::kafka::basic_message> x;
     for (int i = 0; i != 1; ++i)

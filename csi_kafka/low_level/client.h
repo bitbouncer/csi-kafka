@@ -1,4 +1,5 @@
 #include <deque>
+#include <future>
 #include <boost/asio.hpp>
 #include <boost/array.hpp>
 #include <boost/function.hpp>
@@ -19,7 +20,7 @@ namespace csi
 
             enum { MAX_BUFFER_SIZE = 1024 * 1024 };
             typedef boost::function <void(csi::kafka::error_codes, std::shared_ptr<basic_call_context>)>	callback;
-            typedef std::shared_ptr<basic_call_context>					                handle;
+            typedef std::shared_ptr<basic_call_context>					                                    handle;
 
             boost::array<uint8_t, MAX_BUFFER_SIZE>  _tx_buffer;
             size_t                                  _tx_size;
@@ -51,21 +52,31 @@ namespace csi
             class client
             {
             public:
-                client(boost::asio::io_service& io_service);
+                typedef boost::function < void(const boost::system::error_code&)>                           completetion_handler;
+                typedef boost::function <void(csi::kafka::error_codes, std::shared_ptr<metadata_response>)> get_metadata_callback;
+
+                client(boost::asio::io_service& io_service, const boost::asio::ip::tcp::resolver::query& query);
                 ~client();
 
-                bool connect(const std::string& hostname, const uint16_t port);  // TBD async version
-                bool connect(const std::string& hostname, const std::string& servicename);
+
+                void connect_async(completetion_handler handler);
+                boost::system::error_code connect();
 
                 bool close();
                 bool is_connected() const;
-                bool is_connecting() const;
 
-                void                       perform_async(basic_call_context::handle, basic_call_context::callback cb);
-                basic_call_context::handle perform_sync(basic_call_context::handle, basic_call_context::callback cb);
+                void                                get_metadata_async(const std::vector<std::string>& topics, int32_t correlation_id, get_metadata_callback);
+                std::shared_ptr<metadata_response>  get_metadata(const std::vector<std::string>& topics, int32_t correlation_id);
+                
+                void                                perform_async(basic_call_context::handle, basic_call_context::callback cb);
+                basic_call_context::handle          perform_sync(basic_call_context::handle, basic_call_context::callback cb);
 
             protected:
+                //void tryconnect();
+
                 // asio callbacks
+                void handle_timer(const boost::system::error_code& ec);
+
                 void _perform(basic_call_context::handle handle);       // will be called in context of worker thread
 
                 void handle_resolve(const boost::system::error_code& error_code, boost::asio::ip::tcp::resolver::iterator endpoints);
@@ -74,9 +85,12 @@ namespace csi
                 void socket_rx_cb(const boost::system::error_code& e, size_t bytes_received, basic_call_context::handle handle);
                 void socket_tx_cb(const boost::system::error_code& e, basic_call_context::handle handle);
 
-                boost::asio::io_service&	                _io_service;
+                boost::asio::io_service&	              _io_service;
                 csi::kafka::spinlock                      _spinlock;
                 boost::asio::ip::tcp::resolver            _resolver;
+                boost::asio::ip::tcp::resolver::query     _query;
+                boost::asio::deadline_timer			      _timer;
+                boost::posix_time::time_duration	      _timeout;
                 boost::asio::ip::tcp::socket              _socket; // array of connections to shard leaders???
                 std::deque<basic_call_context::handle>    _tx_queue;
                 std::deque<basic_call_context::handle>    _rx_queue;

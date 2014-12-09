@@ -135,7 +135,7 @@ namespace csi
                 {
                     produce_response::topic_data::partition_data pr_item;
                     internal::decode_i32(str, pr_item.partition_id);
-                    internal::decode_i16(str, pr_item.error_code);
+                    internal::decode_i16(str, pr_item._error_code);
                     internal::decode_i64(str, pr_item.offset); // should we read this field if error_code != 0 ???? TBD KOLLA
                     item.partitions.push_back(pr_item);
                 }

@@ -11,17 +11,15 @@ int main(int argc, char** argv)
     //std::string hostname = (argc >= 2) ? argv[1] : "kafka-dev";
     std::string port = (argc >= 3) ? argv[2] : "9092";
 
+    boost::asio::ip::tcp::resolver::query query(hostname, port);
+
     boost::asio::io_service io_service;
     std::auto_ptr<boost::asio::io_service::work> work(new boost::asio::io_service::work(io_service));
     boost::thread bt(boost::bind(&boost::asio::io_service::run, &io_service));
 
-    csi::kafka::low_level::client client(io_service);
-    client.connect(hostname, port);
-
-    while (!client.is_connected())
-    {
-        boost::this_thread::sleep(boost::posix_time::seconds(1));
-    }
+    csi::kafka::low_level::client client(io_service, query);
+    
+    boost::system::error_code error = client.connect();
 
     client.perform_sync(csi::kafka::create_metadata_request({}, 0), [](csi::kafka::error_codes ec, csi::kafka::basic_call_context::handle handle)
     {

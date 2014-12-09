@@ -69,42 +69,66 @@ namespace csi
 
         namespace low_level
         {
-            client::client(boost::asio::io_service& io_service) :
+            client::client(boost::asio::io_service& io_service, const boost::asio::ip::tcp::resolver::query& query) :
                 _io_service(io_service),
                 _resolver(io_service),
+                _query(query),
+                _timer(io_service),
                 _socket(io_service),
                 _connecting(false),
                 _connected(false),
                 _tx_in_progress(false),
-                _rx_in_progress(false)
+                _rx_in_progress(false),
+                _timeout(boost::posix_time::milliseconds(1000))
             {
+                _timer.expires_from_now(_timeout);
+                _timer.async_wait(boost::bind(&client::handle_timer, this, boost::asio::placeholders::error));
             }
 
             client::~client()
             {
+                _timer.cancel();
                 close();
             }
 
-            bool client::connect(const std::string& hostname, const uint16_t port)
+            void client::connect_async(completetion_handler cb)
             {
-                return connect(hostname, boost::lexical_cast<std::string>(port));
+                boost::asio::ip::tcp::resolver::iterator iterator = _resolver.resolve(_query);
+                boost::asio::async_connect(_socket, iterator, [this, cb](boost::system::error_code ec, boost::asio::ip::tcp::resolver::iterator)
+                {
+                    if (!ec)
+                        _connected = true;
+                    cb(ec);
+                });
             }
 
-            bool client::connect(const std::string& hostname, const std::string& servicename)
+            boost::system::error_code client::connect()
             {
-                if (_connecting) { return false; }
-                _connecting = true;
-
-                boost::asio::ip::tcp::resolver::query query(hostname, servicename);
-                _resolver.async_resolve(query, boost::bind(&client::handle_resolve, this, boost::asio::placeholders::error, boost::asio::placeholders::iterator));
-                return true;
+                std::promise<boost::system::error_code> p;
+                std::future<boost::system::error_code>  f = p.get_future();
+                connect_async([&p](const boost::system::error_code& error)
+                {
+                    p.set_value(error);
+                });
+                f.wait();
+                return f.get();
             }
 
+            void client::handle_timer(const boost::system::error_code& ec)
+            {
+                if (!ec)
+                {
+                    _timer.expires_from_now(_timeout);
+                    _timer.async_wait(boost::bind(&client::handle_timer, this, boost::asio::placeholders::error));
+                }
+            }
+                
             bool client::close()
             {
-                if (_connecting) { return false; }
-
+                //if (_connecting) { return false; }
                 _connected = false;
+                boost::system::error_code ec;
+                _socket.cancel(ec);
                 _socket.close();
                 return true;
             }
@@ -114,46 +138,32 @@ namespace csi
                 return _connected;
             }
 
-            bool client::is_connecting() const
+            void client::get_metadata_async(const std::vector<std::string>& topics, int32_t correlation_id, get_metadata_callback cb)
             {
-                return _connecting;
+                perform_async(csi::kafka::create_metadata_request(topics, correlation_id), [cb](csi::kafka::error_codes ec, csi::kafka::basic_call_context::handle handle)
+                {
+                    if (!ec)
+                    {
+                        auto response = csi::kafka::parse_metadata_response(handle);
+                        cb(ec, response);
+                    }
+                    else
+                    {
+                        cb(ec, std::shared_ptr<metadata_response>(NULL));
+                    }
+                });
             }
 
-            void client::handle_resolve(const boost::system::error_code& error_code, boost::asio::ip::tcp::resolver::iterator endpoints)
+            std::shared_ptr<metadata_response> client::get_metadata(const std::vector<std::string>& topics, int32_t correlation_id)
             {
-                if (!error_code)
+                std::promise<std::shared_ptr<metadata_response>> p;
+                std::future<std::shared_ptr<metadata_response>>  f = p.get_future();
+                get_metadata_async(topics, correlation_id, [&p](csi::kafka::error_codes ec, std::shared_ptr<metadata_response> response)
                 {
-                    boost::asio::ip::tcp::endpoint endpoint = *endpoints;
-                    _socket.async_connect(endpoint, boost::bind(&client::handle_connect, this, boost::asio::placeholders::error, ++endpoints));
-                }
-                else
-                {
-                    _connecting = false;
-                    //fail_fast_error_handler(error_code);
-                }
-            }
-
-            void client::handle_connect(const boost::system::error_code& error_code, boost::asio::ip::tcp::resolver::iterator endpoints)
-            {
-                if (!error_code)
-                {
-                    // The connection was successful.
-                    _connecting = false;
-                    _connected = true;
-                }
-                else if (endpoints != boost::asio::ip::tcp::resolver::iterator())
-                {
-                    // TODO: handle connection error (we might not need this as we have others though?)
-
-                    // The connection failed, but we have more potential endpoints so throw it back to handle resolve
-                    _socket.close();
-                    handle_resolve(boost::system::error_code(), endpoints);
-                }
-                else
-                {
-                    _connecting = false;
-                    //fail_fast_error_handler(error_code);
-                }
+                    p.set_value(response);
+                });
+                f.wait();
+                return f.get();
             }
 
             void client::perform_async(basic_call_context::handle handle, basic_call_context::callback cb)

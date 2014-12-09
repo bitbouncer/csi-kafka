@@ -34,15 +34,23 @@ void create_message(std::vector<sample::syslog>& msg)
     }
 }
 
-void write_logs()
+void send_batch(csi::kafka::avro_producer<sample::syslog>& producer)
 {
-    while (true)
+    std::vector<sample::syslog> x;
+    create_message(x);
+
+    size_t items_in_message = x.size();
+    uint32_t correlation_id = 42;
+    producer.send_async(1, 1000, x, correlation_id, [items_in_message, &producer](csi::kafka::error_codes error, std::shared_ptr<csi::kafka::produce_response> response)
     {
-        uint64_t last_total = total;
-        boost::this_thread::sleep(boost::posix_time::seconds(1));
-        acc((double)total - last_total);
-        std::cerr << boost::accumulators::rolling_mean(acc) << " (ms)/s " << total << std::endl;
-    }
+        if (error)
+            std::cerr << "error " << error << std::endl;
+        else
+            total += items_in_message;
+
+        send_batch(producer);
+    });
+    std::cerr << "+";
 }
 
 int main(int argc, char** argv)
@@ -53,33 +61,27 @@ int main(int argc, char** argv)
     bin/kafka-topics.sh --list --zookeeper localhost:2181
     */
 
-    std::string hostname = (argc >= 2) ? argv[1] : "192.168.91.135";
+    std::string hostname = (argc >= 2) ? argv[1] : "192.168.0.102";
     std::string port = (argc >= 3) ? argv[2] : "9092";
+    boost::asio::ip::tcp::resolver::query query(hostname, port);
 
     boost::asio::io_service io_service;
     std::auto_ptr<boost::asio::io_service::work> work(new boost::asio::io_service::work(io_service));
     boost::thread bt(boost::bind(&boost::asio::io_service::run, &io_service));
-    boost::thread log_thread(boost::bind(write_logs));
 
-    csi::kafka::avro_producer<sample::syslog> producer(io_service, hostname, port, "sample-avro-syslog2", 0);
-    producer.start();
+    csi::kafka::avro_producer<sample::syslog> producer(io_service, query, "saka.test.avro-syslog2", 0);
+    
+    boost::system::error_code error = producer.connect();
 
+   send_batch(producer);
 
     while (true)
     {
-        boost::this_thread::sleep(boost::posix_time::milliseconds(10));
-        std::vector<sample::syslog> x;
-        create_message(x);
-        size_t items_in_message = x.size();
-        producer.send_async(0, 1000, x, 0, [items_in_message](csi::kafka::error_codes error, std::shared_ptr<csi::kafka::produce_response> response)
-        {
-            if (error)
-                std::cerr << "error " << error << std::endl;
-            else
-                total += items_in_message;
-        });
+        uint64_t last_total = total;
+        boost::this_thread::sleep(boost::posix_time::seconds(1));
+        acc((double)total - last_total);
+        std::cerr << boost::accumulators::rolling_mean(acc) << " msg/s " << total << std::endl;
     }
- 
 
     work.reset();
     io_service.stop();

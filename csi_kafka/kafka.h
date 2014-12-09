@@ -36,6 +36,8 @@ namespace csi
             OffsetMetadataTooLargeCode = 12 // If you specify a string larger than configured maximum for offset metadata
         };
 
+        std::string to_string(error_codes);
+
         enum api_keys
         {
             ProduceRequest = 0,
@@ -135,9 +137,10 @@ namespace csi
             {
                 struct partition_data
                 {
-                    partition_data() : partition_id(-1), error_code(-1), offset(-1) {}
+                    partition_data() : partition_id(-1), _error_code(0), offset(-1) {}
+                    inline error_codes error_code() const { return (error_codes)_error_code; }
                     int32_t partition_id;
-                    int16_t error_code;
+                    int16_t _error_code;
                     int64_t offset;
                 };
 

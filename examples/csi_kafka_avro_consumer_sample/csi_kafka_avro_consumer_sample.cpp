@@ -9,59 +9,62 @@
 #include <boost/accumulators/statistics/rolling_mean.hpp>
 #include <boost/accumulators/statistics/mean.hpp>
 
-#include <csi_kafka/avro/avro_consumer.h>
+#include <csi_kafka/low_level/consumer.h>
+#include <csi_kafka/high_level_consumer.h>
+
+#include <csi_kafka/avro/decoder.h>
 #include "syslog.h"
-
-static boost::accumulators::accumulator_set<double, boost::accumulators::stats<boost::accumulators::tag::rolling_mean> > acc(boost::accumulators::tag::rolling_window::window_size = 50000);
-static int64_t total=0;
-
-
 
 int main(int argc, char** argv)
 {
-    /*
-    bin/kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic sample-avro-syslog1
-    bin/kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic test
-    bin/kafka-topics.sh --list --zookeeper localhost:2181
-    */
-
-    std::string hostname = (argc >= 2) ? argv[1] : "192.168.91.135";
+    std::string hostname = (argc >= 2) ? argv[1] : "192.168.0.102";
     std::string port = (argc >= 3) ? argv[2] : "9092";
+    boost::asio::ip::tcp::resolver::query query(hostname, port);
 
     boost::asio::io_service io_service;
     std::auto_ptr<boost::asio::io_service::work> work(new boost::asio::io_service::work(io_service));
     boost::thread bt(boost::bind(&boost::asio::io_service::run, &io_service));
 
-    csi::kafka::avro_consumer<sample::syslog> consumer(io_service, hostname, port, "sample-avro-syslog2", 0);
+    csi::kafka::highlevel_consumer consumer0(io_service, query, "saka.test.avro-syslog2");
+    boost::system::error_code ec0 = consumer0.connect();
 
-    //consumer.start(csi::kafka::earliest_available_offset, [](csi::kafka::error_codes ec, const sample::syslog& log)
-    consumer.start(csi::kafka::latest_offsets, [](csi::kafka::error_codes ec, const sample::syslog& log)
+    csi::kafka::lowlevel_consumer consumer(io_service, query, "saka.test.avro-syslog2", 0);
+
+    boost::system::error_code ec1 = consumer.connect();
+    csi::kafka::error_codes   ec2 = consumer.set_offset(csi::kafka::latest_offsets);
+
+    boost::accumulators::accumulator_set<double, boost::accumulators::stats<boost::accumulators::tag::rolling_mean> > acc(boost::accumulators::tag::rolling_window::window_size = 50000);
+    int64_t total = 0;
+
+    consumer.open_stream(
+        csi::kafka::avro_value_decoder<sample::syslog>(
+        [&acc, &total](csi::kafka::error_codes error, std::shared_ptr<sample::syslog> log)
     {
-        if (ec != 0)
+        if (error)
         {
-            std::cerr << "ec = " << ec << std::endl;
+            std::cerr << " decode error: " << csi::kafka::to_string(error) << std::endl;
+            return;
         }
-        else
+        if (!log)
         {
-            //boost::lexical_cast<std::string>(milliseconds());
-            try
-            {
-                boost::posix_time::ptime now = boost::posix_time::microsec_clock::universal_time();
-                boost::posix_time::ptime log_time = boost::posix_time::from_iso_string(log.timestamp);
+            std::cerr << " decode unexpected NULL value" << std::endl;
+            return;
+        }
+        try
+        {
+            boost::posix_time::ptime now = boost::posix_time::microsec_clock::universal_time();
+            boost::posix_time::ptime log_time = boost::posix_time::from_iso_string(log->timestamp);
+            auto duration = now - log_time;
+            auto ms = duration.total_milliseconds();
+            total++;
+            acc((double)ms);
+        }
+        catch (...)
+        {
+        }
+    })
+        );
 
-                //std::chrono::milliseconds duration = std::chrono::duration_cast<std::chrono::milliseconds>(now - log_time); return duration.count();
-                auto duration = now - log_time;
-                auto ms = duration.total_milliseconds();
-                
-                total++;
-                acc((double) ms);
-            }
-            catch (...)
-            {
-            }
-            //std::cerr << log.timestamp << ":" << log.message << " duration:" << duration << std::endl;
-        }
-    });
 
     while (true)
     {
