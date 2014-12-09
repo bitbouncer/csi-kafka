@@ -1,5 +1,7 @@
 #include <csi_kafka/low_level/consumer.h>
 
+#pragma once
+
 namespace csi
 {
     namespace kafka
@@ -21,10 +23,6 @@ namespace csi
             std::string                          _topic_name;
             std::vector<lowlevel_consumer*>      _consumers;
             std::shared_ptr<metadata_response>   _metadata;
-
-
         };
     };
 };
-
-//std::vector<csi::kafka::broker_data> _brokers;

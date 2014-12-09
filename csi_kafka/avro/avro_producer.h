@@ -126,47 +126,6 @@ namespace csi
                 }
                 csi::kafka::producer::send_async(required_acks, timeout, src2, correlation_id, cb);
             }
-
-            /*
-            std::shared_ptr<csi::kafka::produce_response> send_sync(int32_t required_acks, int32_t timeout, const std::vector<std::pair<K, V>>& src, int32_t correlation_id, callback cb)
-            {
-                std::vector<csi::kafka::basic_message> src2;
-                for (std::vector<std::pair<K, V>>::const_iterator i = src.begin(); i != src.end(); ++i)
-                {
-                    csi::kafka::basic_message msg;
-
-                    //encode key
-                    {
-                        auto ostr = avro::memoryOutputStream();
-                        avro_binary_encode(i->first, *ostr);
-                        size_t sz = ostr->byteCount();
-
-                        auto in = avro::memoryInputStream(*ostr);
-                        avro::StreamReader stream_reader(*in);
-                        msg.key.set_null(false);
-                        msg.key.reserve(sz);
-                        for (int j = 0; j != sz; ++j)
-                            msg.key.push_back(stream_reader.read());
-                    }
-
-                    //encode value
-                    {
-                        auto ostr = avro::memoryOutputStream();
-                        avro_binary_encode(i->second, *ostr);
-                        size_t sz = ostr->byteCount();
-
-                        auto in = avro::memoryInputStream(*ostr);
-                        avro::StreamReader stream_reader(*in);
-                        msg.value.set_null(false);
-                        msg.value.reserve(sz);
-                        for (int j = 0; j != sz; ++j)
-                            msg.value.push_back(stream_reader.read());
-                    }
-                    src2.push_back(msg);
-                }
-                return csi::kafka::producer::send_sync(required_acks, timeout, src2, correlation_id, cb);
-            }
-            */
         };
     }
 }

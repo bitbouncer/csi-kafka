@@ -19,8 +19,8 @@ namespace csi
             basic_call_context() : _tx_size(0), _rx_size(0), _rx_cursor(0), _expecting_reply(true){}
 
             enum { MAX_BUFFER_SIZE = 1024 * 1024 };
-            typedef boost::function <void(csi::kafka::error_codes, std::shared_ptr<basic_call_context>)>	callback;
-            typedef std::shared_ptr<basic_call_context>					                                    handle;
+            typedef boost::function <void(const boost::system::error_code&, std::shared_ptr<basic_call_context>)>	callback;
+            typedef std::shared_ptr<basic_call_context>					                                            handle;
 
             boost::array<uint8_t, MAX_BUFFER_SIZE>  _tx_buffer;
             size_t                                  _tx_size;
@@ -31,9 +31,11 @@ namespace csi
             callback                                _callback;
         };
 
+
         basic_call_context::handle create_produce_request(const std::string& topic, int32_t partition_id, int required_acks, int timeout, const std::vector<basic_message>& v, int32_t correlation_id);
         basic_call_context::handle create_metadata_request(const std::vector<std::string>& topics, int32_t correlation_id);
-        basic_call_context::handle create_simple_fetch_request(const std::string& topic, int32_t partition_id, uint32_t max_wait_time, size_t min_bytes, int64_t fetch_offset, int32_t correlation_id);
+        basic_call_context::handle create_simple_fetch_request(const std::string& topic, int32_t partition_id, int64_t fetch_offset, uint32_t max_wait_time, size_t min_bytes, int32_t correlation_id);
+        basic_call_context::handle create_multi_fetch_request(const std::string& topic, const std::vector<partition_cursor>&, uint32_t max_wait_time, size_t min_bytes, int32_t correlation_id);
         basic_call_context::handle create_simple_offset_request(const std::string& topic, int32_t partition_id, int64_t time, int32_t max_number_of_offsets, int32_t correlation_id);
         basic_call_context::handle create_consumer_metadata_request(const std::string& consumer_group, int32_t correlation_id);
         basic_call_context::handle create_simple_offset_commit_request(const std::string& consumer_group, const std::string& topic, int32_t partition_id, int64_t offset, int64_t timestamp, const std::string& metadata, int32_t correlation_id);
@@ -53,7 +55,7 @@ namespace csi
             {
             public:
                 typedef boost::function < void(const boost::system::error_code&)>                           completetion_handler;
-                typedef boost::function <void(csi::kafka::error_codes, std::shared_ptr<metadata_response>)> get_metadata_callback;
+                typedef boost::function <void(const boost::system::error_code& ec1, csi::kafka::error_codes ec2, std::shared_ptr<metadata_response>)> get_metadata_callback;
 
                 client(boost::asio::io_service& io_service, const boost::asio::ip::tcp::resolver::query& query);
                 ~client();
@@ -72,8 +74,6 @@ namespace csi
                 basic_call_context::handle          perform_sync(basic_call_context::handle, basic_call_context::callback cb);
 
             protected:
-                //void tryconnect();
-
                 // asio callbacks
                 void handle_timer(const boost::system::error_code& ec);
 

@@ -56,12 +56,15 @@ void send_batch(csi::kafka::avro_producer<sample::syslog>& producer)
 int main(int argc, char** argv)
 {
     /*
-    bin/kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic sample-avro-syslog1
+    bin/kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic sample-avro-syslog2
     bin/kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic test
     bin/kafka-topics.sh --list --zookeeper localhost:2181
     */
 
     std::string hostname = (argc >= 2) ? argv[1] : "192.168.0.102";
+    //std::string hostname = (argc >= 2) ? argv[1] : "z8r102-mc12-4-4.sth-tc2.videoplaza.net";
+    //std::string hostname = (argc >= 2) ? argv[1] : "10.1.3.238";
+
     std::string port = (argc >= 3) ? argv[2] : "9092";
     boost::asio::ip::tcp::resolver::query query(hostname, port);
 

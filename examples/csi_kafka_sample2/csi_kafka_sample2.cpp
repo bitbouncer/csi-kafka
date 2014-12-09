@@ -14,16 +14,16 @@ int main(int argc, char** argv)
     boost::thread bt(boost::bind(&boost::asio::io_service::run, &io_service));
 
 
-    csi::kafka::lowlevel_consumer consumer(io_service, query, "saka.test.sample2", 0);
+    csi::kafka::lowlevel_consumer consumer(io_service, query, "saka.test.sample2");
 
     boost::system::error_code ec1 = consumer.connect();
-    csi::kafka::error_codes   ec2 = consumer.set_offset(csi::kafka::earliest_available_offset);
+    auto ec2 = consumer.set_offset(0, csi::kafka::earliest_available_offset);
 
-    consumer.open_stream([](csi::kafka::error_codes error, const csi::kafka::fetch_response::topic_data::partition_data& data)
+    consumer.stream_async([](const boost::system::error_code& ec1, csi::kafka::error_codes ec2, const csi::kafka::fetch_response::topic_data::partition_data& data)
     {
-        if (error)
+        if (ec1 || ec2)
         {
-            std::cerr << "  fetch next failed ec:" << csi::kafka::to_string(error) << std::endl;
+            std::cerr << "  fetch next failed ec1:" << ec1 << ", ec2 " << csi::kafka::to_string(ec2) << std::endl;
             return;
         }
 

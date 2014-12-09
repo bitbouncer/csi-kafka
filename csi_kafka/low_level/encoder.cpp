@@ -160,8 +160,7 @@ namespace csi
             return ostr.tellp();
         }
 
-        //size_t encode_simple_fetch_request(const std::string& topic, int32_t partition_id, uint32_t max_wait_time, size_t min_bytes, int64_t fetch_offset, size_t max_bytes, int32_t correlation_id, char* buffer, size_t capacity)
-        size_t encode_simple_fetch_request(const std::string& topic, int32_t partition_id, uint32_t max_wait_time, size_t min_bytes, int64_t fetch_offset, int32_t correlation_id, char* buffer, size_t capacity)
+        size_t encode_simple_fetch_request(const std::string& topic, int32_t partition_id, int64_t fetch_offset, uint32_t max_wait_time, size_t min_bytes, int32_t correlation_id, char* buffer, size_t capacity)
         {
             boost::iostreams::stream<boost::iostreams::array_sink> ostr(buffer, capacity);
             {
@@ -185,6 +184,37 @@ namespace csi
             }
             return ostr.tellp();
         }
+
+        size_t encode_multi_fetch_request(const std::string& topic, const std::vector<partition_cursor>& cursors, uint32_t max_wait_time, size_t min_bytes, int32_t correlation_id, char* buffer, size_t capacity)
+        {
+            int32_t max_bytes_per_partition = (int32_t)((capacity - 100) / cursors.size());
+            assert(capacity > 256);
+
+            boost::iostreams::stream<boost::iostreams::array_sink> ostr(buffer, capacity);
+            {
+                internal::delayed_size message_size(ostr);
+                internal::encode_i16(ostr, csi::kafka::FetchRequest);
+                internal::encode_i16(ostr, csi::kafka::ApiVersion);
+                internal::encode_i32(ostr, correlation_id);
+                internal::encode_str(ostr, client_id);
+
+                internal::encode_i32(ostr, -1); // should be -1 for clients
+                internal::encode_i32(ostr, max_wait_time);
+                internal::encode_i32(ostr, (int32_t)min_bytes);
+                internal::encode_i32(ostr, 1); // nr of topics
+                internal::encode_str(ostr, topic);
+                internal::encode_i32(ostr, (int32_t) cursors.size()); // nr of partitions
+                
+                for (std::vector<partition_cursor>::const_iterator i = cursors.begin(); i != cursors.end(); ++i)
+                {
+                    internal::encode_i32(ostr, i->_partition_id);
+                    internal::encode_i64(ostr, i->_next_offset);
+                    internal::encode_i32(ostr, max_bytes_per_partition); // estimated size of rest of reply without all the other jadda jadda..
+                }
+            }
+            return ostr.tellp();
+        }
+
 
         size_t encode_simple_offset_request(const std::string& topic, int32_t partition_id, int64_t time, int32_t max_number_of_offsets, int32_t correlation_id, char* buffer, size_t capacity)
         {

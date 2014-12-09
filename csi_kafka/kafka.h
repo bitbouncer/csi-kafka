@@ -108,25 +108,13 @@ namespace csi
             int64_t                 offset;
             payload_type            key;
             payload_type            value;
+        };
 
-            /*
-            basic_message() : offset(0), _key_is_null(false), _value_is_null(false) {}
-            basic_message(const std::string& akey, const std::string& aval) : offset(0), _key_is_null(false), _value_is_null(false), _key(akey.begin(), akey.end()), _value(aval.begin(), aval.end()) {}
-
-            inline bool is_key_null() const { return _key_is_null; }
-            inline bool is_value_null() const { return _value_is_null; }
-            inline const std::vector<uint8_t>& key() const { return _key; }
-            inline const std::vector<uint8_t>& value() const { return _value; }
-
-            void set_key(const uint8_t* buf, size_t len)   { _key.reserve(len); for (size_t i = 0; i != len; ++i) _key.push_back(buf[i]); _key_is_null = false; }
-            void set_value(const uint8_t* buf, size_t len) { _value.reserve(len); for (size_t i = 0; i != len; ++i) _value.push_back(buf[i]); _value_is_null = false; }
-
-            int64_t                 offset;
-            bool                    _key_is_null;
-            bool                    _value_is_null;
-            std::vector<uint8_t>    _key;
-            std::vector<uint8_t>    _value;
-            */
+        struct partition_cursor
+        {
+            inline partition_cursor(int32_t p, int64_t of) : _partition_id(p), _next_offset(of) {}
+            int32_t _partition_id;
+            int64_t _next_offset;
         };
 
         //ProduceResponse = >[TopicName[Partition ErrorCode Offset]]

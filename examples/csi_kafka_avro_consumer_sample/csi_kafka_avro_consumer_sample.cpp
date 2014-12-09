@@ -18,6 +18,8 @@
 int main(int argc, char** argv)
 {
     std::string hostname = (argc >= 2) ? argv[1] : "192.168.0.102";
+    //std::string hostname = (argc >= 2) ? argv[1] : "z8r102-mc12-4-4.sth-tc2.videoplaza.net";
+
     std::string port = (argc >= 3) ? argv[2] : "9092";
     boost::asio::ip::tcp::resolver::query query(hostname, port);
 
@@ -28,21 +30,22 @@ int main(int argc, char** argv)
     csi::kafka::highlevel_consumer consumer0(io_service, query, "saka.test.avro-syslog2");
     boost::system::error_code ec0 = consumer0.connect();
 
-    csi::kafka::lowlevel_consumer consumer(io_service, query, "saka.test.avro-syslog2", 0);
+    csi::kafka::lowlevel_consumer consumer(io_service, query, "saka.test.avro-syslog2");
 
     boost::system::error_code ec1 = consumer.connect();
-    csi::kafka::error_codes   ec2 = consumer.set_offset(csi::kafka::latest_offsets);
+    auto ec2 = consumer.set_offset(0, csi::kafka::latest_offsets);
+    auto ec3 = consumer.set_offset(4, csi::kafka::latest_offsets);
 
     boost::accumulators::accumulator_set<double, boost::accumulators::stats<boost::accumulators::tag::rolling_mean> > acc(boost::accumulators::tag::rolling_window::window_size = 50000);
     int64_t total = 0;
 
-    consumer.open_stream(
+    consumer.stream_async(
         csi::kafka::avro_value_decoder<sample::syslog>(
-        [&acc, &total](csi::kafka::error_codes error, std::shared_ptr<sample::syslog> log)
+        [&acc, &total](const boost::system::error_code& ec1, csi::kafka::error_codes ec2, std::shared_ptr<sample::syslog> log)
     {
-        if (error)
+        if (ec1 || ec2)
         {
-            std::cerr << " decode error: " << csi::kafka::to_string(error) << std::endl;
+            std::cerr << " decode error: ec1:" << ec1 << " ec2" << csi::kafka::to_string(ec2) << std::endl;
             return;
         }
         if (!log)

@@ -24,10 +24,17 @@ namespace csi
             return handle;
         }
 
-        basic_call_context::handle create_simple_fetch_request(const std::string& topic, int32_t partition_id, uint32_t max_wait_time, size_t min_bytes, int64_t fetch_offset, int32_t correlation_id)
+        basic_call_context::handle create_simple_fetch_request(const std::string& topic, int32_t partition_id, int64_t fetch_offset, uint32_t max_wait_time, size_t min_bytes, int32_t correlation_id)
         {
             basic_call_context::handle handle(new basic_call_context());
-            handle->_tx_size = encode_simple_fetch_request(topic, partition_id, max_wait_time, min_bytes, fetch_offset, correlation_id, (char*)&handle->_tx_buffer[0], basic_call_context::MAX_BUFFER_SIZE);
+            handle->_tx_size = encode_simple_fetch_request(topic, partition_id, fetch_offset, max_wait_time, min_bytes, correlation_id, (char*)&handle->_tx_buffer[0], basic_call_context::MAX_BUFFER_SIZE);
+            return handle;
+        }
+
+        basic_call_context::handle create_multi_fetch_request(const std::string& topic, const std::vector<partition_cursor>& cursors, uint32_t max_wait_time, size_t min_bytes, int32_t correlation_id)
+        {
+            basic_call_context::handle handle(new basic_call_context());
+            handle->_tx_size = encode_multi_fetch_request(topic, cursors, max_wait_time, min_bytes, correlation_id, (char*)&handle->_tx_buffer[0], basic_call_context::MAX_BUFFER_SIZE);
             return handle;
         }
 
@@ -140,16 +147,16 @@ namespace csi
 
             void client::get_metadata_async(const std::vector<std::string>& topics, int32_t correlation_id, get_metadata_callback cb)
             {
-                perform_async(csi::kafka::create_metadata_request(topics, correlation_id), [cb](csi::kafka::error_codes ec, csi::kafka::basic_call_context::handle handle)
+                perform_async(csi::kafka::create_metadata_request(topics, correlation_id), [cb](const boost::system::error_code& ec, csi::kafka::basic_call_context::handle handle)
                 {
                     if (!ec)
                     {
                         auto response = csi::kafka::parse_metadata_response(handle);
-                        cb(ec, response);
+                        cb(ec, csi::kafka::NoError, response);
                     }
                     else
                     {
-                        cb(ec, std::shared_ptr<metadata_response>(NULL));
+                        cb(ec, csi::kafka::NoError, std::shared_ptr<metadata_response>(NULL));
                     }
                 });
             }
@@ -158,7 +165,7 @@ namespace csi
             {
                 std::promise<std::shared_ptr<metadata_response>> p;
                 std::future<std::shared_ptr<metadata_response>>  f = p.get_future();
-                get_metadata_async(topics, correlation_id, [&p](csi::kafka::error_codes ec, std::shared_ptr<metadata_response> response)
+                get_metadata_async(topics, correlation_id, [&p](const boost::system::error_code& ec1, csi::kafka::error_codes ec2, std::shared_ptr<metadata_response> response)
                 {
                     p.set_value(response);
                 });
@@ -172,22 +179,22 @@ namespace csi
                 _io_service.post(boost::bind(&client::_perform, this, handle));
             }
 
-            static void wait_for_completion(csi::kafka::error_codes ec, std::promise<csi::kafka::error_codes>* promise)
-            {
-                promise->set_value(ec);
-            }
-
+            //we SHOULD remove callback here and reurn a pair <ec, handle>
             basic_call_context::handle client::perform_sync(basic_call_context::handle handle, basic_call_context::callback cb)
             {
-                std::promise<csi::kafka::error_codes> promise; // just a dummy value - we use the request handle anyway as result
-                std::future<csi::kafka::error_codes> future = promise.get_future();
-                perform_async(handle, boost::bind(wait_for_completion, _1, &promise));
+                std::promise<boost::system::error_code> promise;
+                std::future<boost::system::error_code> future = promise.get_future();
+                perform_async(handle, [&promise](const boost::system::error_code& ec1, std::shared_ptr<basic_call_context>)
+                {
+                    promise.set_value(ec1);
+                });
                 future.wait();
-                csi::kafka::error_codes res = future.get();
-                if (cb)
+                auto res = future.get();
+                if (cb)      
                     cb(res, handle);
                 return handle;
             }
+
 
             void client::_perform(basic_call_context::handle handle)
             {
@@ -228,6 +235,12 @@ namespace csi
 
             void client::socket_rx_cb(const boost::system::error_code& error_code, size_t bytes_received, basic_call_context::handle handle)
             {
+                if (error_code)
+                {
+                    if (handle->_callback)
+                        handle->_callback(error_code, handle);
+                }
+
                 handle->_rx_cursor += bytes_received;
                 // a bit ugly but simple
                 if (handle->_rx_cursor == 4)
@@ -240,7 +253,7 @@ namespace csi
                 else
                 {
                     if (handle->_callback)
-                        handle->_callback(csi::kafka::NoError, handle);
+                        handle->_callback(error_code, handle);
 
                     // start the next read
                     basic_call_context::handle item_to_receive;
@@ -264,14 +277,14 @@ namespace csi
             {
                 if (error_code)
                 {
-                    // disconnected - do something else
-                    // as opposed to canceled
-                    //fail_fast_error_handler(error_code);
+                    if (handle->_callback)
+                        handle->_callback(error_code, handle);
+                    return;
                 }
 
                 // if we're not expecing result the all we can say to the client is "NoError" when we posted the data on socket
                 if (!handle->_expecting_reply)
-                    handle->_callback(csi::kafka::NoError, handle);
+                    handle->_callback(error_code, handle);
 
                 //more to send
                 basic_call_context::handle item_to_send;

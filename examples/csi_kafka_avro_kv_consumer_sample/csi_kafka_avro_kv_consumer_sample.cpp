@@ -35,18 +35,22 @@ int main(int argc, char** argv)
     std::auto_ptr<boost::asio::io_service::work> work(new boost::asio::io_service::work(io_service));
     boost::thread bt(boost::bind(&boost::asio::io_service::run, &io_service));
 
-    csi::kafka::lowlevel_consumer consumer(io_service, query, "saka.test.avro_key_value", 0);
+    csi::kafka::lowlevel_consumer consumer(io_service, query, "saka.test.avro_key_value");
 
     int64_t message_total = 0;
 
     boost::system::error_code ec1   = consumer.connect();
-    csi::kafka::error_codes ec2     = consumer.set_offset(csi::kafka::earliest_available_offset);
+    auto ec2 = consumer.set_offset(0, csi::kafka::earliest_available_offset);
 
-    csi::kafka::avro_key_value_decoder<sample::contact_info_key, sample::contact_info> decoder([&datastore, &message_total](csi::kafka::error_codes ec, std::shared_ptr<sample::contact_info_key> key, std::shared_ptr<sample::contact_info> value)
+    csi::kafka::avro_key_value_decoder<sample::contact_info_key, sample::contact_info> decoder([&datastore, &message_total](
+        const boost::system::error_code& ec1, 
+        csi::kafka::error_codes ec2, 
+        std::shared_ptr<sample::contact_info_key> key, 
+        std::shared_ptr<sample::contact_info> value)
     {
-        if (ec != 0)
+        if (ec1 || ec2)
         {
-            std::cerr << "ec = " << ec << std::endl;
+            std::cerr << "ec1 = " << ec1 << " ec2 " << ec2 << std::endl;
             return;
         }
         if (key)
@@ -54,7 +58,7 @@ int main(int argc, char** argv)
         message_total++;
     });
 
-    consumer.open_stream(decoder);
+    consumer.stream_async(decoder);
 
     static boost::accumulators::accumulator_set<double, boost::accumulators::stats<boost::accumulators::tag::rolling_mean> > acc(boost::accumulators::tag::rolling_window::window_size = 3);
     while (true)

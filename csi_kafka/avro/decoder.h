@@ -22,19 +22,14 @@ namespace csi
         class avro_value_decoder
         {
         public:
-            typedef boost::function <void(csi::kafka::error_codes, std::shared_ptr<V> value)> avro_callback;
+            typedef boost::function <void(const boost::system::error_code& ec1, csi::kafka::error_codes ec2, std::shared_ptr<V> value)> avro_callback;
             avro_value_decoder(avro_callback cb) : _cb(cb) {}
 
-            void operator()(csi::kafka::error_codes ec, const csi::kafka::fetch_response::topic_data::partition_data& data)
+            void operator()(const boost::system::error_code& ec1, csi::kafka::error_codes ec2, const csi::kafka::fetch_response::topic_data::partition_data& data)
             {
-                if (ec)
+                if (ec1 || ec2)
                 {
-                    _cb((csi::kafka::error_codes) ec, std::shared_ptr<V>(NULL));
-                    return;
-                }
-                else if (data.error_code != 0)
-                {
-                    _cb((csi::kafka::error_codes) data.error_code, std::shared_ptr<V>(NULL));
+                    _cb(ec1, ec2, std::shared_ptr<V>(NULL));
                     return;
                 }
 
@@ -46,11 +41,11 @@ namespace csi
                         std::shared_ptr<V> value = std::shared_ptr<V>(new V());
                         std::auto_ptr<avro::InputStream> src = avro::memoryInputStream(&i->value[0], i->value.size()); // lets always reserve 128 bits for md5 hash of avro schema so it's possible to dynamically decode things
                         avro_binary_decode(src, *value);
-                        _cb((csi::kafka::error_codes) data.error_code, value);
+                        _cb(ec1, ec2, value); 
                     }
                     else
                     {
-                        _cb((csi::kafka::error_codes) data.error_code, std::shared_ptr<V>(NULL)); // can this happen???
+                        _cb(ec1, ec2, std::shared_ptr<V>(NULL)); // can this happen???
                     }
                 }
             }
@@ -62,20 +57,15 @@ namespace csi
         class avro_key_value_decoder
         {
         public:
-            typedef boost::function <void(csi::kafka::error_codes, std::shared_ptr<K> key, std::shared_ptr<V> value)> avro_callback;
+            typedef boost::function <void(const boost::system::error_code& ec1, csi::kafka::error_codes ec2, std::shared_ptr<K> key, std::shared_ptr<V> value)> avro_callback;
 
             avro_key_value_decoder(avro_callback cb) : _cb(cb) {}
 
-            void operator()(csi::kafka::error_codes ec, const csi::kafka::fetch_response::topic_data::partition_data& data)
+            void operator()(const boost::system::error_code& ec1, csi::kafka::error_codes ec2, const csi::kafka::fetch_response::topic_data::partition_data& data)
             {
-                if (ec != 0)
+                if (ec1 || ec2)
                 {
-                    _cb((csi::kafka::error_codes) ec, std::shared_ptr<K>(), std::shared_ptr<V>());
-                    return;
-                }
-                else if (data.error_code != 0)
-                {
-                    _cb((csi::kafka::error_codes) data.error_code, std::shared_ptr<K>(), std::shared_ptr<V>());
+                    _cb(ec1, ec2, std::shared_ptr<K>(), std::shared_ptr<V>());
                     return;
                 }
 
@@ -100,7 +90,7 @@ namespace csi
                         avro_binary_decode(src, *value);
                     }
 
-                    _cb((csi::kafka::error_codes) data.error_code, key, value);
+                    _cb(ec1, ec2, key, value);
                 }
             }
 
