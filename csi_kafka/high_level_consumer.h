@@ -1,3 +1,4 @@
+#include <map>
 #include <csi_kafka/low_level/consumer.h>
 
 #pragma once
@@ -21,7 +22,7 @@ namespace csi
             boost::asio::io_service&             _ios;
             csi::kafka::low_level::client        _meta_client;
             std::string                          _topic_name;
-            std::vector<lowlevel_consumer*>      _consumers;
+            std::map<int, lowlevel_consumer*>    _consumers;
             std::shared_ptr<metadata_response>   _metadata;
         };
     };
