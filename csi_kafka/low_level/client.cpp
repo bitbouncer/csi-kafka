@@ -173,6 +173,35 @@ namespace csi
                 return f.get();
             }
 
+            void client::get_consumer_metadata_async(const std::string& consumer_group, int32_t correlation_id, get_consumer_metadata_callback cb)
+            {
+                perform_async(csi::kafka::create_consumer_metadata_request(consumer_group, correlation_id), [cb](const boost::system::error_code& ec, csi::kafka::basic_call_context::handle handle)
+                {
+                    rpc_error_code rec(ec);
+                    if (!rec)
+                    {
+                        auto response = csi::kafka::parse_consumer_metadata_response(handle);
+                        cb(rec, response);
+                    }
+                    else
+                    {
+                        cb(rec, std::shared_ptr<consumer_metadata_response>(NULL));
+                    }
+                });
+            }
+
+            rpc_result<consumer_metadata_response>  client::get_consumer_metadata(const std::string& consumer_group, int32_t correlation_id)
+            {
+                std::promise<rpc_result<consumer_metadata_response> > p;
+                std::future<rpc_result<consumer_metadata_response>>  f = p.get_future();
+                get_consumer_metadata_async(consumer_group, correlation_id, [&p](const rpc_error_code& ec, std::shared_ptr<consumer_metadata_response> response)
+                {
+                    p.set_value(rpc_result<consumer_metadata_response>(ec, response));
+                });
+                f.wait();
+                return f.get();
+            }
+
             void client::perform_async(basic_call_context::handle handle, basic_call_context::callback cb)
             {
                 handle->_callback = cb;

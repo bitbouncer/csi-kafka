@@ -5,6 +5,7 @@
 #include <boost/function.hpp>
 #include <boost/bind.hpp>
 #include <csi_kafka/kafka.h>
+#include <csi_kafka/kafka_error_code.h>
 #include "spinlock.h"
 
 #pragma once
@@ -49,13 +50,35 @@ namespace csi
         std::shared_ptr<offset_fetch_response>      parse_offset_fetch_response(csi::kafka::basic_call_context::handle handle);
         std::shared_ptr<consumer_metadata_response> parse_consumer_metadata_response(csi::kafka::basic_call_context::handle handle);
 
+
+        template <class T>
+        struct rpc_result
+        {
+            inline rpc_result() {}
+            inline rpc_result(const rpc_error_code& e, std::shared_ptr<T> d) : ec(e), data(d) {}
+
+            inline operator bool() const  BOOST_SYSTEM_NOEXCEPT // true if error
+            {
+                return ec1;
+            }
+
+            inline bool operator!() const  BOOST_SYSTEM_NOEXCEPT // true if no error
+            {
+                return !ec;
+            }
+
+            rpc_error_code     ec;
+            std::shared_ptr<T> data;
+        };
+
         namespace low_level
         {
             class client
             {
             public:
-                typedef boost::function < void(const boost::system::error_code&)>                           completetion_handler;
-                typedef boost::function <void(const boost::system::error_code& ec1, csi::kafka::error_codes ec2, std::shared_ptr<metadata_response>)> get_metadata_callback;
+                typedef boost::function < void(const boost::system::error_code&)>                                                                       completetion_handler;
+                typedef boost::function <void(const boost::system::error_code& ec1, csi::kafka::error_codes ec2, std::shared_ptr<metadata_response>)>   get_metadata_callback;
+                typedef boost::function <void(const rpc_error_code&, std::shared_ptr<consumer_metadata_response>)>                                      get_consumer_metadata_callback;
 
                 client(boost::asio::io_service& io_service, const boost::asio::ip::tcp::resolver::query& query);
                 ~client();
@@ -67,11 +90,14 @@ namespace csi
                 bool close();
                 bool is_connected() const;
 
-                void                                get_metadata_async(const std::vector<std::string>& topics, int32_t correlation_id, get_metadata_callback);
-                std::shared_ptr<metadata_response>  get_metadata(const std::vector<std::string>& topics, int32_t correlation_id);
-                
-                void                                perform_async(basic_call_context::handle, basic_call_context::callback cb);
-                basic_call_context::handle          perform_sync(basic_call_context::handle, basic_call_context::callback cb);
+                void                                            get_metadata_async(const std::vector<std::string>& topics, int32_t correlation_id, get_metadata_callback);
+                std::shared_ptr<csi::kafka::metadata_response>  get_metadata(const std::vector<std::string>& topics, int32_t correlation_id);
+
+                void                                                get_consumer_metadata_async(const std::string& consumer_group, int32_t correlation_id, get_consumer_metadata_callback);
+                rpc_result<consumer_metadata_response>  get_consumer_metadata(const std::string& consumer_group, int32_t correlation_id);
+
+                void                                            perform_async(basic_call_context::handle, basic_call_context::callback cb);
+                csi::kafka::basic_call_context::handle          perform_sync(basic_call_context::handle, basic_call_context::callback cb);
 
             protected:
                 // asio callbacks

@@ -20,6 +20,8 @@ SET(LIB_SRCS
     high_level_producer.cpp
 	kafka.h
 	kafka.cpp
+    kafka_error_code.h
+    kafka_error_code.cpp
 	)
 	
 add_library (csi_kafka STATIC ${LIB_SRCS})
