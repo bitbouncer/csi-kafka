@@ -132,7 +132,6 @@ namespace csi
                 
             bool client::close()
             {
-                //if (_connecting) { return false; }
                 _connected = false;
                 boost::system::error_code ec;
                 _socket.cancel(ec);
@@ -149,25 +148,26 @@ namespace csi
             {
                 perform_async(csi::kafka::create_metadata_request(topics, correlation_id), [cb](const boost::system::error_code& ec, csi::kafka::basic_call_context::handle handle)
                 {
-                    if (!ec)
+                    rpc_error_code rec(ec);
+                    if (!rec)
                     {
                         auto response = csi::kafka::parse_metadata_response(handle);
-                        cb(ec, csi::kafka::NoError, response);
+                        cb(rec, response);
                     }
                     else
                     {
-                        cb(ec, csi::kafka::NoError, std::shared_ptr<metadata_response>(NULL));
+                        cb(rec, std::shared_ptr<metadata_response>(NULL));
                     }
                 });
             }
 
-            std::shared_ptr<metadata_response> client::get_metadata(const std::vector<std::string>& topics, int32_t correlation_id)
+            rpc_result<metadata_response> client::get_metadata(const std::vector<std::string>& topics, int32_t correlation_id)
             {
-                std::promise<std::shared_ptr<metadata_response>> p;
-                std::future<std::shared_ptr<metadata_response>>  f = p.get_future();
-                get_metadata_async(topics, correlation_id, [&p](const boost::system::error_code& ec1, csi::kafka::error_codes ec2, std::shared_ptr<metadata_response> response)
+                std::promise<rpc_result<metadata_response>> p;
+                std::future<rpc_result<metadata_response>>  f = p.get_future();
+                get_metadata_async(topics, correlation_id, [&p](const rpc_error_code& ec, std::shared_ptr<metadata_response> response)
                 {
-                    p.set_value(response);
+                    p.set_value(rpc_result<metadata_response>(ec, response));
                 });
                 f.wait();
                 return f.get();
@@ -201,6 +201,37 @@ namespace csi
                 f.wait();
                 return f.get();
             }
+
+            void client::get_offset_async(const std::string& topic, int32_t partition, int64_t start_time, int32_t max_number_of_offsets, int32_t correlation_id, get_offset_callback cb)
+            {
+                perform_async(csi::kafka::create_simple_offset_request(topic, partition, start_time, max_number_of_offsets, correlation_id), [this, cb](const boost::system::error_code& ec, csi::kafka::basic_call_context::handle handle)
+                {
+                    rpc_error_code rec(ec);
+                    if (!rec)
+                    {
+                        auto response = csi::kafka::parse_offset_response(handle);
+                        cb(rec, response);
+                    }
+                    else
+                    {
+                        cb(rec, std::shared_ptr<offset_response>(NULL));
+                    }
+                });
+            }
+
+            rpc_result<offset_response> client::get_offset(const std::string& topic, int32_t partition, int64_t start_time, int32_t max_number_of_offsets, int32_t correlation_id)
+            {
+                std::promise<rpc_result<offset_response> > p;
+                std::future<rpc_result<offset_response>>  f = p.get_future();
+                get_offset_async(topic, partition, start_time, max_number_of_offsets, correlation_id, [&p](const rpc_error_code& ec, std::shared_ptr<offset_response> response)
+                {
+                    p.set_value(rpc_result<offset_response>(ec, response));
+                });
+                f.wait();
+                return f.get();
+            }
+
+
 
             void client::perform_async(basic_call_context::handle handle, basic_call_context::callback cb)
             {

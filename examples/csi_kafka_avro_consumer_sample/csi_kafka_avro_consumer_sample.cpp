@@ -32,7 +32,7 @@ int main(int argc, char** argv)
     {
         csi::kafka::low_level::client client(io_service, query);
         boost::system::error_code ec = client.connect();
-        std::shared_ptr<csi::kafka::metadata_response> md = client.get_metadata({}, 0);
+        auto md = client.get_metadata({}, 0);
         auto resp = client.get_consumer_metadata("caramba", 0);
     }
 

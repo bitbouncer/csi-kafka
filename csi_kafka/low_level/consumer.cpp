@@ -31,12 +31,11 @@ namespace csi
                 assert(i->_partition_id != partition);
             }
 
-            _client.perform_async(csi::kafka::create_simple_offset_request(_topic_name, partition, start_time, 10, 0), [this, partition, cb](const boost::system::error_code& ec, csi::kafka::basic_call_context::handle handle)
+            _client.get_offset_async(_topic_name, partition, start_time, 10, 0, [this, partition, cb](const rpc_error_code& ec, std::shared_ptr<offset_response> response)
             {
                 if (ec)
-                    cb(ec, csi::kafka::NoError);
-
-                auto response = csi::kafka::parse_offset_response(handle);
+                    cb(ec.ec1, ec.ec2);
+               
                 for (std::vector<csi::kafka::offset_response::topic_data>::const_iterator i = response->topics.begin(); i != response->topics.end(); ++i)
                 {
                     // this should always be true.
@@ -54,13 +53,13 @@ namespace csi
                                     // must lock if multithreaded
                                     _cursors.emplace_back(partition, j->offsets[0]);
                                 }
-                                cb(ec, (csi::kafka::error_codes) j->error_code);
+                                cb(ec.ec1, (csi::kafka::error_codes) j->error_code);
                                 return;
                             }
                         }
                     }
                 }
-                cb(ec, csi::kafka::error_codes::Unknown); // this should never happen
+                cb(ec.ec1, csi::kafka::error_codes::Unknown); // this should never happen
             });
         }
 

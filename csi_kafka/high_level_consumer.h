@@ -23,7 +23,7 @@ namespace csi
             csi::kafka::low_level::client        _meta_client;
             std::string                          _topic_name;
             std::map<int, lowlevel_consumer*>    _consumers;
-            std::shared_ptr<metadata_response>   _metadata;
+            rpc_result<metadata_response>        _metadata;
         };
     };
 };
