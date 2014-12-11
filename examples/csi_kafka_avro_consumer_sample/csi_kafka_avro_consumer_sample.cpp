@@ -33,7 +33,7 @@ int main(int argc, char** argv)
         csi::kafka::low_level::client client(io_service, query);
         boost::system::error_code ec = client.connect();
         auto md = client.get_metadata({}, 0);
-        auto resp = client.get_consumer_metadata("caramba", 0);
+        auto resp = client.get_consumer_metadata("saka.test.avro-syslog2", 0);
     }
 
     csi::kafka::highlevel_consumer consumer0(io_service, query, "saka.test.avro-syslog2");
@@ -46,6 +46,8 @@ int main(int argc, char** argv)
     boost::system::error_code ec1 = consumer.connect();
     auto ec2 = consumer.set_offset(0, csi::kafka::latest_offsets);
     auto ec3 = consumer.set_offset(4, csi::kafka::latest_offsets);
+
+
 
     boost::accumulators::accumulator_set<double, boost::accumulators::stats<boost::accumulators::tag::rolling_mean> > acc(boost::accumulators::tag::rolling_window::window_size = 50000);
     int64_t total = 0;

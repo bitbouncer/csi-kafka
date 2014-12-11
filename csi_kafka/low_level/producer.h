@@ -18,6 +18,7 @@ namespace csi
             boost::system::error_code connect();
 
             void send_async(int32_t required_acks, int32_t timeout, const std::vector<basic_message>& v, int32_t correlation_id, callback cb);
+            
             inline bool is_connected() const    { return _client.is_connected(); }
         protected:
             boost::asio::io_service&             _ios;

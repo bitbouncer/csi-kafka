@@ -82,6 +82,7 @@ namespace csi
                 typedef boost::function <void(const rpc_error_code&, std::shared_ptr<metadata_response>)>           get_metadata_callback;
                 typedef boost::function <void(const rpc_error_code&, std::shared_ptr<offset_response>)>             get_offset_callback;
                 typedef boost::function <void(const rpc_error_code&, std::shared_ptr<consumer_metadata_response>)>  get_consumer_metadata_callback;
+                typedef boost::function <void(const rpc_error_code&, std::shared_ptr<offset_commit_response>)>      commit_offset_callback;
 
                 client(boost::asio::io_service& io_service, const boost::asio::ip::tcp::resolver::query& query);
                 ~client();
@@ -101,6 +102,9 @@ namespace csi
 
                 void                                            get_offset_async(const std::string& topic, int32_t partition, int64_t start_time, int32_t max_number_of_offsets, int32_t correlation_id, get_offset_callback);
                 rpc_result<offset_response>                     get_offset(const std::string& topic, int32_t partition, int64_t start_time, int32_t max_number_of_offsets, int32_t correlation_id);
+
+                void                                            commit_offset_async(const std::string& consumer_group, const std::string& topic, int32_t partition_id, int64_t offset, int64_t timestamp, const std::string& metadata, int32_t correlation_id, commit_offset_callback);
+                rpc_result<offset_commit_response>              commit_offset_async(const std::string& consumer_group, const std::string& topic, int32_t partition, int64_t offset, int64_t timestamp, const std::string& metadata, int32_t correlation_id);
 
                 void                                            perform_async(basic_call_context::handle, basic_call_context::callback cb);
                 csi::kafka::basic_call_context::handle          perform_sync(basic_call_context::handle, basic_call_context::callback cb);

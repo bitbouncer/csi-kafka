@@ -19,7 +19,7 @@ namespace csi
 
         enum { latest_offsets = -1, earliest_available_offset = -2 };
 
-   
+
 
         enum api_keys
         {
@@ -70,14 +70,14 @@ namespace csi
                 payload_type(const char* buf, size_t len) : _value(buf, buf + len), _is_null(false) {}
                 inline void set(const uint8_t* begin, const uint8_t* end) { _value.reserve(end - begin); _value.assign(begin, end); _is_null = false; }
                 inline void set(const uint8_t* begin, size_t len)         { _value.reserve(len); _value.assign(begin, begin + len); _is_null = false; }
-                inline void set_string(const char* ch)                    { set((const uint8_t*) ch, strlen(ch)); }
+                inline void set_string(const char* ch)                    { set((const uint8_t*)ch, strlen(ch)); }
                 inline void reserve(size_t len)                           { _value.reserve(len); }
                 inline void push_back(uint8_t ch)                         { _value.push_back(ch); _is_null = false; }
                 inline void set_null(bool val)                            { _is_null = val; }
                 inline bool is_null() const                               { return _is_null; }
                 inline const std::vector<uint8_t>& value() const          { return _value; }
                 inline size_t size() const                                { return _value.size(); }
-                
+
                 inline uint8_t& operator[] (const size_t index)           { return _value[index]; }
                 inline const uint8_t& operator[] (const size_t index) const { return _value[index]; }
 
@@ -259,3 +259,51 @@ namespace csi
         };
     };
 };
+
+
+// More message types below
+//https://cwiki.apache.org/confluence/display/KAFKA/Kafka+0.9+Consumer+Rewrite+Design
+
+/*
+JoinGroupRequest
+{
+GroupId = > String
+SessionTimeout = > int32
+Topics = >[String]
+ConsumerId = > String
+PartitionAssignmentStrategy = > String
+}
+
+JoinGroupResponse
+{
+ErrorCode = > int16
+GroupGenerationId = > int32
+ConsumerId = > String
+PartitionsToOwn = >[TopicName[Partition]]
+}
+TopicName = > String
+Partition = > int32
+
+HeartbeatRequest
+{
+GroupId = > String
+GroupGenerationId = > int32
+ConsumerId = > String
+}
+HeartbeatResponse
+{
+ErrorCode = > int16
+}
+
+OffsetCommitRequest(v1)
+
+OffsetCommitRequest = > ConsumerGroup GroupGenerationId ConsumerId[TopicName[Partition Offset TimeStamp Metadata]]
+ConsumerGroup = > string
+GroupGenerationId = > int32
+ConsumerId = > String
+TopicName = > string
+Partition = > int32
+Offset = > int64
+TimeStamp = > int64
+Metadata = > string
+*/
