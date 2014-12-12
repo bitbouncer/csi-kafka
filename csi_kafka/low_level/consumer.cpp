@@ -31,10 +31,10 @@ namespace csi
                 assert(i->_partition_id != partition);
             }
 
-            _client.get_offset_async(_topic_name, partition, start_time, 10, 0, [this, partition, cb](const rpc_error_code& ec, std::shared_ptr<offset_response> response)
+            _client.get_offset_async(_topic_name, partition, start_time, 10, 0, [this, partition, cb](rpc_result<offset_response> response)
             {
-                if (ec)
-                    cb(ec.ec1, ec.ec2);
+                if (response)
+                    return cb(rpc_result<void>(response.ec));
                
                 for (std::vector<csi::kafka::offset_response::topic_data>::const_iterator i = response->topics.begin(); i != response->topics.end(); ++i)
                 {
@@ -53,23 +53,23 @@ namespace csi
                                     // must lock if multithreaded
                                     _cursors.emplace_back(partition, j->offsets[0]);
                                 }
-                                cb(ec.ec1, (csi::kafka::error_codes) j->error_code);
+                                cb(rpc_result<void>(rpc_error_code(response.ec.ec1, (csi::kafka::error_codes) j->error_code)));
                                 return;
                             }
                         }
                     }
                 }
-                cb(ec.ec1, csi::kafka::error_codes::Unknown); // this should never happen
+                cb(rpc_result<void>(rpc_error_code(response.ec.ec1, csi::kafka::error_codes::Unknown))); // this should never happen
             });
         }
 
-        std::pair<boost::system::error_code, csi::kafka::error_codes> lowlevel_consumer::set_offset(int32_t partition, int64_t start_time)
+        rpc_result<void> lowlevel_consumer::set_offset(int32_t partition, int64_t start_time)
         {
-            std::promise<std::pair<boost::system::error_code, csi::kafka::error_codes>> p;
-            std::future<std::pair<boost::system::error_code, csi::kafka::error_codes>>  f = p.get_future();
-            set_offset_async(partition, start_time, [&p](const boost::system::error_code& ec1, csi::kafka::error_codes ec2)
+            std::promise<rpc_result<void>> p;
+            std::future<rpc_result<void>>  f = p.get_future();
+            set_offset_async(partition, start_time, [&p](rpc_result<void> result)
             {
-                p.set_value(std::make_pair(ec1, ec2));
+                p.set_value(result);
             });
             f.wait();
             return f.get();
@@ -112,18 +112,7 @@ namespace csi
     
         void lowlevel_consumer::get_metadata_async(get_metadata_callback cb)
         {
-            _client.perform_async(csi::kafka::create_metadata_request({ _topic_name }, 0), [cb](const boost::system::error_code& ec, csi::kafka::basic_call_context::handle handle)
-            {
-                if (ec)
-                {
-                    std::cerr << "fetch_metadata_async failed: ec:" << ec;
-                    cb(ec, csi::kafka::NoError, NULL);
-                    return;
-                }
-
-                 auto response = csi::kafka::parse_metadata_response(handle);
-                 cb(ec, csi::kafka::NoError, response);
-            });
+            _client.get_metadata_async({ _topic_name }, 0, cb);
         }
     } // kafka
 }; // csi

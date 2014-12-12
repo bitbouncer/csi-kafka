@@ -44,48 +44,25 @@ namespace csi
         basic_call_context::handle create_simple_offset_fetch_request(const std::string& consumer_group, const std::string& topic, int32_t partition_id, int32_t correlation_id);
         basic_call_context::handle create_simple_offset_fetch_request(const std::string& consumer_group, int32_t correlation_id);
 
-        std::shared_ptr<produce_response>           parse_produce_response(csi::kafka::basic_call_context::handle handle);
-        std::shared_ptr<fetch_response>             parse_fetch_response(csi::kafka::basic_call_context::handle handle);
-        std::shared_ptr<offset_response>            parse_offset_response(csi::kafka::basic_call_context::handle handle);
-        std::shared_ptr<metadata_response>          parse_metadata_response(csi::kafka::basic_call_context::handle handle);
-        std::shared_ptr<offset_commit_response>     parse_offset_commit_response(csi::kafka::basic_call_context::handle handle);
-        std::shared_ptr<offset_fetch_response>      parse_offset_fetch_response(csi::kafka::basic_call_context::handle handle);
-        std::shared_ptr<consumer_metadata_response> parse_consumer_metadata_response(csi::kafka::basic_call_context::handle handle);
-
-
-        template <class T>
-        struct rpc_result
-        {
-            inline rpc_result() {}
-            inline rpc_result(const rpc_error_code& e, std::shared_ptr<T> d) : ec(e), data(d) {}
-
-            inline operator bool() const  BOOST_SYSTEM_NOEXCEPT // true if error
-            {
-                return ec1 || (data.get() == NULL);
-            }
-
-            inline bool operator!() const  BOOST_SYSTEM_NOEXCEPT // true if no error
-            {
-                return !ec && (data.get() != NULL);
-            }
-
-            inline T* operator->() const { return data.get(); }
-
-            rpc_error_code     ec;
-            std::shared_ptr<T> data;
-        };
+        rpc_result<produce_response>           parse_produce_response(csi::kafka::basic_call_context::handle handle);
+        rpc_result<fetch_response>             parse_fetch_response(csi::kafka::basic_call_context::handle handle);
+        rpc_result<offset_response>            parse_offset_response(csi::kafka::basic_call_context::handle handle);
+        rpc_result<metadata_response>          parse_metadata_response(csi::kafka::basic_call_context::handle handle);
+        rpc_result<offset_commit_response>     parse_offset_commit_response(csi::kafka::basic_call_context::handle handle);
+        rpc_result<offset_fetch_response>      parse_offset_fetch_response(csi::kafka::basic_call_context::handle handle);
+        rpc_result<consumer_metadata_response> parse_consumer_metadata_response(csi::kafka::basic_call_context::handle handle);
 
         namespace low_level
         {
             class client
             {
             public:
-                typedef boost::function < void(const boost::system::error_code&)>                                   completetion_handler;
-                typedef boost::function <void(const rpc_error_code&, std::shared_ptr<metadata_response>)>           get_metadata_callback;
-                typedef boost::function <void(const rpc_error_code&, std::shared_ptr<offset_response>)>             get_offset_callback;
-                typedef boost::function <void(const rpc_error_code&, std::shared_ptr<consumer_metadata_response>)>  get_consumer_metadata_callback;
-                typedef boost::function <void(const rpc_error_code&, std::shared_ptr<offset_commit_response>)>      commit_offset_callback;
-                typedef boost::function <void(const rpc_error_code&, std::shared_ptr<offset_fetch_response>)>       get_consumer_offset_callback;
+                typedef boost::function < void(const boost::system::error_code&)>       completetion_handler;
+                typedef boost::function <void(rpc_result<metadata_response>)>           get_metadata_callback;
+                typedef boost::function <void(rpc_result<offset_response>)>             get_offset_callback;
+                typedef boost::function <void(rpc_result<consumer_metadata_response>)>  get_consumer_metadata_callback;
+                typedef boost::function <void(rpc_result<offset_commit_response>)>      commit_offset_callback;
+                typedef boost::function <void(rpc_result<offset_fetch_response>)>       get_consumer_offset_callback;
                 
 
                 client(boost::asio::io_service& io_service, const boost::asio::ip::tcp::resolver::query& query);
@@ -141,8 +118,6 @@ namespace csi
                 boost::asio::ip::tcp::socket              _socket; // array of connections to shard leaders???
                 std::deque<basic_call_context::handle>    _tx_queue;
                 std::deque<basic_call_context::handle>    _rx_queue;
-
-                bool                                      _connecting;
                 bool                                      _connected;
                 bool                                      _tx_in_progress;
                 bool                                      _rx_in_progress;

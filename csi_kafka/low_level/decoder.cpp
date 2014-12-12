@@ -110,14 +110,16 @@ namespace csi
         //Partition = > int32
         //ErrorCode = > int16
         //Offset = > int64
-        std::shared_ptr<produce_response> parse_produce_response(const char* buffer, size_t len)
+        rpc_result<produce_response> parse_produce_response(const char* buffer, size_t len)
         {
+            rpc_result<produce_response> response(new produce_response());
             boost::iostreams::stream<boost::iostreams::array_source> str(buffer, len);
 
-            std::shared_ptr<produce_response> response(new produce_response());
-
             if (len == 0)
+            {
+                response.ec.ec1 = make_error_code(boost::system::errc::bad_message);
                 return response;
+            }
 
             internal::decode_i32(str, response->correlation_id);
             int32_t nr_of_topics;
@@ -198,14 +200,15 @@ namespace csi
         //ErrorCode = > int16
         //HighwaterMarkOffset = > int64
         //MessageSetSize = > int32
-        std::shared_ptr<fetch_response> parse_fetch_response(const char* buffer, size_t len)
+        rpc_result<fetch_response> parse_fetch_response(const char* buffer, size_t len)
         {
             boost::iostreams::stream<boost::iostreams::array_source> str(buffer, len);
 
-            std::shared_ptr<fetch_response> response(new fetch_response());
+            rpc_result<fetch_response> response(new fetch_response());
 
             internal::decode_i32(str, response->correlation_id);
 
+            int16_t resulting_error_code = 0;
             int32_t nr_of_topics;
             internal::decode_i32(str, nr_of_topics);
             response->topics.reserve(nr_of_topics);
@@ -223,6 +226,8 @@ namespace csi
                     fetch_response::topic_data::partition_data partition_data;
                     internal::decode_i32(str, partition_data.partition_id);
                     internal::decode_i16(str, partition_data.error_code);
+                    if (partition_data.error_code)
+                        resulting_error_code = partition_data.error_code;
                     internal::decode_i64(str, partition_data.highwater_mark_offset);  // ska vi läsa detta om error code är !=0 TBD
                     int32_t  message_set_size = 0;
                     internal::decode_i32(str, message_set_size); // ska vi läsa detta om error code är !=0 TBD
@@ -241,6 +246,7 @@ namespace csi
                 if (!str.good())
                     break;
             }
+            response.ec.ec2 = (csi::kafka::error_codes) resulting_error_code;
             return response;
         }
 
@@ -249,10 +255,10 @@ namespace csi
         //Partition = > int32
         //ErrorCode = > int16
         //Offset = > int64
-        std::shared_ptr<offset_response> parse_offset_response(const char* buffer, size_t len)
+        rpc_result<offset_response> parse_offset_response(const char* buffer, size_t len)
         {
             boost::iostreams::stream<boost::iostreams::array_source> str(buffer, len);
-            std::shared_ptr<offset_response> response(new offset_response());
+            rpc_result<offset_response> response(new offset_response());
             internal::decode_i32(str, response->correlation_id);
 
             int32_t nr_of_topics;
@@ -292,10 +298,10 @@ namespace csi
         //Leader = > int32
         //Replicas = >[int32]
         //Isr = >[int32]
-        std::shared_ptr<metadata_response> parse_metadata_response(const char* buffer, size_t len)
+        rpc_result<metadata_response> parse_metadata_response(const char* buffer, size_t len)
         {
             boost::iostreams::stream<boost::iostreams::array_source> str(buffer, len);
-            std::shared_ptr<metadata_response> response(new metadata_response());
+            rpc_result<metadata_response> response(new metadata_response());
             internal::decode_i32(str, response->correlation_id);
 
             int32_t nr_of_brokers;
@@ -343,10 +349,10 @@ namespace csi
         //TopicName = > string
         //Partition = > int32
         //ErrorCode = > int16
-        std::shared_ptr<offset_commit_response> parse_offset_commit_response(const char* buffer, size_t len)
+        rpc_result<offset_commit_response> parse_offset_commit_response(const char* buffer, size_t len)
         {
             boost::iostreams::stream<boost::iostreams::array_source> str(buffer, len);
-            std::shared_ptr<offset_commit_response> response(new offset_commit_response());
+            rpc_result<offset_commit_response> response(new offset_commit_response());
             internal::decode_i32(str, response->correlation_id);
 
             int32_t nr_of_topics;
@@ -378,12 +384,12 @@ namespace csi
         //Offset = > int64
         //Metadata = > string
         //ErrorCode = > int16
-        std::shared_ptr<offset_fetch_response> parse_offset_fetch_response(const char* buffer, size_t len)
+        rpc_result<offset_fetch_response> parse_offset_fetch_response(const char* buffer, size_t len)
         {
             //assert(false); // not working in kafka head yet
 
             boost::iostreams::stream<boost::iostreams::array_source> str(buffer, len);
-            std::shared_ptr<offset_fetch_response> response(new offset_fetch_response());
+            rpc_result<offset_fetch_response> response(new offset_fetch_response());
             internal::decode_i32(str, response->correlation_id);
 
             int32_t nr_of_topics;
@@ -416,10 +422,10 @@ namespace csi
         //CoordinatorId = > int32
         //CoordinatorHost = > string
         //CoordinatorPort = > int32
-        std::shared_ptr<consumer_metadata_response> parse_consumer_metadata_response(const char* buffer, size_t len)
+        rpc_result<consumer_metadata_response> parse_consumer_metadata_response(const char* buffer, size_t len)
         {
             boost::iostreams::stream<boost::iostreams::array_source> str(buffer, len);
-            std::shared_ptr<consumer_metadata_response> response(new consumer_metadata_response());
+            rpc_result<consumer_metadata_response> response(new consumer_metadata_response());
             internal::decode_i32(str, response->correlation_id);
             internal::decode_i16(str, response->error_code);
 

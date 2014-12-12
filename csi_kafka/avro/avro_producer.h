@@ -29,7 +29,7 @@ namespace csi
             {
             }
 
-            void send_async(int32_t required_acks, int32_t timeout, const std::vector<T>& src, int32_t correlation_id, callback cb)
+            void send_async(int32_t required_acks, int32_t timeout, const std::vector<T>& src, int32_t correlation_id, send_callback cb)
             {
                 std::vector<csi::kafka::basic_message> src2;
                 for (std::vector<T>::const_iterator i = src.begin(); i != src.end(); ++i)
@@ -53,7 +53,7 @@ namespace csi
                 csi::kafka::producer::send_async(required_acks, timeout, src2, correlation_id, cb);
             }
 
-            std::shared_ptr<csi::kafka::produce_response> send_sync(int32_t required_acks, int32_t timeout, const std::vector<T>& src, int32_t correlation_id, callback cb)
+            std::shared_ptr<csi::kafka::produce_response> send_sync(int32_t required_acks, int32_t timeout, const std::vector<T>& src, int32_t correlation_id, send_callback cb)
             {
                 std::vector<csi::kafka::basic_message> src2;
                 for (std::vector<T>::const_iterator i = src.begin(); i != src.end(); ++i)
@@ -88,7 +88,7 @@ namespace csi
             {
             }
 
-            void send_async(int32_t required_acks, int32_t timeout, const std::vector<std::pair<K, V>>& src, int32_t correlation_id, callback cb)
+            void send_async(int32_t required_acks, int32_t timeout, const std::vector<std::pair<K, V>>& src, int32_t correlation_id, send_callback cb)
             {
                 std::vector<csi::kafka::basic_message> src2;
                 for (std::vector<std::pair<K, V>>::const_iterator i = src.begin(); i != src.end(); ++i)

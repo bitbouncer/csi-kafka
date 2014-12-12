@@ -57,9 +57,9 @@ namespace csi
 
         void highlevel_consumer::refresh_metadata_async()
         {
-            _meta_client.get_metadata_async({ _topic_name }, 0, [this](const rpc_error_code& ec, std::shared_ptr<metadata_response> p)
+            _meta_client.get_metadata_async({ _topic_name }, 0, [this](rpc_result<metadata_response> result)
             {
-                _metadata = rpc_result<metadata_response>(ec, p);
+                _metadata = result;
             });
         }
 

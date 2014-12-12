@@ -41,10 +41,10 @@ void send_batch(csi::kafka::avro_producer<sample::syslog>& producer)
 
     size_t items_in_message = x.size();
     uint32_t correlation_id = 42;
-    producer.send_async(1, 1000, x, correlation_id, [items_in_message, &producer](csi::kafka::error_codes error, std::shared_ptr<csi::kafka::produce_response> response)
+    producer.send_async(1, 1000, x, correlation_id, [items_in_message, &producer](csi::kafka::rpc_result<csi::kafka::produce_response> response)
     {
-        if (error)
-            std::cerr << "error " << error << std::endl;
+        if (response)
+            std::cerr << csi::kafka::to_string(response.ec) << std::endl;
         else
             total += items_in_message;
 

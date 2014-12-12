@@ -58,10 +58,10 @@ int main(int argc, char** argv)
 
     for (int i = 0; i != 100; ++i)
     {
-        producer.send_async(1, 1000, x, 0, [](csi::kafka::error_codes error, std::shared_ptr<csi::kafka::produce_response> response)
+        producer.send_async(1, 1000, x, 0, [](csi::kafka::rpc_result<csi::kafka::produce_response> response)
         {
-            if (error)
-                std::cerr << "¨-";
+            if (response)
+                std::cerr << csi::kafka::to_string(response.ec) << std::endl;
             else
                 std::cerr << "+";
         });

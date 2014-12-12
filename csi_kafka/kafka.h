@@ -9,6 +9,7 @@
 #include <stdint.h>
 #include <vector>
 #include <string>
+#include <memory>
 #include "kafka_error_code.h"
 
 namespace csi
@@ -257,53 +258,78 @@ namespace csi
             std::string host_name;
             int32_t     port;
         };
+
+
+        // More message types below
+        //https://cwiki.apache.org/confluence/display/KAFKA/Kafka+0.9+Consumer+Rewrite+Design
+
+        /*
+        JoinGroupRequest
+        {
+        GroupId = > String
+        SessionTimeout = > int32
+        Topics = >[String]
+        ConsumerId = > String
+        PartitionAssignmentStrategy = > String
+        }
+
+        JoinGroupResponse
+        {
+        ErrorCode = > int16
+        GroupGenerationId = > int32
+        ConsumerId = > String
+        PartitionsToOwn = >[TopicName[Partition]]
+        }
+        TopicName = > String
+        Partition = > int32
+
+        HeartbeatRequest
+        {
+        GroupId = > String
+        GroupGenerationId = > int32
+        ConsumerId = > String
+        }
+        HeartbeatResponse
+        {
+        ErrorCode = > int16
+        }
+
+        OffsetCommitRequest(v1)
+
+        OffsetCommitRequest = > ConsumerGroup GroupGenerationId ConsumerId[TopicName[Partition Offset TimeStamp Metadata]]
+        ConsumerGroup = > string
+        GroupGenerationId = > int32
+        ConsumerId = > String
+        TopicName = > string
+        Partition = > int32
+        Offset = > int64
+        TimeStamp = > int64
+        Metadata = > string
+        */
+
+        template <class T>
+        struct rpc_result
+        {
+            inline rpc_result() {}
+            inline rpc_result(const rpc_error_code& e) : ec(e) {}
+            inline rpc_result(T* d) : data(d) {}
+            inline rpc_result(const rpc_error_code& e, std::shared_ptr<T> d) : ec(e), data(d) {}
+
+
+            inline operator bool() const  BOOST_SYSTEM_NOEXCEPT // true if error
+            {
+                return ec || (data.get() == NULL);
+            }
+
+            inline bool operator!() const  BOOST_SYSTEM_NOEXCEPT // true if no error
+            {
+                return !ec && (data.get() != NULL);
+            }
+
+            inline T* operator->() const { return data.get(); }
+
+            rpc_error_code     ec;
+            std::shared_ptr<T> data;
+        };
     };
 };
-
-
-// More message types below
-//https://cwiki.apache.org/confluence/display/KAFKA/Kafka+0.9+Consumer+Rewrite+Design
-
-/*
-JoinGroupRequest
-{
-GroupId = > String
-SessionTimeout = > int32
-Topics = >[String]
-ConsumerId = > String
-PartitionAssignmentStrategy = > String
-}
-
-JoinGroupResponse
-{
-ErrorCode = > int16
-GroupGenerationId = > int32
-ConsumerId = > String
-PartitionsToOwn = >[TopicName[Partition]]
-}
-TopicName = > String
-Partition = > int32
-
-HeartbeatRequest
-{
-GroupId = > String
-GroupGenerationId = > int32
-ConsumerId = > String
-}
-HeartbeatResponse
-{
-ErrorCode = > int16
-}
-
-OffsetCommitRequest(v1)
-
-OffsetCommitRequest = > ConsumerGroup GroupGenerationId ConsumerId[TopicName[Partition Offset TimeStamp Metadata]]
-ConsumerGroup = > string
-GroupGenerationId = > int32
-ConsumerId = > String
-TopicName = > string
-Partition = > int32
-Offset = > int64
-TimeStamp = > int64
-Metadata = > string
-*/
