@@ -252,6 +252,14 @@ namespace csi
             return ostr.tellp();
         }
 
+        /*
+        OffsetCommitRequest => ConsumerGroup [TopicName [Partition Offset Metadata]]
+        ConsumerGroup => string
+        TopicName => string
+        Partition => int32
+        Offset => int64
+        Metadata => string
+        */
         //Offset Commit Request
         size_t encode_simple_offset_commit_request(const std::string& consumer_group, const std::string& topic, int32_t partition_id, int64_t offset, int64_t timestamp, const std::string& metadata, int32_t correlation_id, char* buffer, size_t capacity)
         {
@@ -273,8 +281,12 @@ namespace csi
             }
             return ostr.tellp();
         }
+        
 
-        //Offset Fetch Request
+        /*
+        OffsetFetchRequest => ConsumerGroup [TopicName [Partition]]
+        */
+         //Offset Fetch Request
         size_t encode_simple_offset_fetch_request(const std::string& consumer_group, const std::string& topic, int32_t partition_id, int32_t correlation_id, char* buffer, size_t capacity)
         {
             boost::iostreams::stream<boost::iostreams::array_sink> ostr(buffer, capacity);
@@ -292,5 +304,25 @@ namespace csi
             }
             return ostr.tellp();
         }
+
+        //Offset Fetch Request
+        size_t encode_offset_fetch_all_request(const std::string& consumer_group, int32_t correlation_id, char* buffer, size_t capacity)
+        {
+            boost::iostreams::stream<boost::iostreams::array_sink> ostr(buffer, capacity);
+            {
+                internal::delayed_size message_size(ostr);
+                internal::encode_i16(ostr, csi::kafka::OffsetFetchRequest);
+                internal::encode_i16(ostr, csi::kafka::ApiVersion);
+                internal::encode_i32(ostr, correlation_id);
+                internal::encode_str(ostr, client_id);
+                internal::encode_str(ostr, consumer_group);
+                internal::encode_i32(ostr, 0); // nr of topics
+                //internal::encode_str(ostr, topic);
+                //internal::encode_i32(ostr, 1); // nr of partitions
+                //internal::encode_i32(ostr, partition_id);
+            }
+            return ostr.tellp();
+        }
+
     }
 }

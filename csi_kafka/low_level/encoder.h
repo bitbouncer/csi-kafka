@@ -14,5 +14,7 @@ namespace csi
         size_t encode_consumer_metadata_request(const std::string& consumer_group, int32_t correlation_id, char* buffer, size_t capacity);
         size_t encode_simple_offset_commit_request(const std::string& consumer_group, const std::string& topic, int32_t partition_id, int64_t offset, int64_t timestamp, const std::string& metadata, int32_t correlation_id, char* buffer, size_t capacity);
         size_t encode_simple_offset_fetch_request(const std::string& consumer_group, const std::string& topic, int32_t partition_id, int32_t correlation_id, char* buffer, size_t capacity);
+
+        size_t encode_offset_fetch_all_request(const std::string& consumer_group, int32_t correlation_id, char* buffer, size_t capacity);
     }
 }

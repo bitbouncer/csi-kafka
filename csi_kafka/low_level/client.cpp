@@ -66,6 +66,15 @@ namespace csi
             return handle;
         }
 
+        basic_call_context::handle create_simple_offset_fetch_request(const std::string& consumer_group, int32_t correlation_id)
+        {
+            basic_call_context::handle handle(new basic_call_context());
+            handle->_tx_size = encode_offset_fetch_all_request(consumer_group, correlation_id, (char*)&handle->_tx_buffer[0], basic_call_context::MAX_BUFFER_SIZE);
+            return handle;
+        }
+
+
+
         std::shared_ptr<produce_response>           parse_produce_response(csi::kafka::basic_call_context::handle handle)           { return parse_produce_response((const char*)&handle->_rx_buffer[0], handle->_rx_size); }
         std::shared_ptr<fetch_response>             parse_fetch_response(csi::kafka::basic_call_context::handle handle)             { return parse_fetch_response((const char*)&handle->_rx_buffer[0], handle->_rx_size); }
         std::shared_ptr<offset_response>            parse_offset_response(csi::kafka::basic_call_context::handle handle)            { return parse_offset_response((const char*)&handle->_rx_buffer[0], handle->_rx_size); }
@@ -232,7 +241,7 @@ namespace csi
             }
 
 
-            void client::commit_offset_async(const std::string& consumer_group, const std::string& topic, int32_t partition, int64_t offset, int64_t timestamp, const std::string& metadata, int32_t correlation_id, commit_offset_callback cb)
+            void client::commit_consumer_offset_async(const std::string& consumer_group, const std::string& topic, int32_t partition, int64_t offset, int64_t timestamp, const std::string& metadata, int32_t correlation_id, commit_offset_callback cb)
             {
                 perform_async(csi::kafka::create_simple_offset_commit_request(consumer_group, topic, partition, offset, timestamp, metadata, correlation_id), [this, cb](const boost::system::error_code& ec, csi::kafka::basic_call_context::handle handle)
                 {
@@ -249,13 +258,73 @@ namespace csi
                 });
             }
 
-            rpc_result<offset_commit_response> client::commit_offset_async(const std::string& consumer_group, const std::string& topic, int32_t partition, int64_t offset, int64_t timestamp, const std::string& metadata, int32_t correlation_id)
+            rpc_result<offset_commit_response> client::commit_consumer_offset(const std::string& consumer_group, const std::string& topic, int32_t partition, int64_t offset, int64_t timestamp, const std::string& metadata, int32_t correlation_id)
             {
                 std::promise<rpc_result<offset_commit_response> > p;
                 std::future<rpc_result<offset_commit_response>>  f = p.get_future();
-                commit_offset_async(consumer_group, topic, partition, offset, timestamp, metadata, correlation_id, [&p](const rpc_error_code& ec, std::shared_ptr<offset_commit_response> response)
+                commit_consumer_offset_async(consumer_group, topic, partition, offset, timestamp, metadata, correlation_id, [&p](const rpc_error_code& ec, std::shared_ptr<offset_commit_response> response)
                 {
                     p.set_value(rpc_result<offset_commit_response>(ec, response));
+                });
+                f.wait();
+                return f.get();
+            }
+
+            void client::get_consumer_offset_async(const std::string& consumer_group, const std::string& topic, int32_t partition, int32_t correlation_id, get_consumer_offset_callback cb)
+            {
+                perform_async(csi::kafka::create_simple_offset_fetch_request(consumer_group, topic, partition, correlation_id), [this, cb](const boost::system::error_code& ec, csi::kafka::basic_call_context::handle handle)
+                {
+                    rpc_error_code rec(ec);
+                    if (!rec)
+                    {
+                        auto response = csi::kafka::parse_offset_fetch_response(handle);
+                        cb(rec, response);
+                    }
+                    else
+                    {
+                        cb(rec, std::shared_ptr<offset_fetch_response>(NULL));
+                    }
+                });
+            }
+            
+            rpc_result<offset_fetch_response> client::get_consumer_offset(const std::string& consumer_group, const std::string& topic, int32_t partition, int32_t correlation_id)
+            {
+                std::promise<rpc_result<offset_fetch_response> > p;
+                std::future<rpc_result<offset_fetch_response>>  f = p.get_future();
+                get_consumer_offset_async(consumer_group, topic, partition, correlation_id, [&p](const rpc_error_code& ec, std::shared_ptr<offset_fetch_response> response)
+                {
+                    p.set_value(rpc_result<offset_fetch_response>(ec, response));
+                });
+                f.wait();
+                return f.get();
+            }
+
+
+
+            void client::get_consumer_offset_async(const std::string& consumer_group, int32_t correlation_id, get_consumer_offset_callback cb)
+            {
+                perform_async(csi::kafka::create_simple_offset_fetch_request(consumer_group, correlation_id), [this, cb](const boost::system::error_code& ec, csi::kafka::basic_call_context::handle handle)
+                {
+                    rpc_error_code rec(ec);
+                    if (!rec)
+                    {
+                        auto response = csi::kafka::parse_offset_fetch_response(handle);
+                        cb(rec, response);
+                    }
+                    else
+                    {
+                        cb(rec, std::shared_ptr<offset_fetch_response>(NULL));
+                    }
+                });
+            }
+            
+            rpc_result<offset_fetch_response> client::get_consumer_offset(const std::string& consumer_group, int32_t correlation_id)
+            {
+                std::promise<rpc_result<offset_fetch_response> > p;
+                std::future<rpc_result<offset_fetch_response>>  f = p.get_future();
+                get_consumer_offset_async(consumer_group, correlation_id, [&p](const rpc_error_code& ec, std::shared_ptr<offset_fetch_response> response)
+                {
+                    p.set_value(rpc_result<offset_fetch_response>(ec, response));
                 });
                 f.wait();
                 return f.get();

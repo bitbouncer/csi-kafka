@@ -5,8 +5,8 @@
 
 int main(int argc, char** argv)
 {
-    std::string hostname = (argc >= 2) ? argv[1] : "192.168.0.102";
-    //std::string hostname = (argc >= 2) ? argv[1] : "z8r102-mc12-4-4.sth-tc2.videoplaza.net";
+    //std::string hostname = (argc >= 2) ? argv[1] : "192.168.0.102";
+    std::string hostname = (argc >= 2) ? argv[1] : "z8r102-mc12-4-4.sth-tc2.videoplaza.net";
 
     std::string port = (argc >= 3) ? argv[2] : "9092";
     boost::asio::ip::tcp::resolver::query query(hostname, port);
@@ -18,7 +18,20 @@ int main(int argc, char** argv)
     csi::kafka::low_level::client client(io_service, query);
     boost::system::error_code ec = client.connect();
     auto md  = client.get_metadata({}, 0);
-    auto cmd = client.get_consumer_metadata("saka.test.avro-syslog2", 0);
+
+    auto cco = client.commit_consumer_offset("my_test_group", "saka.test.avro-syslog2", 0, 17, 111111, "gnarf", 17);
+    auto cmd = client.get_consumer_metadata("my_test_group", 42);
+    
+    if (!cmd)
+    {
+        boost::asio::ip::tcp::resolver::query query(cmd->host_name, std::to_string(cmd->port));
+        csi::kafka::low_level::client offset_client(io_service, query);
+        boost::system::error_code ec = offset_client.connect();
+        auto od = offset_client.get_consumer_offset("my_test_group", 42);
+    }
+
+
+    auto of =  client.get_metadata({}, 0);
 
     boost::this_thread::sleep(boost::posix_time::seconds(1000));
 
