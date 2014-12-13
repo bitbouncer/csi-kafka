@@ -22,8 +22,11 @@ namespace csi
 
             _metadata = _meta_client.get_metadata({ _topic_name }, 0);
 
-            if (!_metadata)
+            if (_metadata)
+            {
+                std::cerr << "metatdata for topic " << _topic_name << " failed" << std::endl;
                 return  make_error_code(boost::system::errc::no_message);
+            }
 
             for (std::vector<csi::kafka::broker_data>::const_iterator i = _metadata->brokers.begin(); i != _metadata->brokers.end(); ++i)
             {

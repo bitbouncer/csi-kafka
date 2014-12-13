@@ -24,6 +24,11 @@ namespace csi
             return _client.connect();
         }
 
+        void  producer::close()
+        {
+            _client.close();
+        }
+
         void producer::send_async(int32_t required_acks, int32_t timeout, const std::vector<basic_message>& v, int32_t correlation_id, send_callback cb)
         {
             _client.send_produce_async(_topic_name, _partition_id, required_acks, timeout, v, correlation_id, cb);

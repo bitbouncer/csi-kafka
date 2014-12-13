@@ -107,44 +107,6 @@ namespace csi
             });
         }
 
-        /*
-        void lowlevel_consumer::stream_async(datastream_callback cb)
-        {
-            _client.perform_async(csi::kafka::create_multi_fetch_request(_topic_name, _cursors, 100, 10, 0), [this, cb](const boost::system::error_code& ec, csi::kafka::basic_call_context::handle handle)
-            {
-                if (ec)
-                {
-                    csi::kafka::fetch_response::topic_data::partition_data dummy;
-                    cb(ec, csi::kafka::NoError, dummy);
-                    return;
-                }
-
-                auto response = csi::kafka::parse_fetch_response(handle);
-                for (std::vector<csi::kafka::fetch_response::topic_data>::const_iterator i = response->topics.begin(); i != response->topics.end(); ++i)
-                {
-                    // this should always be true.
-                    if (i->topic_name == _topic_name)
-                    {
-                        for (std::vector<csi::kafka::fetch_response::topic_data::partition_data>::const_iterator j = i->partitions.begin(); j != i->partitions.end(); ++j)
-                        {
-                            for (std::vector<partition_cursor>::iterator k = _cursors.begin(); k != _cursors.end(); ++k)
-                            {
-                                if (j->partition_id == k->_partition_id)  // a partition that have been closed will not exist here so it will not be added again in the next read loop 
-                                {
-                                    if (j->messages.size())
-                                        k->_next_offset = j->messages[j->messages.size() - 1].offset + 1;
-                                    cb(ec, ((csi::kafka::error_codes) j->error_code), *j); // possibly partition & ack j->messages[j->messages.size() - 1].offset here or send it to application
-                                }
-                            }
-                        }
-                    }
-                }
-                stream_async(cb);
-            });
-        }
-        */
-
-
         void lowlevel_consumer::get_metadata_async(get_metadata_callback cb)
         {
             _client.get_metadata_async({ _topic_name }, 0, cb);

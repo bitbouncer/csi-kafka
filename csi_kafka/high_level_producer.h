@@ -12,11 +12,16 @@ namespace csi
             highlevel_producer(boost::asio::io_service& io_service, const boost::asio::ip::tcp::resolver::query& query, const std::string& topic);
             boost::system::error_code connect();
             void refresh_metadata_async();
+            void close(); 
         private:
             boost::asio::io_service&             _ios;
             csi::kafka::low_level::client        _meta_client;
             std::string                          _topic_name;
-            std::map<int, producer*>             _producers;
+            
+            std::map<int, producer*>             _producers; // partition -> producer NOT broker -> producer
+            std::map<int, broker_data>           _brokers;
+            std::map<int, csi::kafka::metadata_response::topic_data::partition_data> _partitions; // partition->partition_dat
+
             rpc_result<metadata_response>        _metadata;
         };
     };
