@@ -96,7 +96,7 @@ namespace csi
 
         struct partition_cursor
         {
-            inline partition_cursor(int32_t p, int64_t of) : _partition_id(p), _next_offset(of) {}
+            inline partition_cursor(int32_t partition, int64_t offset) : _partition_id(partition), _next_offset(offset) {}
             int32_t _partition_id;
             int64_t _next_offset;
         };

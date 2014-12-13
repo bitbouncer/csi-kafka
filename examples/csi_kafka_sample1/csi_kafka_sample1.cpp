@@ -18,72 +18,33 @@ int main(int argc, char** argv)
     boost::thread bt(boost::bind(&boost::asio::io_service::run, &io_service));
 
     csi::kafka::low_level::client client(io_service, query);
-    
+
     boost::system::error_code error = client.connect();
 
-    client.perform_sync(csi::kafka::create_metadata_request({}, 0), [](const boost::system::error_code& ec, csi::kafka::basic_call_context::handle handle)
-    {
-        if (!ec)
-        {
-            auto response = csi::kafka::parse_metadata_response(handle);
-        }
-        std::cerr << "callback error_code=" << ec << std::endl;
-    });
+    auto res1 = client.get_metadata({}, 0);
+    if (res1)
+        std::cerr << csi::kafka::to_string(res1.ec) << std::endl;
 
-    boost::this_thread::sleep(boost::posix_time::seconds(1));
+    auto res2 = client.get_offset("test", 0, csi::kafka::earliest_available_offset, 1000, 0);
+    if (res2)
+        std::cerr << csi::kafka::to_string(res2.ec) << std::endl;
 
-    client.perform_async(csi::kafka::create_simple_offset_request("test", 0, csi::kafka::earliest_available_offset, 1000, 0), [](const boost::system::error_code& ec, csi::kafka::basic_call_context::handle handle)
-    {
-        if (!ec)
-        {
-            auto response = csi::kafka::parse_offset_response(handle);
-        }
-        std::cerr << "callback error_code=" << ec << std::endl;
-    });
+    auto res3 = client.get_consumer_offset("my_test_consumer", 0);
+    if (res3)
+        std::cerr << csi::kafka::to_string(res3.ec) << std::endl;
 
-    boost::this_thread::sleep(boost::posix_time::seconds(1));
+    auto res4 = client.commit_consumer_offset("my_test_consumer", "test", 0, 0, 0, "my metadata", 0);
+    if (res4)
+        std::cerr << csi::kafka::to_string(res4.ec) << std::endl;
 
+    auto res5 = client.get_consumer_offset("my_test_consumer", "test", 2, 0);
+    if (res5)
+        std::cerr << csi::kafka::to_string(res5.ec) << std::endl;
 
-    client.perform_async(csi::kafka::create_consumer_metadata_request("my_test_consumer", 0), [](const boost::system::error_code& ec, csi::kafka::basic_call_context::handle handle)
-    {
-        if (!ec)
-        {
-            auto response = csi::kafka::parse_consumer_metadata_response(handle);
-            std::cerr << "kafka error code " << response->error_code << std::endl;
-        }
-        std::cerr << "callback error_code=" << ec << std::endl;
-    });
-
-    boost::this_thread::sleep(boost::posix_time::seconds(1));
-
-    client.perform_async(csi::kafka::create_simple_offset_commit_request("my_test_consumer", "test", 0, 0, 0, "my metadata", 0), [](const boost::system::error_code& ec, csi::kafka::basic_call_context::handle handle)
-    {
-        if (!ec)
-        {
-            auto response = csi::kafka::parse_offset_commit_response(handle);
-        }
-        std::cerr << "callback error_code=" << ec << std::endl;
-    });
-
-    client.perform_async(csi::kafka::create_simple_offset_fetch_request("my_test_consumer", "test", 2, 2), [](const boost::system::error_code& ec, csi::kafka::basic_call_context::handle handle)
-    {
-        if (!ec)
-        {
-            auto response = csi::kafka::parse_offset_fetch_response(handle);
-        }
-        std::cerr << "callback error_code=" << ec << std::endl;
-    });
-
-    client.perform_async(csi::kafka::create_simple_fetch_request("test", 0, 0, 1000, 1000, 0), [](const boost::system::error_code& ec, csi::kafka::basic_call_context::handle handle)
-    {
-        if (!ec)
-        {
-            auto response = csi::kafka::parse_fetch_response(handle);
-        }
-        std::cerr << "callback error_code=" << ec << std::endl;
-    });
-
-    boost::this_thread::sleep(boost::posix_time::seconds(1));
+    csi::kafka::partition_cursor cursor(0, csi::kafka::earliest_available_offset);
+    auto res6 = client.get_data("test", { cursor }, 1000, 1000, 0);
+    if (res6)
+        std::cerr << csi::kafka::to_string(res6.ec) << std::endl;
 
     std::vector<csi::kafka::basic_message> x;
     for (int i = 0; i != 1; ++i)
@@ -91,15 +52,11 @@ int main(int argc, char** argv)
         x.push_back(csi::kafka::basic_message("key1", "So long and thanks for all the fish"));
     }
 
-    for (int i = 0; i != 0; ++i)
-    {
-        client.perform_async(csi::kafka::create_produce_request("test", 0, 0, 1000, x, 0), [](const boost::system::error_code& ec, csi::kafka::basic_call_context::handle handle)
-        {
-            std::cerr << "callback error_code=" << ec << std::endl;
-        });
-    }
+    auto res7 = client.send_produce("test", 0, 0, 1000, x, 0);
+    if (res7)
+        std::cerr << csi::kafka::to_string(res7.ec) << std::endl;
 
-    boost::this_thread::sleep(boost::posix_time::seconds(1000));
+    client.close();
 
     work.reset();
     io_service.stop();

@@ -26,36 +26,42 @@ namespace csi
 
         void producer::send_async(int32_t required_acks, int32_t timeout, const std::vector<basic_message>& v, int32_t correlation_id, send_callback cb)
         {
-            _client.perform_async(csi::kafka::create_produce_request(_topic_name, _partition_id, required_acks, timeout, v, correlation_id), [this, cb, correlation_id](const boost::system::error_code& ec, csi::kafka::basic_call_context::handle handle)
-            {
-                if (ec)
-                    return cb(rpc_result<produce_response>(ec));
-                rpc_result<produce_response> result = parse_produce_response(handle);
-
-                assert(correlation_id == result->correlation_id);
-                //for now only one topic / many partitions
-                assert(result->topics.size() == 1);
-                for (std::vector<produce_response::topic_data>::const_iterator i = result->topics.begin(); i != result->topics.end(); ++i)
-                {
-                    if (i->topic_name != _topic_name)
-                    {
-                        std::cerr << "unexpected topic name " << i->topic_name << std::endl;
-                        break;
-                    }
-
-                    // for now our call sends only one partition - so this will be a vector of 1
-                    assert(i->partitions.size() == 1);
-                    for (std::vector<produce_response::topic_data::partition_data>::const_iterator j = i->partitions.begin(); j != i->partitions.end(); ++j)
-                    {
-                        if (j->error_code())
-                        {
-                            std::cerr << "produce_response: topic:" << i->topic_name << ", partition:" << j->partition_id << ", error:"  << csi::kafka::to_string(j->error_code()) << std::endl;
-                            result.ec.ec2 = j->error_code();
-                        }
-                    }
-                }
-                return cb(result);
-            });
+            _client.send_produce_async(_topic_name, _partition_id, required_acks, timeout, v, correlation_id, cb);
         }
+
+
+        //void producer::send_async(int32_t required_acks, int32_t timeout, const std::vector<basic_message>& v, int32_t correlation_id, send_callback cb)
+        //{
+        //    _client.send_produce_async(_topic_name, _partition_id, required_acks, timeout, v, correlation_id, [this, cb, correlation_id](rpc_result<produce_response> response)
+        //    {
+        //        if (ec)
+        //            return cb(rpc_result<produce_response>(ec));
+        //        rpc_result<produce_response> result = parse_produce_response(handle);
+
+        //        assert(correlation_id == result->correlation_id);
+        //        //for now only one topic / many partitions
+        //        assert(result->topics.size() == 1);
+        //        for (std::vector<produce_response::topic_data>::const_iterator i = result->topics.begin(); i != result->topics.end(); ++i)
+        //        {
+        //            if (i->topic_name != _topic_name)
+        //            {
+        //                std::cerr << "unexpected topic name " << i->topic_name << std::endl;
+        //                break;
+        //            }
+
+        //            // for now our call sends only one partition - so this will be a vector of 1
+        //            assert(i->partitions.size() == 1);
+        //            for (std::vector<produce_response::topic_data::partition_data>::const_iterator j = i->partitions.begin(); j != i->partitions.end(); ++j)
+        //            {
+        //                if (j->error_code())
+        //                {
+        //                    std::cerr << "produce_response: topic:" << i->topic_name << ", partition:" << j->partition_id << ", error:"  << csi::kafka::to_string(j->error_code()) << std::endl;
+        //                    result.ec.ec2 = j->error_code();
+        //                }
+        //            }
+        //        }
+        //        return cb(result);
+        //    });
+        //}
     } // kafka
 }; // csi

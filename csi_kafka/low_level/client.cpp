@@ -178,6 +178,54 @@ namespace csi
                 return f.get();
             }
 
+            void client::send_produce_async(const std::string& topic, int32_t partition_id, int required_acks, int timeout, const std::vector<basic_message>& v, int32_t correlation_id, send_produce_callback cb)
+            {
+                perform_async(csi::kafka::create_produce_request(topic, partition_id, required_acks, timeout, v, correlation_id), [cb](const boost::system::error_code& ec, csi::kafka::basic_call_context::handle handle)
+                {
+                    if (ec)
+                        cb(rpc_result<produce_response>(ec));
+                    else
+                        cb(csi::kafka::parse_produce_response(handle));
+                });
+            }
+            
+            rpc_result<produce_response>  client::send_produce(const std::string& topic, int32_t partition_id, int required_acks, int timeout, const std::vector<basic_message>& v, int32_t correlation_id)
+            {
+                std::promise<rpc_result<produce_response>> p;
+                std::future<rpc_result<produce_response>>  f = p.get_future();
+                send_produce_async(topic, partition_id, required_acks, timeout, v, correlation_id, [&p](rpc_result<produce_response> response)
+                {
+                    p.set_value(response);
+                });
+                f.wait();
+                return f.get();
+            }
+
+            void client::get_data_async(const std::string& topic, const std::vector<partition_cursor>& partitions, uint32_t max_wait_time, size_t min_bytes, int32_t correlation_id, get_data_callback cb)
+            {
+                perform_async(csi::kafka::create_multi_fetch_request(topic, partitions, max_wait_time, min_bytes, correlation_id), [cb](const boost::system::error_code& ec, csi::kafka::basic_call_context::handle handle)
+                {
+                    if (ec)
+                        cb(rpc_result<fetch_response>(ec));
+                    else
+                        cb(csi::kafka::parse_fetch_response(handle));
+                });
+            }
+
+            rpc_result<fetch_response> client::get_data(const std::string& topic, const std::vector<partition_cursor>& partitions, uint32_t max_wait_time, size_t min_bytes, int32_t correlation_id)
+            {
+                std::promise<rpc_result<fetch_response>> p;
+                std::future<rpc_result<fetch_response>>  f = p.get_future();
+                get_data_async(topic, partitions, max_wait_time, min_bytes, correlation_id, [&p](rpc_result<fetch_response> response)
+                {
+                    p.set_value(response);
+                });
+                f.wait();
+                return f.get();
+            }
+
+
+
             void client::get_consumer_metadata_async(const std::string& consumer_group, int32_t correlation_id, get_consumer_metadata_callback cb)
             {
                 perform_async(csi::kafka::create_consumer_metadata_request(consumer_group, correlation_id), [cb](const boost::system::error_code& ec, csi::kafka::basic_call_context::handle handle)

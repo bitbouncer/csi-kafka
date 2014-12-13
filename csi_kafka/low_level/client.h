@@ -33,24 +33,27 @@ namespace csi
         };
 
 
-        basic_call_context::handle create_produce_request(const std::string& topic, int32_t partition_id, int required_acks, int timeout, const std::vector<basic_message>& v, int32_t correlation_id);
         basic_call_context::handle create_metadata_request(const std::vector<std::string>& topics, int32_t correlation_id);
+        basic_call_context::handle create_produce_request(const std::string& topic, int32_t partition_id, int required_acks, int timeout, const std::vector<basic_message>& v, int32_t correlation_id);
+        basic_call_context::handle create_simple_offset_request(const std::string& topic, int32_t partition_id, int64_t time, int32_t max_number_of_offsets, int32_t correlation_id);
         basic_call_context::handle create_simple_fetch_request(const std::string& topic, int32_t partition_id, int64_t fetch_offset, uint32_t max_wait_time, size_t min_bytes, int32_t correlation_id);
         basic_call_context::handle create_multi_fetch_request(const std::string& topic, const std::vector<partition_cursor>&, uint32_t max_wait_time, size_t min_bytes, int32_t correlation_id);
-        basic_call_context::handle create_simple_offset_request(const std::string& topic, int32_t partition_id, int64_t time, int32_t max_number_of_offsets, int32_t correlation_id);
+
         //CONSUMER OFFSET MANAGEMENT
         basic_call_context::handle create_consumer_metadata_request(const std::string& consumer_group, int32_t correlation_id);
         basic_call_context::handle create_simple_offset_commit_request(const std::string& consumer_group, const std::string& topic, int32_t partition_id, int64_t offset, int64_t timestamp, const std::string& metadata, int32_t correlation_id);
         basic_call_context::handle create_simple_offset_fetch_request(const std::string& consumer_group, const std::string& topic, int32_t partition_id, int32_t correlation_id);
         basic_call_context::handle create_simple_offset_fetch_request(const std::string& consumer_group, int32_t correlation_id);
 
-        rpc_result<produce_response>           parse_produce_response(csi::kafka::basic_call_context::handle handle);
-        rpc_result<fetch_response>             parse_fetch_response(csi::kafka::basic_call_context::handle handle);
-        rpc_result<offset_response>            parse_offset_response(csi::kafka::basic_call_context::handle handle);
         rpc_result<metadata_response>          parse_metadata_response(csi::kafka::basic_call_context::handle handle);
+        rpc_result<produce_response>           parse_produce_response(csi::kafka::basic_call_context::handle handle);
+        rpc_result<offset_response>            parse_offset_response(csi::kafka::basic_call_context::handle handle);
+        rpc_result<fetch_response>             parse_fetch_response(csi::kafka::basic_call_context::handle handle);
+
+        rpc_result<consumer_metadata_response> parse_consumer_metadata_response(csi::kafka::basic_call_context::handle handle);
         rpc_result<offset_commit_response>     parse_offset_commit_response(csi::kafka::basic_call_context::handle handle);
         rpc_result<offset_fetch_response>      parse_offset_fetch_response(csi::kafka::basic_call_context::handle handle);
-        rpc_result<consumer_metadata_response> parse_consumer_metadata_response(csi::kafka::basic_call_context::handle handle);
+
 
         namespace low_level
         {
@@ -59,30 +62,38 @@ namespace csi
             public:
                 typedef boost::function < void(const boost::system::error_code&)>       completetion_handler;
                 typedef boost::function <void(rpc_result<metadata_response>)>           get_metadata_callback;
+                typedef boost::function <void(rpc_result<produce_response>)>            send_produce_callback;
+                
                 typedef boost::function <void(rpc_result<offset_response>)>             get_offset_callback;
+                typedef boost::function <void(rpc_result<fetch_response>)>              get_data_callback;
+
                 typedef boost::function <void(rpc_result<consumer_metadata_response>)>  get_consumer_metadata_callback;
                 typedef boost::function <void(rpc_result<offset_commit_response>)>      commit_offset_callback;
                 typedef boost::function <void(rpc_result<offset_fetch_response>)>       get_consumer_offset_callback;
-                
 
                 client(boost::asio::io_service& io_service, const boost::asio::ip::tcp::resolver::query& query);
                 ~client();
 
+                void                                           connect_async(completetion_handler handler);
+                boost::system::error_code                      connect();
 
-                void connect_async(completetion_handler handler);
-                boost::system::error_code connect();
-
-                bool close();
-                bool is_connected() const;
+                bool                                           close();
+                bool                                           is_connected() const;
 
                 void                                            get_metadata_async(const std::vector<std::string>& topics, int32_t correlation_id, get_metadata_callback);
                 rpc_result<metadata_response>                   get_metadata(const std::vector<std::string>& topics, int32_t correlation_id);
 
-                void                                            get_consumer_metadata_async(const std::string& consumer_group, int32_t correlation_id, get_consumer_metadata_callback);
-                rpc_result<consumer_metadata_response>          get_consumer_metadata(const std::string& consumer_group, int32_t correlation_id);
+                void                                            send_produce_async(const std::string& topic, int32_t partition_id, int required_acks, int timeout, const std::vector<basic_message>& v, int32_t correlation_id, send_produce_callback);
+                rpc_result<produce_response>                    send_produce(const std::string& topic, int32_t partition_id, int required_acks, int timeout, const std::vector<basic_message>& v, int32_t correlation_id);
 
                 void                                            get_offset_async(const std::string& topic, int32_t partition, int64_t start_time, int32_t max_number_of_offsets, int32_t correlation_id, get_offset_callback);
                 rpc_result<offset_response>                     get_offset(const std::string& topic, int32_t partition, int64_t start_time, int32_t max_number_of_offsets, int32_t correlation_id);
+
+                void                                            get_data_async(const std::string& topic, const std::vector<partition_cursor>&, uint32_t max_wait_time, size_t min_bytes, int32_t correlation_id, get_data_callback);
+                rpc_result<fetch_response>                      get_data(const std::string& topic, const std::vector<partition_cursor>&, uint32_t max_wait_time, size_t min_bytes, int32_t correlation_id);
+
+                void                                            get_consumer_metadata_async(const std::string& consumer_group, int32_t correlation_id, get_consumer_metadata_callback);
+                rpc_result<consumer_metadata_response>          get_consumer_metadata(const std::string& consumer_group, int32_t correlation_id);
 
                 void                                            commit_consumer_offset_async(const std::string& consumer_group, const std::string& topic, int32_t partition_id, int64_t offset, int64_t timestamp, const std::string& metadata, int32_t correlation_id, commit_offset_callback);
                 rpc_result<offset_commit_response>              commit_consumer_offset(const std::string& consumer_group, const std::string& topic, int32_t partition, int64_t offset, int64_t timestamp, const std::string& metadata, int32_t correlation_id);
@@ -94,10 +105,10 @@ namespace csi
                 rpc_result<offset_fetch_response>               get_consumer_offset(const std::string& consumer_group, int32_t correlation_id);
 
 
+            protected:
                 void                                            perform_async(basic_call_context::handle, basic_call_context::callback cb);
                 csi::kafka::basic_call_context::handle          perform_sync(basic_call_context::handle, basic_call_context::callback cb);
 
-            protected:
                 // asio callbacks
                 void handle_timer(const boost::system::error_code& ec);
 
