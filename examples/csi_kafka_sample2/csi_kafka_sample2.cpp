@@ -49,10 +49,10 @@ int main(int argc, char** argv)
 
     boost::system::error_code ec3 = producer.connect();
 
-    std::vector<csi::kafka::basic_message> x;
+    std::vector<std::shared_ptr<csi::kafka::basic_message>> x;
     for (int i = 0; i != 1; ++i)
     {
-        x.push_back(csi::kafka::basic_message("key1", "So long and thanks for all the fish"));
+        x.push_back(std::shared_ptr<csi::kafka::basic_message>(new csi::kafka::basic_message("key1", "So long and thanks for all the fish")));
     }
 
 

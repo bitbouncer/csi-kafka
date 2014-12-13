@@ -17,7 +17,7 @@ namespace csi
         {
             _meta_client.close(); 
 
-            for (std::map<int, producer*>::iterator i = _producers.begin(); i != _producers.end(); ++i)
+            for (std::map<int, async_producer*>::iterator i = _producers.begin(); i != _producers.end(); ++i)
             {
                 int broker_id = i->first;
                 int partition = i->second->partition();
@@ -66,7 +66,7 @@ for (std::vector<csi::kafka::broker_data>::const_iterator i = _metadata->brokers
                         _partitions[j->partition_id] = *j;
 
                         boost::asio::ip::tcp::resolver::query query(item->second.host_name, std::to_string(item->second.port));
-                        _producers.insert(std::make_pair(j->partition_id, new producer(_ios, query, _topic_name, j->partition_id)));
+                        _producers.insert(std::make_pair(j->partition_id, new async_producer(_ios, query, _topic_name, j->partition_id)));
                         std::cerr << "partition " << i->topic_name << ":" << j->partition_id << " -> " << j->leader << std::endl;
                     }
                     else
@@ -76,7 +76,7 @@ for (std::vector<csi::kafka::broker_data>::const_iterator i = _metadata->brokers
                 };
             };
 
-            for (std::map<int, producer*>::iterator i = _producers.begin(); i != _producers.end(); ++i)
+            for (std::map<int, async_producer*>::iterator i = _producers.begin(); i != _producers.end(); ++i)
             {
                 int partition = i->first;
                 int leader = _partitions[partition].leader;

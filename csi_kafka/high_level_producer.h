@@ -18,7 +18,7 @@ namespace csi
             csi::kafka::low_level::client        _meta_client;
             std::string                          _topic_name;
             
-            std::map<int, producer*>             _producers; // partition -> producer NOT broker -> producer
+            std::map<int, async_producer*>       _producers; // partition -> producer NOT broker -> producer
             std::map<int, broker_data>           _brokers;
             std::map<int, csi::kafka::metadata_response::topic_data::partition_data> _partitions; // partition->partition_dat
 

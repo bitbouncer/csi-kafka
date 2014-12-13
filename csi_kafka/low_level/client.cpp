@@ -9,7 +9,7 @@ namespace csi
 {
     namespace kafka
     {
-        basic_call_context::handle create_produce_request(const std::string& topic, int partition, int required_acks, int timeout, const std::vector<basic_message>& v, int32_t correlation_id)
+        basic_call_context::handle create_produce_request(const std::string& topic, int partition, int required_acks, int timeout, const std::vector<std::shared_ptr<basic_message>>& v, int32_t correlation_id)
         {
             basic_call_context::handle handle(new basic_call_context());
             handle->_expecting_reply = (required_acks > 0);
@@ -178,7 +178,7 @@ namespace csi
                 return f.get();
             }
 
-            void client::send_produce_async(const std::string& topic, int32_t partition_id, int required_acks, int timeout, const std::vector<basic_message>& v, int32_t correlation_id, send_produce_callback cb)
+            void client::send_produce_async(const std::string& topic, int32_t partition_id, int required_acks, int timeout, const std::vector<std::shared_ptr<basic_message>>& v, int32_t correlation_id, send_produce_callback cb)
             {
                 perform_async(csi::kafka::create_produce_request(topic, partition_id, required_acks, timeout, v, correlation_id), [cb](const boost::system::error_code& ec, csi::kafka::basic_call_context::handle handle)
                 {
@@ -189,7 +189,7 @@ namespace csi
                 });
             }
             
-            rpc_result<produce_response>  client::send_produce(const std::string& topic, int32_t partition_id, int required_acks, int timeout, const std::vector<basic_message>& v, int32_t correlation_id)
+            rpc_result<produce_response> client::send_produce(const std::string& topic, int32_t partition_id, int required_acks, int timeout, const std::vector<std::shared_ptr<basic_message>>& v, int32_t correlation_id)
             {
                 std::promise<rpc_result<produce_response>> p;
                 std::future<rpc_result<produce_response>>  f = p.get_future();

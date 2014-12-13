@@ -89,6 +89,8 @@ namespace csi
 
             basic_message() : offset(0) {}
             basic_message(const std::string& akey, const std::string& aval) : offset(0), key(akey.data(), akey.size()), value(aval.data(), aval.size()) {}
+            size_t size() const { return key.size() + value.size() + 26; } // estimated size for streaming TODO check if this is correct
+
             int64_t                 offset;
             payload_type            key;
             payload_type            value;

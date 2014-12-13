@@ -101,7 +101,7 @@ namespace csi
         }
 
 
-        size_t encode_produce_request(const std::string& topic, int partition, int required_acks, int timeout, const std::vector<basic_message>& v, int32_t correlation_id, char* buffer, size_t capacity)
+        size_t encode_produce_request(const std::string& topic, int partition, int required_acks, int timeout, const std::vector<std::shared_ptr<basic_message>>& v, int32_t correlation_id, char* buffer, size_t capacity)
         {
             boost::iostreams::stream<boost::iostreams::array_sink> ostr(buffer, capacity);
             {
@@ -124,15 +124,15 @@ namespace csi
                             internal::delayed_size message_set_size(ostr);
 
                             // N.B., MessageSets are not preceded by an int32 like other array elements in the protocol.
-                            for (std::vector<basic_message>::const_iterator i = v.begin(); i != v.end(); ++i)
+                            for (std::vector<std::shared_ptr<basic_message>>::const_iterator i = v.begin(); i != v.end(); ++i)
                             {
                                 internal::encode_i64(ostr, 0); // offset (not known)
                                 internal::delayed_size message_set_size(ostr);
                                 internal::delayed_crc  message_set_crc(ostr, buffer);
                                 internal::encode_i08(ostr, 0); // magic byte
                                 internal::encode_i08(ostr, 0); // attributes
-                                internal::encode_arr(ostr, i->key);
-                                internal::encode_arr(ostr, i->value);
+                                internal::encode_arr(ostr, (*i)->key);
+                                internal::encode_arr(ostr, (*i)->value);
                             }
                         } // here is the message set size written
                     } // end of partitions

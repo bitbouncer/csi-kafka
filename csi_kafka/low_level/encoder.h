@@ -6,7 +6,7 @@ namespace csi
 {
     namespace kafka
     {
-        size_t encode_produce_request(const std::string& topic, int partition_id, int required_acks, int timeout, const std::vector<basic_message>& v, int32_t correlation_id, char* buffer, size_t capacity);
+        size_t encode_produce_request(const std::string& topic, int partition_id, int required_acks, int timeout, const std::vector<std::shared_ptr<basic_message>>& v, int32_t correlation_id, char* buffer, size_t capacity);
         size_t encode_metadata_request(const std::vector<std::string>& topics, int32_t correlation_id, char* buffer, size_t capacity);
         size_t encode_simple_fetch_request(const std::string& topic, int32_t partition_id, int64_t fetch_offset, uint32_t max_wait_time, size_t min_bytes, int32_t correlation_id, char* buffer, size_t capacity);
         size_t encode_multi_fetch_request(const std::string& topic, const std::vector<partition_cursor>& cursors, uint32_t max_wait_time, size_t min_bytes, int32_t correlation_id, char* buffer, size_t capacity);

@@ -34,7 +34,7 @@ namespace csi
 
 
         basic_call_context::handle create_metadata_request(const std::vector<std::string>& topics, int32_t correlation_id);
-        basic_call_context::handle create_produce_request(const std::string& topic, int32_t partition_id, int required_acks, int timeout, const std::vector<basic_message>& v, int32_t correlation_id);
+        basic_call_context::handle create_produce_request(const std::string& topic, int32_t partition_id, int required_acks, int timeout, const std::vector<std::shared_ptr<basic_message>>& v, int32_t correlation_id);
         basic_call_context::handle create_simple_offset_request(const std::string& topic, int32_t partition_id, int64_t time, int32_t max_number_of_offsets, int32_t correlation_id);
         basic_call_context::handle create_simple_fetch_request(const std::string& topic, int32_t partition_id, int64_t fetch_offset, uint32_t max_wait_time, size_t min_bytes, int32_t correlation_id);
         basic_call_context::handle create_multi_fetch_request(const std::string& topic, const std::vector<partition_cursor>&, uint32_t max_wait_time, size_t min_bytes, int32_t correlation_id);
@@ -83,8 +83,8 @@ namespace csi
                 void                                            get_metadata_async(const std::vector<std::string>& topics, int32_t correlation_id, get_metadata_callback);
                 rpc_result<metadata_response>                   get_metadata(const std::vector<std::string>& topics, int32_t correlation_id);
 
-                void                                            send_produce_async(const std::string& topic, int32_t partition_id, int required_acks, int timeout, const std::vector<basic_message>& v, int32_t correlation_id, send_produce_callback);
-                rpc_result<produce_response>                    send_produce(const std::string& topic, int32_t partition_id, int required_acks, int timeout, const std::vector<basic_message>& v, int32_t correlation_id);
+                void                                            send_produce_async(const std::string& topic, int32_t partition_id, int required_acks, int timeout, const std::vector<std::shared_ptr<basic_message>>& v, int32_t correlation_id, send_produce_callback);
+                rpc_result<produce_response>                    send_produce(const std::string& topic, int32_t partition_id, int required_acks, int timeout, const std::vector<std::shared_ptr<basic_message>>& v, int32_t correlation_id);
 
                 void                                            get_offset_async(const std::string& topic, int32_t partition, int64_t start_time, int32_t max_number_of_offsets, int32_t correlation_id, get_offset_callback);
                 rpc_result<offset_response>                     get_offset(const std::string& topic, int32_t partition, int64_t start_time, int32_t max_number_of_offsets, int32_t correlation_id);

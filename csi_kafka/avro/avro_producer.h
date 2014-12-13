@@ -31,7 +31,7 @@ namespace csi
 
             void send_async(int32_t required_acks, int32_t timeout, const std::vector<T>& src, int32_t correlation_id, send_callback cb)
             {
-                std::vector<csi::kafka::basic_message> src2;
+                std::vector<std::shared_ptr<csi::kafka::basic_message>> src2;
                 for (std::vector<T>::const_iterator i = src.begin(); i != src.end(); ++i)
                 {
                     auto ostr = avro::memoryOutputStream();
@@ -41,13 +41,13 @@ namespace csi
                     auto in = avro::memoryInputStream(*ostr);
                     avro::StreamReader stream_reader(*in);
 
-                    csi::kafka::basic_message msg;
+                    std::shared_ptr<csi::kafka::basic_message> msg(new csi::kafka::basic_message());
                     
-                    msg.value.set_null(false);
-                    msg.value.reserve(sz + 16); // add 128 bit hash before - 0's for now
-                    //msg.value.insert(msg.value.end(), 0, 16);
+                    msg->value.set_null(false);
+                    msg->value.reserve(sz + 16); // add 128 bit hash before - 0's for now
+                    //msg->value.insert(msg.value.end(), 0, 16);
                     for (int j = 0; j != sz; ++j)
-                        msg.value.push_back(stream_reader.read());
+                        msg->value.push_back(stream_reader.read());
                     src2.push_back(msg);
                 }
                 csi::kafka::producer::send_async(required_acks, timeout, src2, correlation_id, cb);
@@ -90,10 +90,10 @@ namespace csi
 
             void send_async(int32_t required_acks, int32_t timeout, const std::vector<std::pair<K, V>>& src, int32_t correlation_id, send_callback cb)
             {
-                std::vector<csi::kafka::basic_message> src2;
+                std::vector<std::shared_ptr<csi::kafka::basic_message>> src2;
                 for (std::vector<std::pair<K, V>>::const_iterator i = src.begin(); i != src.end(); ++i)
                 {
-                    csi::kafka::basic_message msg;
+                    std::shared_ptr<csi::kafka::basic_message> msg(new csi::kafka::basic_message());
 
                     //encode key
                     {
@@ -103,10 +103,10 @@ namespace csi
 
                         auto in = avro::memoryInputStream(*ostr);
                         avro::StreamReader stream_reader(*in);
-                        msg.key.set_null(false);
-                        msg.key.reserve(sz);
+                        msg->key.set_null(false);
+                        msg->key.reserve(sz);
                         for (int j = 0; j != sz; ++j)
-                            msg.key.push_back(stream_reader.read());
+                            msg->key.push_back(stream_reader.read());
                     }
 
                     //encode value
@@ -117,10 +117,10 @@ namespace csi
 
                         auto in = avro::memoryInputStream(*ostr);
                         avro::StreamReader stream_reader(*in);
-                        msg.value.set_null(false);
-                        msg.value.reserve(sz);
+                        msg->value.set_null(false);
+                        msg->value.reserve(sz);
                         for (int j = 0; j != sz; ++j)
-                            msg.value.push_back(stream_reader.read());
+                            msg->value.push_back(stream_reader.read());
                     }
                     src2.push_back(msg);
                 }
