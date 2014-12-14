@@ -51,6 +51,10 @@ namespace csi
             inline bool is_connected() const    { return _client.is_connected(); }
             int32_t partition() const           { return _partition_id; }
             const std::string& topic() const    { return _topic_name; }
+
+            size_t items_in_queue() const { return _tx_queue.size(); } // no lock but should not matter
+            size_t bytes_in_queue() const { return _tx_queue_byte_size; } // no lock but should not matter
+
         protected:
             void _try_send(); // gets posted from enqueue so actual call comes from correct thread
 
@@ -64,7 +68,7 @@ namespace csi
             //TX queue
             csi::kafka::spinlock                       _spinlock;
             std::deque<std::shared_ptr<basic_message>> _tx_queue;
-            size_t                                     _tx_queue_size;
+            size_t                                     _tx_queue_byte_size;
             bool                                       _tx_in_progress;
             int32_t                                    _required_acks;
             int32_t                                    _tx_timeout;

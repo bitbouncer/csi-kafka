@@ -21,17 +21,16 @@ int main(int argc, char** argv)
 
     boost::system::error_code error = producer.connect();
     
-    std::vector<csi::kafka::basic_message> x;
-    for (int i = 0; i != 1; ++i)
-    {
-        x.push_back(csi::kafka::basic_message("key1", "So long and thanks for all the fish"));
-    }
 
-    /*
-    auto res7 = producer.send_produce("test", 0, 0, 1000, x, 0);
-    if (res7)
-        std::cerr << csi::kafka::to_string(res7.ec) << std::endl;
-    */
+    uint32_t key = 0;
+    while (true)
+    {
+        for (int i = 0; i != 10000; ++i, ++key)
+        {
+            producer.enqueue(std::shared_ptr<csi::kafka::basic_message>(new csi::kafka::basic_message(std::to_string(key), "So long and thanks for all the fish")));
+        }
+        boost::this_thread::sleep(boost::posix_time::milliseconds(100));
+    }
 
     boost::this_thread::sleep(boost::posix_time::seconds(30));
 

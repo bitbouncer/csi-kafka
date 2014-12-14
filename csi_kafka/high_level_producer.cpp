@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <iostream>
+#include <boost/crc.hpp>
 #include "high_level_producer.h"
 
 namespace csi
@@ -103,6 +104,29 @@ for (std::vector<csi::kafka::broker_data>::const_iterator i = _metadata->brokers
             {
                 _metadata = result;
             });
+        }
+
+        void highlevel_producer::enqueue(std::shared_ptr<basic_message> message)
+        {
+            // calc a hash to get partition
+            //for now use crc32 hardcoded 
+            
+            uint32_t hash = 0;
+            if (!message->key.is_null())
+            {
+                boost::crc_32_type result;
+                uint32_t keysize = (uint32_t) message->key.size();
+                result.process_bytes(&message->key[0], message->key.size());
+                hash = result.checksum();
+            }
+            else
+            {
+                std::cerr << " no key -> enque in parition 0 FIXME" << std::endl;
+            }
+
+            uint32_t partition = hash % _partitions.size();
+            _producers[partition]->enqueue(message);
+            std::cerr << "encqueue -> " << partition << " items:" << _producers[partition]->items_in_queue() << ", buffer:" << _producers[partition]->bytes_in_queue()/1024 << " KB " <<  std::endl;
         }
     };
 };

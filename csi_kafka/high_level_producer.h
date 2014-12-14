@@ -11,6 +11,10 @@ namespace csi
             typedef boost::function <void(const boost::system::error_code&)> connect_callback;
             highlevel_producer(boost::asio::io_service& io_service, const boost::asio::ip::tcp::resolver::query& query, const std::string& topic);
             boost::system::error_code connect();
+
+            void enqueue(std::shared_ptr<basic_message> message);
+
+
             void refresh_metadata_async();
             void close(); 
         private:

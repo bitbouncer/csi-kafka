@@ -41,7 +41,7 @@ namespace csi
                 _client(io_service, query),
                 _topic_name(topic),
                 _partition_id(partition),
-                _tx_queue_size(0),
+                _tx_queue_byte_size(0),
                 _tx_in_progress(false),
                 _required_acks(-1),
                 _tx_timeout(500)
@@ -67,7 +67,7 @@ namespace csi
         {
             {
                 csi::kafka::spinlock::scoped_lock xxx(_spinlock);
-                _tx_queue_size += message->size();
+                _tx_queue_byte_size += message->size();
                 _tx_queue.push_front(message);
             }
 
@@ -123,7 +123,7 @@ namespace csi
                     {
                         for (size_t i = 0; i != items_in_batch; ++i)
                         {
-                            _tx_queue_size -= (*_tx_queue.rend())->size();
+                            _tx_queue_byte_size -= (*_tx_queue.rend())->size();
                             _tx_queue.pop_back();
                         }
                     }
