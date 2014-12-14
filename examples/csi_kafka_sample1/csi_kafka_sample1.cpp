@@ -17,9 +17,9 @@ int main(int argc, char** argv)
     std::auto_ptr<boost::asio::io_service::work> work(new boost::asio::io_service::work(io_service));
     boost::thread bt(boost::bind(&boost::asio::io_service::run, &io_service));
 
-    csi::kafka::low_level::client client(io_service, query);
+    csi::kafka::low_level::client client(io_service);
 
-    boost::system::error_code error = client.connect();
+    boost::system::error_code error = client.connect(query);
 
     auto res1 = client.get_metadata({}, 0);
     if (res1)

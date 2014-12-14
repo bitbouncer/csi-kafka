@@ -71,14 +71,15 @@ namespace csi
                 typedef boost::function <void(rpc_result<offset_commit_response>)>      commit_offset_callback;
                 typedef boost::function <void(rpc_result<offset_fetch_response>)>       get_consumer_offset_callback;
 
-                client(boost::asio::io_service& io_service, const boost::asio::ip::tcp::resolver::query& query);
+                client(boost::asio::io_service& io_service);
                 ~client();
 
-                void                                           connect_async(completetion_handler handler);
-                boost::system::error_code                      connect();
+                void                                           connect_async(const boost::asio::ip::tcp::resolver::query& query, completetion_handler handler);
+                boost::system::error_code                      connect(const boost::asio::ip::tcp::resolver::query& query);
 
                 bool                                           close();
                 bool                                           is_connected() const;
+                bool                                           is_connection_in_progress() const;
 
                 void                                            get_metadata_async(const std::vector<std::string>& topics, int32_t correlation_id, get_metadata_callback);
                 rpc_result<metadata_response>                   get_metadata(const std::vector<std::string>& topics, int32_t correlation_id);
@@ -123,13 +124,13 @@ namespace csi
                 boost::asio::io_service&	              _io_service;
                 csi::kafka::spinlock                      _spinlock;
                 boost::asio::ip::tcp::resolver            _resolver;
-                boost::asio::ip::tcp::resolver::query     _query;
                 boost::asio::deadline_timer			      _timer;
                 boost::posix_time::time_duration	      _timeout;
                 boost::asio::ip::tcp::socket              _socket; // array of connections to shard leaders???
                 std::deque<basic_call_context::handle>    _tx_queue;
                 std::deque<basic_call_context::handle>    _rx_queue;
                 bool                                      _connected;
+                bool                                      _connection_in_progress;
                 bool                                      _tx_in_progress;
                 bool                                      _rx_in_progress;
             };

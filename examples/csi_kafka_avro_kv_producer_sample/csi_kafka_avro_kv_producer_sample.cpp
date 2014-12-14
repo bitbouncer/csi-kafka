@@ -63,8 +63,8 @@ int main(int argc, char** argv)
     });
 
 
-    csi::kafka::avro_producer2<sample::contact_info_key, sample::contact_info> producer(io_service, query, "saka.test.avro_key_value", 0);
-    boost::system::error_code error = producer.connect();
+    csi::kafka::avro_producer2<sample::contact_info_key, sample::contact_info> producer(io_service, "saka.test.avro_key_value", 0);
+    boost::system::error_code error = producer.connect(query);
 
     int32_t cursor=0;
 

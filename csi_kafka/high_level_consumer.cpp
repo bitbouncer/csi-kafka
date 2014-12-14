@@ -6,16 +6,29 @@ namespace csi
 {
     namespace kafka
     {
-        highlevel_consumer::highlevel_consumer(boost::asio::io_service& io_service, const boost::asio::ip::tcp::resolver::query& query, const std::string& topic) :
+        highlevel_consumer::highlevel_consumer(boost::asio::io_service& io_service, const std::string& topic) :
             _ios(io_service),
-            _meta_client(io_service, query),
+            _meta_client(io_service),
             _topic_name(topic)
         {
         }
 
-        boost::system::error_code highlevel_consumer::connect()
+        /*
+        highlevel_consumer::~highlevel_consumer()
         {
-            boost::system::error_code ec = _meta_client.connect();
+            _timer.cancel();
+        }
+        
+        void highlevel_consumer::handle_timer(const boost::system::error_code& ec)
+        {
+            if (!ec)
+                _try_connect_brokers();
+        }
+        */
+
+        boost::system::error_code highlevel_consumer::connect(const boost::asio::ip::tcp::resolver::query& query)
+        {
+            boost::system::error_code ec = _meta_client.connect(query);
 
             if (ec)
                 return ec;
@@ -29,32 +42,10 @@ namespace csi
             }
 
             for (std::vector<csi::kafka::broker_data>::const_iterator i = _metadata->brokers.begin(); i != _metadata->brokers.end(); ++i)
-            {
-                boost::asio::ip::tcp::resolver::query query(i->host_name, std::to_string(i->port));
-                _consumers.insert(std::make_pair(i->node_id, new lowlevel_consumer(_ios, query, _topic_name)));
-                std::cerr << "broker #" << i->node_id << i->host_name << ":" << i->port << std::endl;
-            };
+                _consumers.insert(std::make_pair(i->node_id, new lowlevel_consumer(_ios, _topic_name)));
 
-            for (std::vector<csi::kafka::metadata_response::topic_data>::const_iterator i = _metadata->topics.begin(); i != _metadata->topics.end(); ++i)
-            {
-                assert(i->topic_name == _topic_name);
-                for (std::vector<csi::kafka::metadata_response::topic_data::partition_data>::const_iterator j = i->partitions.begin(); j != i->partitions.end(); ++j)
-                {
-                    std::cerr << "partition " << i->topic_name << ":" << j->partition_id << " -> " << j->leader << std::endl;
-                };
-            };
+            _ios.post([this]{ _try_connect_brokers(); });
 
-            for (std::map<int, lowlevel_consumer*>::iterator i = _consumers.begin(); i != _consumers.end(); ++i)
-            {
-                int broker_id = i->first;
-                i->second->connect_async([broker_id](const boost::system::error_code& ec1)
-                {
-                    if (ec1)
-                        std::cerr << "can't connect to broker #" << broker_id << " ec:" << ec1 << std::endl;
-                    else
-                        std::cerr << "connected to broker #" << broker_id << std::endl;
-                });
-            }
             return ec;
         }
 
@@ -67,6 +58,55 @@ namespace csi
         }
 
 
+        void highlevel_consumer::_try_connect_brokers()
+        {
+            // the number of partitions is constand but the serving hosts might differ
+            _meta_client.get_metadata_async({ _topic_name }, 0, [this](rpc_result<metadata_response> result)
+            {
+                if (!result)
+                {
+                    {
+                        csi::kafka::spinlock::scoped_lock xxx(_spinlock);
+                        _metadata = result;
 
+                        for (std::vector<csi::kafka::broker_data>::const_iterator i = _metadata->brokers.begin(); i != _metadata->brokers.end(); ++i)
+                        {
+                            _broker2brokers[i->node_id] = *i;
+                        };
+
+                        for (std::vector<csi::kafka::metadata_response::topic_data>::const_iterator i = _metadata->topics.begin(); i != _metadata->topics.end(); ++i)
+                        {
+                            assert(i->topic_name == _topic_name);
+                            for (std::vector<csi::kafka::metadata_response::topic_data::partition_data>::const_iterator j = i->partitions.begin(); j != i->partitions.end(); ++j)
+                            {
+                                _partition2partitions[j->partition_id] = *j;
+                            };
+                        };
+                    }
+                }
+
+                for (std::map<int, lowlevel_consumer*>::iterator i = _consumers.begin(); i != _consumers.end(); ++i)
+                {
+                    if (!i->second->is_connected())
+                    {
+                        int partition = i->first;
+                        int leader = _partition2partitions[partition].leader;
+                        auto bd = _broker2brokers[leader];
+                        boost::asio::ip::tcp::resolver::query query(bd.host_name, std::to_string(bd.port));
+                        std::string broker_uri = bd.host_name + ":" + std::to_string(bd.port);
+                        std::cerr << "connecting to broker node_id:" << leader << " (" << broker_uri << ") partition:" << partition << std::endl;
+                        i->second->connect_async(query, [leader, partition, broker_uri](const boost::system::error_code& ec1)
+                        {
+                            if (ec1)
+                            {
+                                std::cerr << "can't connect to broker #" << leader << " (" << broker_uri << ") partition " << partition << " ec:" << ec1 << std::endl;
+                            }
+                            else
+                                std::cerr << "connected to broker #" << leader << " (" << broker_uri << ") partition " << partition << std::endl;
+                        });
+                    }
+                }
+            });
+        }
     };
 };

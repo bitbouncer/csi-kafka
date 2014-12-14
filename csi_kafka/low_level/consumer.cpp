@@ -6,21 +6,21 @@ namespace csi
 {
     namespace kafka
     {
-        lowlevel_consumer::lowlevel_consumer(boost::asio::io_service& io_service, const boost::asio::ip::tcp::resolver::query& query, const std::string& topic) :
+        lowlevel_consumer::lowlevel_consumer(boost::asio::io_service& io_service, const std::string& topic) :
             _ios(io_service),
-            _client(io_service, query),
+            _client(io_service),
             _topic_name(topic)
         {
         }
 
-        void lowlevel_consumer::connect_async(connect_callback cb)
+        void lowlevel_consumer::connect_async(const boost::asio::ip::tcp::resolver::query& query, connect_callback cb)
         {
-            _client.connect_async(cb);
+            _client.connect_async(query, cb);
         }
 
-        boost::system::error_code lowlevel_consumer::connect()
+        boost::system::error_code lowlevel_consumer::connect(const boost::asio::ip::tcp::resolver::query& query)
         {
-            return _client.connect();
+            return _client.connect(query);
         }
 
         void lowlevel_consumer::set_offset_async(int32_t partition, int64_t start_time, set_offset_callback cb)

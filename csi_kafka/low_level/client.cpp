@@ -12,7 +12,7 @@ namespace csi
         basic_call_context::handle create_produce_request(const std::string& topic, int partition, int required_acks, int timeout, const std::vector<std::shared_ptr<basic_message>>& v, int32_t correlation_id)
         {
             basic_call_context::handle handle(new basic_call_context());
-            handle->_expecting_reply = (required_acks > 0);
+            handle->_expecting_reply = (required_acks != 0);
             handle->_tx_size = encode_produce_request(topic, partition, required_acks, timeout, v, correlation_id, (char*)&handle->_tx_buffer[0], basic_call_context::MAX_BUFFER_SIZE);
             return handle;
         }
@@ -83,13 +83,13 @@ namespace csi
 
         namespace low_level
         {
-            client::client(boost::asio::io_service& io_service, const boost::asio::ip::tcp::resolver::query& query) :
+            client::client(boost::asio::io_service& io_service) :
                 _io_service(io_service),
                 _resolver(io_service),
-                _query(query),
                 _timer(io_service),
                 _socket(io_service),
                 _connected(false),
+                _connection_in_progress(false),
                 _tx_in_progress(false),
                 _rx_in_progress(false),
                 _timeout(boost::posix_time::milliseconds(1000))
@@ -104,15 +104,20 @@ namespace csi
                 close();
             }
 
-            void client::connect_async(completetion_handler cb)
+            void client::connect_async(const boost::asio::ip::tcp::resolver::query& query, completetion_handler cb)
             {
-                _resolver.async_resolve(_query, [this, cb](boost::system::error_code ec, boost::asio::ip::tcp::resolver::iterator iterator)
+                _connection_in_progress = true;
+                _resolver.async_resolve(query, [this, cb](boost::system::error_code ec, boost::asio::ip::tcp::resolver::iterator iterator)
                 {
                     if (ec)
+                    {
+                        _connection_in_progress = false;
                         cb(ec);
+                    }
                     else
                         boost::asio::async_connect(_socket, iterator, [this, cb](boost::system::error_code ec, boost::asio::ip::tcp::resolver::iterator)
                     {
+                        _connection_in_progress = false;
                         if (!ec)
                             _connected = true;
                         cb(ec);
@@ -120,11 +125,11 @@ namespace csi
                 });
             }
 
-            boost::system::error_code client::connect()
+            boost::system::error_code client::connect(const boost::asio::ip::tcp::resolver::query& query)
             {
                 std::promise<boost::system::error_code> p;
                 std::future<boost::system::error_code>  f = p.get_future();
-                connect_async([&p](const boost::system::error_code& error)
+                connect_async(query, [&p](const boost::system::error_code& error)
                 {
                     p.set_value(error);
                 });
@@ -153,6 +158,11 @@ namespace csi
             bool client::is_connected() const
             {
                 return _connected;
+            }
+
+            bool client::is_connection_in_progress() const
+            {
+                return _connection_in_progress;
             }
 
             void client::get_metadata_async(const std::vector<std::string>& topics, int32_t correlation_id, get_metadata_callback cb)

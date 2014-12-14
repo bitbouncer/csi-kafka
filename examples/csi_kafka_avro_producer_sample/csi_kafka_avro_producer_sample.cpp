@@ -72,19 +72,18 @@ int main(int argc, char** argv)
     std::auto_ptr<boost::asio::io_service::work> work(new boost::asio::io_service::work(io_service));
     boost::thread bt(boost::bind(&boost::asio::io_service::run, &io_service));
 
-    csi::kafka::avro_producer<sample::syslog> producer(io_service, query, "saka.test.avro-syslog2", 0);
+    csi::kafka::avro_producer<sample::syslog> producer(io_service, "saka.test.avro-syslog2", 0);
     
-    boost::system::error_code error = producer.connect();
+    boost::system::error_code error = producer.connect(query);
 
    send_batch(producer);
-
-    while (true)
-    {
-        uint64_t last_total = total;
-        boost::this_thread::sleep(boost::posix_time::seconds(1));
-        acc((double)total - last_total);
-        std::cerr << boost::accumulators::rolling_mean(acc) << " msg/s " << total << std::endl;
-    }
+   while (true)
+   {
+       uint64_t last_total = total;
+       boost::this_thread::sleep(boost::posix_time::seconds(1));
+       acc((double)total - last_total);
+       std::cerr << boost::accumulators::rolling_mean(acc) << " msg/s " << total << std::endl;
+   }
 
     work.reset();
     io_service.stop();

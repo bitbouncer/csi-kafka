@@ -24,8 +24,8 @@ namespace csi
         class avro_producer : public csi::kafka::producer
         {
         public:
-            avro_producer(boost::asio::io_service& io_service, const boost::asio::ip::tcp::resolver::query& query, const std::string& topic, int32_t partition) :
-                producer(io_service, query, topic, partition)
+            avro_producer(boost::asio::io_service& io_service, const std::string& topic, int32_t partition) :
+                producer(io_service, topic, partition)
             {
             }
 
@@ -83,8 +83,8 @@ namespace csi
         class avro_producer2 : public csi::kafka::producer
         {
         public:
-            avro_producer2(boost::asio::io_service& io_service, const boost::asio::ip::tcp::resolver::query& query, const std::string& topic, int32_t partition) :
-                producer(io_service, query, topic, partition)
+            avro_producer2(boost::asio::io_service& io_service, const std::string& topic, int32_t partition) :
+                producer(io_service, topic, partition)
             {
             }
 

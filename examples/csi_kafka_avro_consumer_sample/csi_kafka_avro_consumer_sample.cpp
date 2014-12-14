@@ -30,20 +30,20 @@ int main(int argc, char** argv)
 
     // just testing away
     {
-        csi::kafka::low_level::client client(io_service, query);
-        boost::system::error_code ec = client.connect();
+        csi::kafka::low_level::client client(io_service);
+        boost::system::error_code ec = client.connect(query);
         auto md = client.get_metadata({}, 0);
         auto resp = client.get_consumer_metadata("saka.test.avro-syslog2", 0);
     }
 
-    csi::kafka::highlevel_consumer consumer0(io_service, query, "saka.test.avro-syslog2");
-    boost::system::error_code ec0 = consumer0.connect();
+    csi::kafka::highlevel_consumer consumer0(io_service, "saka.test.avro-syslog2");
+    boost::system::error_code ec0 = consumer0.connect(query);
 
 
     //sample begin
-    csi::kafka::lowlevel_consumer consumer(io_service, query, "saka.test.avro-syslog2");
+    csi::kafka::lowlevel_consumer consumer(io_service, "saka.test.avro-syslog2");
 
-    boost::system::error_code ec1 = consumer.connect();
+    boost::system::error_code ec1 = consumer.connect(query);
     auto ec2 = consumer.set_offset(0, csi::kafka::latest_offsets);
     auto ec3 = consumer.set_offset(4, csi::kafka::latest_offsets);
 
