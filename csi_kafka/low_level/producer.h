@@ -42,16 +42,17 @@ namespace csi
         {
         public:
             typedef boost::function <void(const boost::system::error_code&)>         connect_callback;
-            typedef boost::function <void(const boost::system::error_code&)>         lowwater_callback;
-            typedef boost::function <void(rpc_result<csi::kafka::produce_response>)> send_callback;
+            typedef boost::function <void()>                                         tx_ack_callback;
+            //typedef boost::function <void(rpc_result<csi::kafka::produce_response>)> send_callback;
 
-            async_producer(boost::asio::io_service& io_service, const std::string& topic, int32_t partition);
+            async_producer(boost::asio::io_service& io_service, const std::string& topic, int32_t partition, int32_t required_acks, int32_t timeout, int32_t max_packet_size=-1);
             ~async_producer();
 
             void connect_async(const boost::asio::ip::tcp::resolver::query& query, connect_callback cb);
             boost::system::error_code connect(const boost::asio::ip::tcp::resolver::query& query);
             void close();
-            void enqueue(std::shared_ptr<basic_message> message);
+            void send_async(std::shared_ptr<basic_message> message, tx_ack_callback = NULL);
+
             //void wait_lowwater_async(int max_messages, lowwater_callback);
             //void close_async();
 
@@ -65,8 +66,17 @@ namespace csi
 
             uint32_t metrics_kb_sec() const { return (uint32_t) boost::accumulators::rolling_mean(_metrics_tx_kb_sec); } // lock ???
             uint32_t metrics_msg_sec() const { return (uint32_t) boost::accumulators::rolling_mean(_metrics_tx_msg_sec); } // lock ???
+            double   metrics_tx_roundtrip() const { return boost::accumulators::rolling_mean(_metrics_tx_roundtrip); } // lock ???
 
         protected:
+            struct tx_item
+            {
+                tx_item(std::shared_ptr<basic_message> message) : msg(message) {}
+                tx_item(std::shared_ptr<basic_message> message, tx_ack_callback callback) : msg(message), cb(callback) {}
+                std::shared_ptr<basic_message> msg;
+                tx_ack_callback                cb;
+            };
+
             typedef boost::accumulators::accumulator_set<double, boost::accumulators::stats<boost::accumulators::tag::rolling_mean> >   metrics_accumulator_t;
 
             void handle_metrics_timer(const boost::system::error_code& ec);
@@ -78,11 +88,12 @@ namespace csi
             const int32_t                              _partition_id;
             //TX queue
             csi::kafka::spinlock                       _spinlock;
-            std::deque<std::shared_ptr<basic_message>> _tx_queue;
+            std::deque<tx_item>                        _tx_queue;
             size_t                                     _tx_queue_byte_size;
             bool                                       _tx_in_progress;
             int32_t                                    _required_acks;
             int32_t                                    _tx_timeout;
+            int32_t                                    _max_packet_size;
             
             //METRICS
             boost::asio::deadline_timer	               _metrics_timer;
@@ -93,6 +104,7 @@ namespace csi
             uint64_t                                   _metrics_total_tx_msg;
             metrics_accumulator_t                      _metrics_tx_kb_sec;
             metrics_accumulator_t                      _metrics_tx_msg_sec;
+            metrics_accumulator_t                      _metrics_tx_roundtrip;
         };
     }
 };

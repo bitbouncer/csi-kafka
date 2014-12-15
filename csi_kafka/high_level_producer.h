@@ -18,13 +18,17 @@ namespace csi
                 size_t      bytes_in_queue;
                 uint32_t    tx_kb_sec;
                 uint32_t    tx_msg_sec;
+                double      tx_roundtrip;
             };
 
             typedef boost::function <void(const boost::system::error_code&)> connect_callback;
-            highlevel_producer(boost::asio::io_service& io_service, const std::string& topic);
+            typedef boost::function <void()>                                 tx_ack_callback;
+
+            highlevel_producer(boost::asio::io_service& io_service, const std::string& topic, int32_t required_acks, int32_t timeout, int32_t max_packet_size=-1);
             ~highlevel_producer();
             boost::system::error_code connect(const boost::asio::ip::tcp::resolver::query& query);
-            void enqueue(std::shared_ptr<basic_message> message);
+            void send_async(std::shared_ptr<basic_message> message, tx_ack_callback = NULL);
+            void send_async(std::vector<std::shared_ptr<basic_message>>& messages, tx_ack_callback = NULL);
             void close(); 
 
             std::vector<metrics> get_metrics() const;
@@ -35,6 +39,10 @@ namespace csi
             void _try_connect_brokers();
             boost::asio::io_service&                                                 _ios;
             std::string                                                              _topic_name;
+            int32_t                                                                  _required_acks;
+            int32_t                                                                  _tx_timeout;
+            int32_t                                                                  _max_packet_size;
+
             std::map<int, async_producer*>                                           _partition2producers;
 
             boost::asio::deadline_timer			                                     _timer;
