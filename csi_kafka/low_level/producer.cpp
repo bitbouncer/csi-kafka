@@ -9,7 +9,7 @@ namespace csi
         producer::producer(boost::asio::io_service& io_service, const std::string& topic, int32_t partition) :
             _ios(io_service),
             _client(io_service),
-            _topic_name(topic),
+            _topic(topic),
             _partition_id(partition)
         {
         }
@@ -31,13 +31,13 @@ namespace csi
 
         void producer::send_async(int32_t required_acks, int32_t timeout, const std::vector<std::shared_ptr<basic_message>>& v, int32_t correlation_id, send_callback cb)
         {
-            _client.send_produce_async(_topic_name, _partition_id, required_acks, timeout, v, correlation_id, cb);
+            _client.send_produce_async(_topic, _partition_id, required_acks, timeout, v, correlation_id, cb);
         }
 
         async_producer::async_producer(boost::asio::io_service& io_service, const std::string& topic, int32_t partition, int32_t required_acks, int32_t timeout, int32_t max_packet_size) :
             _ios(io_service),
             _client(io_service),
-            _topic_name(topic),
+            _topic(topic),
             _partition_id(partition),
             _required_acks(required_acks),
             _tx_timeout(timeout),
@@ -55,9 +55,9 @@ namespace csi
             __metrics_last_total_tx_msg(0)
         {
             if (_max_packet_size <0)
-                _max_packet_size = (csi::kafka::basic_call_context::MAX_BUFFER_SIZE - 1000);
-            if (_max_packet_size >(csi::kafka::basic_call_context::MAX_BUFFER_SIZE - 1000))
-                _max_packet_size = (csi::kafka::basic_call_context::MAX_BUFFER_SIZE - 1000);
+                _max_packet_size = (csi::kafka::low_level::basic_call_context::MAX_BUFFER_SIZE - 1000);
+            if (_max_packet_size >(csi::kafka::low_level::basic_call_context::MAX_BUFFER_SIZE - 1000))
+                _max_packet_size = (csi::kafka::low_level::basic_call_context::MAX_BUFFER_SIZE - 1000);
 
             _metrics_timer.expires_from_now(_metrics_timeout);
             _metrics_timer.async_wait([this](const boost::system::error_code& ec){ handle_metrics_timer(ec); });
@@ -159,11 +159,11 @@ namespace csi
             if (items_in_batch > 0)
             {
                 auto tick = boost::posix_time::microsec_clock::local_time();
-                _client.send_produce_async(_topic_name, _partition_id, _required_acks, _tx_timeout, v, 99, [this, tick, items_in_batch](rpc_result<produce_response> result)
+                _client.send_produce_async(_topic, _partition_id, _required_acks, _tx_timeout, v, 99, [this, tick, items_in_batch](rpc_result<produce_response> result)
                 {
                     auto now = boost::posix_time::microsec_clock::local_time();
                     boost::posix_time::time_duration diff = now - tick;
-                    _metrics_tx_roundtrip(diff.total_milliseconds());
+                    _metrics_tx_roundtrip((double) diff.total_milliseconds());
 
                     //TODO PARSE THE RESULT DEEP - WE MIGHT HAVE GOTTEN AN ERROR INSIDE
                     //IF SO WE SHOULD PROBASBLY CLOSE THE CONNECTION

@@ -5,84 +5,90 @@
 #include "decoder.h"
 #include "encoder.h"
 
+
 namespace csi
 {
     namespace kafka
     {
-        basic_call_context::handle create_produce_request(const std::string& topic, int partition, int required_acks, int timeout, const std::vector<std::shared_ptr<basic_message>>& v, int32_t correlation_id)
-        {
-            basic_call_context::handle handle(new basic_call_context());
-            handle->_expecting_reply = (required_acks != 0);
-            handle->_tx_size = encode_produce_request(topic, partition, required_acks, timeout, v, correlation_id, (char*)&handle->_tx_buffer[0], basic_call_context::MAX_BUFFER_SIZE);
-            return handle;
-        }
 
-        basic_call_context::handle create_metadata_request(const std::vector<std::string>& topics, int32_t correlation_id)
-        {
-            basic_call_context::handle handle(new basic_call_context());
-            handle->_tx_size = encode_metadata_request(topics, correlation_id, (char*)&handle->_tx_buffer[0], basic_call_context::MAX_BUFFER_SIZE);
-            return handle;
-        }
-
-        basic_call_context::handle create_simple_fetch_request(const std::string& topic, int32_t partition_id, int64_t fetch_offset, uint32_t max_wait_time, size_t min_bytes, int32_t correlation_id)
-        {
-            basic_call_context::handle handle(new basic_call_context());
-            handle->_tx_size = encode_simple_fetch_request(topic, partition_id, fetch_offset, max_wait_time, min_bytes, correlation_id, (char*)&handle->_tx_buffer[0], basic_call_context::MAX_BUFFER_SIZE);
-            return handle;
-        }
-
-        basic_call_context::handle create_multi_fetch_request(const std::string& topic, const std::vector<partition_cursor>& cursors, uint32_t max_wait_time, size_t min_bytes, int32_t correlation_id)
-        {
-            basic_call_context::handle handle(new basic_call_context());
-            handle->_tx_size = encode_multi_fetch_request(topic, cursors, max_wait_time, min_bytes, correlation_id, (char*)&handle->_tx_buffer[0], basic_call_context::MAX_BUFFER_SIZE);
-            return handle;
-        }
-
-        basic_call_context::handle create_simple_offset_request(const std::string& topic, int32_t partition_id, int64_t time, int32_t max_number_of_offsets, int32_t correlation_id)
-        {
-            basic_call_context::handle handle(new basic_call_context());
-            handle->_tx_size = encode_simple_offset_request(topic, partition_id, time, max_number_of_offsets, correlation_id, (char*)&handle->_tx_buffer[0], basic_call_context::MAX_BUFFER_SIZE);
-            return handle;
-        }
-
-        basic_call_context::handle create_consumer_metadata_request(const std::string& consumer_group, int32_t correlation_id)
-        {
-            basic_call_context::handle handle(new basic_call_context());
-            handle->_tx_size = encode_consumer_metadata_request(consumer_group, correlation_id, (char*)&handle->_tx_buffer[0], basic_call_context::MAX_BUFFER_SIZE);
-            return handle;
-        }
-
-        basic_call_context::handle create_simple_offset_commit_request(const std::string& consumer_group, const std::string& topic, int32_t partition_id, int64_t offset, int64_t timestamp, const std::string& metadata, int32_t correlation_id)
-        {
-            basic_call_context::handle handle(new basic_call_context());
-            handle->_tx_size = encode_simple_offset_commit_request(consumer_group, topic, partition_id, offset, timestamp, metadata, correlation_id, (char*)&handle->_tx_buffer[0], basic_call_context::MAX_BUFFER_SIZE);
-            return handle;
-        }
-
-        basic_call_context::handle create_simple_offset_fetch_request(const std::string& consumer_group, const std::string& topic, int32_t partition_id, int32_t correlation_id)
-        {
-            basic_call_context::handle handle(new basic_call_context());
-            handle->_tx_size = encode_simple_offset_fetch_request(consumer_group, topic, partition_id, correlation_id, (char*)&handle->_tx_buffer[0], basic_call_context::MAX_BUFFER_SIZE);
-            return handle;
-        }
-
-        basic_call_context::handle create_simple_offset_fetch_request(const std::string& consumer_group, int32_t correlation_id)
-        {
-            basic_call_context::handle handle(new basic_call_context());
-            handle->_tx_size = encode_offset_fetch_all_request(consumer_group, correlation_id, (char*)&handle->_tx_buffer[0], basic_call_context::MAX_BUFFER_SIZE);
-            return handle;
-        }
-
-        rpc_result<produce_response>           parse_produce_response(csi::kafka::basic_call_context::handle handle)           { return parse_produce_response((const char*)&handle->_rx_buffer[0], handle->_rx_size); }
-        rpc_result<fetch_response>             parse_fetch_response(csi::kafka::basic_call_context::handle handle)             { return parse_fetch_response((const char*)&handle->_rx_buffer[0], handle->_rx_size); }
-        rpc_result<offset_response>            parse_offset_response(csi::kafka::basic_call_context::handle handle)            { return parse_offset_response((const char*)&handle->_rx_buffer[0], handle->_rx_size); }
-        rpc_result<metadata_response>          parse_metadata_response(csi::kafka::basic_call_context::handle handle)          { return parse_metadata_response((const char*)&handle->_rx_buffer[0], handle->_rx_size); }
-        rpc_result<offset_commit_response>     parse_offset_commit_response(csi::kafka::basic_call_context::handle handle)     { return parse_offset_commit_response((const char*)&handle->_rx_buffer[0], handle->_rx_size); }
-        rpc_result<offset_fetch_response>      parse_offset_fetch_response(csi::kafka::basic_call_context::handle handle)      { return parse_offset_fetch_response((const char*)&handle->_rx_buffer[0], handle->_rx_size); }
-        rpc_result<consumer_metadata_response> parse_consumer_metadata_response(csi::kafka::basic_call_context::handle handle) { return parse_consumer_metadata_response((const char*)&handle->_rx_buffer[0], handle->_rx_size); }
 
         namespace low_level
         {
+            basic_call_context::handle create_produce_request(const std::string& topic, int partition, int required_acks, int timeout, const std::vector<std::shared_ptr<basic_message>>& v, int32_t correlation_id)
+            {
+                basic_call_context::handle handle(new basic_call_context());
+                handle->_expecting_reply = (required_acks != 0);
+                handle->_tx_size = encode_produce_request(topic, partition, required_acks, timeout, v, correlation_id, (char*)&handle->_tx_buffer[0], basic_call_context::MAX_BUFFER_SIZE);
+                return handle;
+            }
+
+            basic_call_context::handle create_metadata_request(const std::vector<std::string>& topics, int32_t correlation_id)
+            {
+                basic_call_context::handle handle(new basic_call_context());
+                handle->_tx_size = encode_metadata_request(topics, correlation_id, (char*)&handle->_tx_buffer[0], basic_call_context::MAX_BUFFER_SIZE);
+                return handle;
+            }
+
+            basic_call_context::handle create_simple_fetch_request(const std::string& topic, int32_t partition_id, int64_t fetch_offset, uint32_t max_wait_time, size_t min_bytes, int32_t correlation_id)
+            {
+                basic_call_context::handle handle(new basic_call_context());
+                handle->_tx_size = encode_simple_fetch_request(topic, partition_id, fetch_offset, max_wait_time, min_bytes, correlation_id, (char*)&handle->_tx_buffer[0], basic_call_context::MAX_BUFFER_SIZE);
+                return handle;
+            }
+
+            basic_call_context::handle create_multi_fetch_request(const std::string& topic, const std::vector<partition_cursor>& cursors, uint32_t max_wait_time, size_t min_bytes, int32_t correlation_id)
+            {
+                basic_call_context::handle handle(new basic_call_context());
+                handle->_tx_size = encode_multi_fetch_request(topic, cursors, max_wait_time, min_bytes, correlation_id, (char*)&handle->_tx_buffer[0], basic_call_context::MAX_BUFFER_SIZE);
+                return handle;
+            }
+
+            basic_call_context::handle create_simple_offset_request(const std::string& topic, int32_t partition_id, int64_t time, int32_t max_number_of_offsets, int32_t correlation_id)
+            {
+                basic_call_context::handle handle(new basic_call_context());
+                handle->_tx_size = encode_simple_offset_request(topic, partition_id, time, max_number_of_offsets, correlation_id, (char*)&handle->_tx_buffer[0], basic_call_context::MAX_BUFFER_SIZE);
+                return handle;
+            }
+
+            basic_call_context::handle create_consumer_metadata_request(const std::string& consumer_group, int32_t correlation_id)
+            {
+                basic_call_context::handle handle(new basic_call_context());
+                handle->_tx_size = encode_consumer_metadata_request(consumer_group, correlation_id, (char*)&handle->_tx_buffer[0], basic_call_context::MAX_BUFFER_SIZE);
+                return handle;
+            }
+
+            basic_call_context::handle create_simple_offset_commit_request(const std::string& consumer_group, const std::string& topic, int32_t partition_id, int64_t offset, int64_t timestamp, const std::string& metadata, int32_t correlation_id)
+            {
+                basic_call_context::handle handle(new basic_call_context());
+                handle->_tx_size = encode_simple_offset_commit_request(consumer_group, topic, partition_id, offset, timestamp, metadata, correlation_id, (char*)&handle->_tx_buffer[0], basic_call_context::MAX_BUFFER_SIZE);
+                return handle;
+            }
+
+            basic_call_context::handle create_simple_offset_fetch_request(const std::string& consumer_group, const std::string& topic, int32_t partition_id, int32_t correlation_id)
+            {
+                basic_call_context::handle handle(new basic_call_context());
+                handle->_tx_size = encode_simple_offset_fetch_request(consumer_group, topic, partition_id, correlation_id, (char*)&handle->_tx_buffer[0], basic_call_context::MAX_BUFFER_SIZE);
+                return handle;
+            }
+
+            basic_call_context::handle create_simple_offset_fetch_request(const std::string& consumer_group, int32_t correlation_id)
+            {
+                basic_call_context::handle handle(new basic_call_context());
+                handle->_tx_size = encode_offset_fetch_all_request(consumer_group, correlation_id, (char*)&handle->_tx_buffer[0], basic_call_context::MAX_BUFFER_SIZE);
+                return handle;
+            }
+
+
+            static rpc_result<produce_response>           parse_produce_response(basic_call_context::handle handle)           { return csi::kafka::parse_produce_response((const char*)&handle->_rx_buffer[0], handle->_rx_size); }
+            static rpc_result<fetch_response>             parse_fetch_response(basic_call_context::handle handle)             { return csi::kafka::parse_fetch_response((const char*)&handle->_rx_buffer[0], handle->_rx_size); }
+            static rpc_result<offset_response>            parse_offset_response(basic_call_context::handle handle)            { return csi::kafka::parse_offset_response((const char*)&handle->_rx_buffer[0], handle->_rx_size); }
+            static rpc_result<metadata_response>          parse_metadata_response(basic_call_context::handle handle)          { return csi::kafka::parse_metadata_response((const char*)&handle->_rx_buffer[0], handle->_rx_size); }
+            static rpc_result<offset_commit_response>     parse_offset_commit_response(basic_call_context::handle handle)     { return csi::kafka::parse_offset_commit_response((const char*)&handle->_rx_buffer[0], handle->_rx_size); }
+            static rpc_result<offset_fetch_response>      parse_offset_fetch_response(basic_call_context::handle handle)      { return csi::kafka::parse_offset_fetch_response((const char*)&handle->_rx_buffer[0], handle->_rx_size); }
+            static rpc_result<consumer_metadata_response> parse_consumer_metadata_response(basic_call_context::handle handle) { return csi::kafka::parse_consumer_metadata_response((const char*)&handle->_rx_buffer[0], handle->_rx_size); }
+
+
+
             client::client(boost::asio::io_service& io_service) :
                 _io_service(io_service),
                 _resolver(io_service),
@@ -167,12 +173,12 @@ namespace csi
 
             void client::get_metadata_async(const std::vector<std::string>& topics, int32_t correlation_id, get_metadata_callback cb)
             {
-                perform_async(csi::kafka::create_metadata_request(topics, correlation_id), [cb](const boost::system::error_code& ec, csi::kafka::basic_call_context::handle handle)
+                perform_async(create_metadata_request(topics, correlation_id), [cb](const boost::system::error_code& ec, basic_call_context::handle handle)
                 {
                     if (ec)
                         cb(rpc_result<metadata_response>(ec));
                     else
-                        cb(csi::kafka::parse_metadata_response(handle));
+                        cb(parse_metadata_response(handle));
                 });
             }
 
@@ -190,12 +196,12 @@ namespace csi
 
             void client::send_produce_async(const std::string& topic, int32_t partition_id, int required_acks, int timeout, const std::vector<std::shared_ptr<basic_message>>& v, int32_t correlation_id, send_produce_callback cb)
             {
-                perform_async(csi::kafka::create_produce_request(topic, partition_id, required_acks, timeout, v, correlation_id), [cb](const boost::system::error_code& ec, csi::kafka::basic_call_context::handle handle)
+                perform_async(create_produce_request(topic, partition_id, required_acks, timeout, v, correlation_id), [cb](const boost::system::error_code& ec, basic_call_context::handle handle)
                 {
                     if (ec)
                         cb(rpc_result<produce_response>(ec));
                     else
-                        cb(csi::kafka::parse_produce_response(handle));
+                        cb(parse_produce_response(handle));
                 });
             }
             
@@ -213,12 +219,12 @@ namespace csi
 
             void client::get_data_async(const std::string& topic, const std::vector<partition_cursor>& partitions, uint32_t max_wait_time, size_t min_bytes, int32_t correlation_id, get_data_callback cb)
             {
-                perform_async(csi::kafka::create_multi_fetch_request(topic, partitions, max_wait_time, min_bytes, correlation_id), [cb](const boost::system::error_code& ec, csi::kafka::basic_call_context::handle handle)
+                perform_async(create_multi_fetch_request(topic, partitions, max_wait_time, min_bytes, correlation_id), [cb](const boost::system::error_code& ec, basic_call_context::handle handle)
                 {
                     if (ec)
                         cb(rpc_result<fetch_response>(ec));
                     else
-                        cb(csi::kafka::parse_fetch_response(handle));
+                        cb(parse_fetch_response(handle));
                 });
             }
 
@@ -238,12 +244,12 @@ namespace csi
 
             void client::get_consumer_metadata_async(const std::string& consumer_group, int32_t correlation_id, get_consumer_metadata_callback cb)
             {
-                perform_async(csi::kafka::create_consumer_metadata_request(consumer_group, correlation_id), [cb](const boost::system::error_code& ec, csi::kafka::basic_call_context::handle handle)
+                perform_async(create_consumer_metadata_request(consumer_group, correlation_id), [cb](const boost::system::error_code& ec, basic_call_context::handle handle)
                 {
                     if (ec)
                         cb(rpc_result<consumer_metadata_response>(ec));
                     else
-                        cb(csi::kafka::parse_consumer_metadata_response(handle));
+                        cb(parse_consumer_metadata_response(handle));
                 });
             }
 
@@ -261,12 +267,12 @@ namespace csi
 
             void client::get_offset_async(const std::string& topic, int32_t partition, int64_t start_time, int32_t max_number_of_offsets, int32_t correlation_id, get_offset_callback cb)
             {
-                perform_async(csi::kafka::create_simple_offset_request(topic, partition, start_time, max_number_of_offsets, correlation_id), [this, cb](const boost::system::error_code& ec, csi::kafka::basic_call_context::handle handle)
+                perform_async(create_simple_offset_request(topic, partition, start_time, max_number_of_offsets, correlation_id), [this, cb](const boost::system::error_code& ec, basic_call_context::handle handle)
                 {
                     if (ec)
                         cb(rpc_result<offset_response>(ec));
                     else
-                        cb(csi::kafka::parse_offset_response(handle));
+                        cb(parse_offset_response(handle));
                 });
             }
 
@@ -285,12 +291,12 @@ namespace csi
 
             void client::commit_consumer_offset_async(const std::string& consumer_group, const std::string& topic, int32_t partition, int64_t offset, int64_t timestamp, const std::string& metadata, int32_t correlation_id, commit_offset_callback cb)
             {
-                perform_async(csi::kafka::create_simple_offset_commit_request(consumer_group, topic, partition, offset, timestamp, metadata, correlation_id), [this, cb](const boost::system::error_code& ec, csi::kafka::basic_call_context::handle handle)
+                perform_async(create_simple_offset_commit_request(consumer_group, topic, partition, offset, timestamp, metadata, correlation_id), [this, cb](const boost::system::error_code& ec, basic_call_context::handle handle)
                 {
                     if (ec)
                         cb(rpc_result<offset_commit_response>(ec));
                     else
-                        cb(csi::kafka::parse_offset_commit_response(handle));
+                        cb(parse_offset_commit_response(handle));
                 });
             }
 
@@ -308,12 +314,12 @@ namespace csi
 
             void client::get_consumer_offset_async(const std::string& consumer_group, const std::string& topic, int32_t partition, int32_t correlation_id, get_consumer_offset_callback cb)
             {
-                perform_async(csi::kafka::create_simple_offset_fetch_request(consumer_group, topic, partition, correlation_id), [this, cb](const boost::system::error_code& ec, csi::kafka::basic_call_context::handle handle)
+                perform_async(create_simple_offset_fetch_request(consumer_group, topic, partition, correlation_id), [this, cb](const boost::system::error_code& ec, basic_call_context::handle handle)
                 {
                     if (ec)
                         cb(rpc_result<offset_fetch_response>(ec));
                     else
-                        cb(csi::kafka::parse_offset_fetch_response(handle));
+                        cb(parse_offset_fetch_response(handle));
                 });
             }
 
@@ -333,12 +339,12 @@ namespace csi
 
             void client::get_consumer_offset_async(const std::string& consumer_group, int32_t correlation_id, get_consumer_offset_callback cb)
             {
-                perform_async(csi::kafka::create_simple_offset_fetch_request(consumer_group, correlation_id), [this, cb](const boost::system::error_code& ec, csi::kafka::basic_call_context::handle handle)
+                perform_async(create_simple_offset_fetch_request(consumer_group, correlation_id), [this, cb](const boost::system::error_code& ec, basic_call_context::handle handle)
                 {
                     if (ec)
                         cb(rpc_result<offset_fetch_response>(ec));
                     else
-                        cb(csi::kafka::parse_offset_fetch_response(handle));
+                        cb(parse_offset_fetch_response(handle));
                 });
             }
 

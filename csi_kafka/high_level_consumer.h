@@ -18,7 +18,7 @@ namespace csi
             void _try_connect_brokers();
 
             boost::asio::io_service&             _ios;
-            std::string                          _topic_name;
+            std::string                          _topic;
             std::map<int, lowlevel_consumer*>    _consumers;
 
             // CLUSTER METADATA

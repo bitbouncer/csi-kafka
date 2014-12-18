@@ -24,7 +24,7 @@ namespace csi
         protected:
             boost::asio::io_service&        _ios;
             csi::kafka::low_level::client   _client;
-            std::string                     _topic_name;
+            std::string                     _topic;
             std::vector<partition_cursor>   _cursors;
         };
     }

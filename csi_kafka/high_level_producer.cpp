@@ -12,7 +12,7 @@ namespace csi
             _timer(io_service),
             _timeout(boost::posix_time::milliseconds(5000)),
             _meta_client(io_service),
-            _topic_name(topic),
+            _topic(topic),
             _required_acks(required_acks),
             _tx_timeout(tx_timeout),
             _max_packet_size(max_packet_size)
@@ -49,19 +49,19 @@ namespace csi
             if (ec)
                 return ec;
 
-            _metadata = _meta_client.get_metadata({ _topic_name }, 0);
+            _metadata = _meta_client.get_metadata({ _topic }, 0);
 
             if (_metadata)
             {
-                std::cerr << "metatdata for topic " << _topic_name << " failed" << std::endl;
+                std::cerr << "metatdata for topic " << _topic << " failed" << std::endl;
                 return  make_error_code(boost::system::errc::no_message);
             }
 
             for (std::vector<csi::kafka::metadata_response::topic_data>::const_iterator i = _metadata->topics.begin(); i != _metadata->topics.end(); ++i)
             {
-                assert(i->topic_name == _topic_name);
+                assert(i->topic_name == _topic);
                 for (std::vector<csi::kafka::metadata_response::topic_data::partition_data>::const_iterator j = i->partitions.begin(); j != i->partitions.end(); ++j)
-                    _partition2producers.insert(std::make_pair(j->partition_id, new async_producer(_ios, _topic_name, j->partition_id, _required_acks, _tx_timeout, _max_packet_size)));
+                    _partition2producers.insert(std::make_pair(j->partition_id, new async_producer(_ios, _topic, j->partition_id, _required_acks, _tx_timeout, _max_packet_size)));
             };
 
             _ios.post([this]{ _try_connect_brokers(); });
@@ -72,7 +72,7 @@ namespace csi
         void highlevel_producer::_try_connect_brokers()
         {
             // the number of partitions is constand but the serving hosts might differ
-            _meta_client.get_metadata_async({ _topic_name }, 0, [this](rpc_result<metadata_response> result)
+            _meta_client.get_metadata_async({ _topic }, 0, [this](rpc_result<metadata_response> result)
             {
                 if (!result)
                 {
@@ -87,7 +87,7 @@ namespace csi
 
                         for (std::vector<csi::kafka::metadata_response::topic_data>::const_iterator i = _metadata->topics.begin(); i != _metadata->topics.end(); ++i)
                         {
-                            assert(i->topic_name == _topic_name);
+                            assert(i->topic_name == _topic);
                             for (std::vector<csi::kafka::metadata_response::topic_data::partition_data>::const_iterator j = i->partitions.begin(); j != i->partitions.end(); ++j)
                             {
                                 _partition2partitions[j->partition_id] = *j;

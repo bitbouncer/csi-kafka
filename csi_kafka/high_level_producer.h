@@ -38,7 +38,7 @@ namespace csi
             void handle_timer(const boost::system::error_code& ec);
             void _try_connect_brokers();
             boost::asio::io_service&                                                 _ios;
-            std::string                                                              _topic_name;
+            std::string                                                              _topic;
             int32_t                                                                  _required_acks;
             int32_t                                                                  _tx_timeout;
             int32_t                                                                  _max_packet_size;
@@ -53,7 +53,7 @@ namespace csi
             csi::kafka::spinlock                                                     _spinlock; // protects the metadata below
             rpc_result<metadata_response>                                            _metadata;
             std::map<int, broker_data>                                               _broker2brokers;
-            std::map<int, csi::kafka::metadata_response::topic_data::partition_data> _partition2partitions; // partition->partition_dat
+            std::map<int, csi::kafka::metadata_response::topic_data::partition_data> _partition2partitions;
         };
     };
 };

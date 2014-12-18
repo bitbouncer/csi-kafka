@@ -9,7 +9,7 @@ namespace csi
         lowlevel_consumer::lowlevel_consumer(boost::asio::io_service& io_service, const std::string& topic) :
             _ios(io_service),
             _client(io_service),
-            _topic_name(topic)
+            _topic(topic)
         {
         }
 
@@ -31,7 +31,7 @@ namespace csi
                 assert(i->_partition_id != partition);
             }
 
-            _client.get_offset_async(_topic_name, partition, start_time, 10, 0, [this, partition, cb](rpc_result<offset_response> response)
+            _client.get_offset_async(_topic, partition, start_time, 10, 0, [this, partition, cb](rpc_result<offset_response> response)
             {
                 if (response)
                     return cb(rpc_result<void>(response.ec));
@@ -39,8 +39,8 @@ namespace csi
                 for (std::vector<csi::kafka::offset_response::topic_data>::const_iterator i = response->topics.begin(); i != response->topics.end(); ++i)
                 {
                     // this should always be true.
-                    assert(i->topic_name == _topic_name);
-                    if (i->topic_name == _topic_name)
+                    assert(i->topic_name == _topic);
+                    if (i->topic_name == _topic)
                     {
                         assert(i->partitions.size() == 1);
                         for (std::vector<csi::kafka::offset_response::topic_data::partition_data>::const_iterator j = i->partitions.begin(); j != i->partitions.end(); ++j)
@@ -77,7 +77,7 @@ namespace csi
 
         void lowlevel_consumer::stream_async(datastream_callback cb)
         {
-            _client.get_data_async(_topic_name, _cursors, 100, 10, 0, [this, cb](rpc_result<fetch_response> response)
+            _client.get_data_async(_topic, _cursors, 100, 10, 0, [this, cb](rpc_result<fetch_response> response)
             {
                 if (response)
                 {   
@@ -87,7 +87,7 @@ namespace csi
                 for (std::vector<csi::kafka::fetch_response::topic_data>::const_iterator i = response->topics.begin(); i != response->topics.end(); ++i)
                 {
                     // this should always be true.
-                    if (i->topic_name == _topic_name)
+                    if (i->topic_name == _topic)
                     {
                         for (std::vector<csi::kafka::fetch_response::topic_data::partition_data>::const_iterator j = i->partitions.begin(); j != i->partitions.end(); ++j)
                         {
@@ -109,7 +109,7 @@ namespace csi
 
         void lowlevel_consumer::get_metadata_async(get_metadata_callback cb)
         {
-            _client.get_metadata_async({ _topic_name }, 0, cb);
+            _client.get_metadata_async({ _topic }, 0, cb);
         }
     } // kafka
 }; // csi

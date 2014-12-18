@@ -29,12 +29,12 @@ namespace csi
             inline bool is_connected() const    { return _client.is_connected(); }
             inline bool is_connection_in_progress() const { return _client.is_connection_in_progress(); }
             int32_t partition() const           { return _partition_id; }
-            const std::string& topic() const    { return _topic_name; }
+            const std::string& topic() const    { return _topic; }
 
         protected:
             boost::asio::io_service&             _ios;
             csi::kafka::low_level::client        _client;
-            const std::string                    _topic_name;
+            const std::string                    _topic;
             const int32_t                        _partition_id;
         };
 
@@ -59,7 +59,7 @@ namespace csi
             inline bool is_connected() const              { return _client.is_connected(); }
             inline bool is_connection_in_progress() const { return _client.is_connection_in_progress(); }
             int32_t partition() const                     { return _partition_id; }
-            const std::string& topic() const              { return _topic_name; }
+            const std::string& topic() const              { return _topic; }
 
             size_t items_in_queue() const { return _tx_queue.size(); } // no lock but should not matter
             size_t bytes_in_queue() const { return _tx_queue_byte_size; } // no lock but should not matter
@@ -84,7 +84,7 @@ namespace csi
 
             boost::asio::io_service&                   _ios;
             csi::kafka::low_level::client              _client;
-            const std::string                          _topic_name;
+            const std::string                          _topic;
             const int32_t                              _partition_id;
             //TX queue
             csi::kafka::spinlock                       _spinlock;

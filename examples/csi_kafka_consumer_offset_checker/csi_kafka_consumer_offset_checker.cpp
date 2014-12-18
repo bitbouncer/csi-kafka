@@ -5,8 +5,8 @@
 
 int main(int argc, char** argv)
 {
-    std::string hostname = (argc >= 2) ? argv[1] : "192.168.0.102";
-    //std::string hostname = (argc >= 2) ? argv[1] : "z8r102-mc12-4-4.sth-tc2.videoplaza.net";
+    //std::string hostname = (argc >= 2) ? argv[1] : "192.168.0.102";
+    std::string hostname = (argc >= 2) ? argv[1] : "z8r102-mc12-4-4.sth-tc2.videoplaza.net";
 
     std::string port = (argc >= 3) ? argv[2] : "9092";
     boost::asio::ip::tcp::resolver::query query(hostname, port);
