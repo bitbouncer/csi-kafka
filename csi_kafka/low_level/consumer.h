@@ -1,3 +1,7 @@
+#include <boost/accumulators/accumulators.hpp>
+#include <boost/accumulators/statistics/stats.hpp>
+#include <boost/accumulators/statistics/rolling_mean.hpp>
+#include <boost/accumulators/statistics/mean.hpp>
 #include "client.h"
 
 #pragma once
@@ -26,6 +30,64 @@ namespace csi
             csi::kafka::low_level::client   _client;
             std::string                     _topic;
             std::vector<partition_cursor>   _cursors;
+        };
+
+        class lowlevel_consumer2
+        {
+        public:
+            typedef boost::function <void(const boost::system::error_code&)>  connect_callback;
+            typedef boost::function <void(rpc_result<void>)>                  set_offset_callback;
+            typedef boost::function <void(rpc_result<metadata_response>)>     get_metadata_callback;
+            typedef boost::function <void(const boost::system::error_code& ec1, csi::kafka::error_codes ec2, const csi::kafka::fetch_response::topic_data::partition_data&)> datastream_callback;
+
+            lowlevel_consumer2(boost::asio::io_service& io_service, const std::string& topic, int32_t partition, int32_t rx_timeout);
+            ~lowlevel_consumer2();
+
+            void                              connect_async(const boost::asio::ip::tcp::resolver::query& query, connect_callback cb);
+            boost::system::error_code         connect(const boost::asio::ip::tcp::resolver::query& query);
+            void                              close();
+
+            void                              set_offset_async(int64_t start_time, set_offset_callback cb);
+            rpc_result<void>                  set_offset(int64_t start_time);
+            void                              stream_async(datastream_callback cb);
+            void                              get_metadata_async(get_metadata_callback cb);
+
+            inline bool                       is_connected() const              { return _client.is_connected(); }
+            inline bool                       is_connection_in_progress() const { return _client.is_connection_in_progress(); }
+            int32_t                           partition() const                 { return _partition; }
+            const std::string&                topic() const                     { return _topic; }
+
+            uint32_t                          metrics_kb_sec() const            { return (uint32_t)boost::accumulators::rolling_mean(_metrics_rx_kb_sec); } // lock ???
+            uint32_t                          metrics_msg_sec() const           { return (uint32_t)boost::accumulators::rolling_mean(_metrics_rx_msg_sec); } // lock ???
+            double                            metrics_rx_roundtrip() const      { return boost::accumulators::rolling_mean(_metrics_rx_roundtrip); } // lock ???
+
+        protected:
+            void _try_fetch();
+            void _try_set_offset();
+
+            boost::asio::io_service&        _ios;
+            csi::kafka::low_level::client   _client;
+            const std::string               _topic;
+            int32_t                         _rx_timeout;
+            bool                            _rx_in_progress;
+            datastream_callback             _cb;
+            const int32_t                   _partition;
+            int64_t                         _next_offset;
+
+
+            //METRICS
+            typedef boost::accumulators::accumulator_set<double, boost::accumulators::stats<boost::accumulators::tag::rolling_mean> >   metrics_accumulator_t;
+            void handle_metrics_timer(const boost::system::error_code& ec);
+
+            boost::asio::deadline_timer	               _metrics_timer;
+            boost::posix_time::time_duration           _metrics_timeout;
+            uint64_t                                   __metrics_last_total_rx_kb;
+            uint64_t                                   __metrics_last_total_rx_msg;
+            uint64_t                                   _metrics_total_rx_kb;
+            uint64_t                                   _metrics_total_rx_msg;
+            metrics_accumulator_t                      _metrics_rx_kb_sec;
+            metrics_accumulator_t                      _metrics_rx_msg_sec;
+            metrics_accumulator_t                      _metrics_rx_roundtrip;
         };
     }
 };

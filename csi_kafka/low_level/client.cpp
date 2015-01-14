@@ -110,7 +110,7 @@ namespace csi
                 close();
             }
 
-            void client::connect_async(const boost::asio::ip::tcp::resolver::query& query, completetion_handler cb)
+            void client::connect_async(const boost::asio::ip::tcp::resolver::query& query, connect_callback cb)
             {
                 _connection_in_progress = true;
                 _resolver.async_resolve(query, [this, cb](boost::system::error_code ec, boost::asio::ip::tcp::resolver::iterator iterator)

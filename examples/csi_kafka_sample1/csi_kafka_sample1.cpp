@@ -7,7 +7,8 @@
 int main(int argc, char** argv)
 {
     std::stringstream stream;
-    std::string hostname = (argc >= 2) ? argv[1] : "192.168.91.131";
+    //std::string hostname = (argc >= 2) ? argv[1] : "192.168.91.131";
+    std::string hostname = (argc >= 2) ? argv[1] : "10.100.5.53";
     //std::string hostname = (argc >= 2) ? argv[1] : "kafka-dev";
     std::string port = (argc >= 3) ? argv[2] : "9092";
 

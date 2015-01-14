@@ -34,9 +34,11 @@ void start_send(csi::kafka::highlevel_producer& producer)
 
 int main(int argc, char** argv)
 {
-    std::stringstream stream;
-    //std::string hostname = (argc >= 2) ? argv[1] : "192.168.0.102";
-    std::string hostname = (argc >= 2) ? argv[1] : "z8r102-mc12-4-4.sth-tc2.videoplaza.net";
+    //std::stringstream stream;
+    //std::string hostname = (argc >= 2) ? argv[1] : "192.168.0.106";
+    //std::string hostname = (argc >= 2) ? argv[1] : "z8r102-mc12-4-4.sth-tc2.videoplaza.net";
+    std::string hostname = (argc >= 2) ? argv[1] : "10.100.5.53";
+    
     std::string port = (argc >= 3) ? argv[2] : "9092";
 
     boost::asio::ip::tcp::resolver::query query(hostname, port);
@@ -45,7 +47,7 @@ int main(int argc, char** argv)
     std::auto_ptr<boost::asio::io_service::work> work(new boost::asio::io_service::work(io_service));
     boost::thread bt(boost::bind(&boost::asio::io_service::run, &io_service));
 
-    csi::kafka::highlevel_producer producer(io_service, "saka.test.strings", -1, 500, 20000);
+    csi::kafka::highlevel_producer producer(io_service, "saka.test.ext_datastream", -1, 500, 20000);
 
     boost::system::error_code error = producer.connect(query);
     

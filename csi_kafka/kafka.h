@@ -8,6 +8,7 @@
 
 #include <stdint.h>
 #include <vector>
+#include <cstring>
 #include <string>
 #include <memory>
 #include "kafka_error_code.h"

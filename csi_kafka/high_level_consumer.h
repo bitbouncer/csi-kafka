@@ -10,16 +10,46 @@ namespace csi
         class highlevel_consumer
         {
         public:
+            struct metrics
+            {
+                int         partition;
+                std::string host;
+                int         port;
+                //size_t      msg_in_queue;
+                //size_t      bytes_in_queue;
+                uint32_t    rx_kb_sec;
+                uint32_t    rx_msg_sec;
+                double      rx_roundtrip;
+            };
+
             typedef boost::function <void(const boost::system::error_code&)> connect_callback;
-            highlevel_consumer(boost::asio::io_service& io_service, const std::string& topic); 
+            typedef boost::function <void(const boost::system::error_code& ec1, csi::kafka::error_codes ec2, const csi::kafka::fetch_response::topic_data::partition_data&)> datastream_callback;
+        
+            highlevel_consumer(boost::asio::io_service& io_service, const std::string& topic, int32_t rx_timeout, int32_t max_packet_size = -1);
+            ~highlevel_consumer(); 
+
+            void set_offset(int64_t start_time);
             boost::system::error_code connect(const boost::asio::ip::tcp::resolver::query& query);
-            void refresh_metadata_async();
+            //void refresh_metadata_async();
+
+
+            void close();
+            void stream_async(datastream_callback cb);
+
+            std::vector<metrics> get_metrics() const;
+
         private:
+            void handle_timer(const boost::system::error_code& ec);
             void _try_connect_brokers();
 
             boost::asio::io_service&             _ios;
+            boost::asio::deadline_timer			 _timer;
+            boost::posix_time::time_duration	 _timeout;
+
             std::string                          _topic;
-            std::map<int, lowlevel_consumer*>    _consumers;
+            int32_t                              _rx_timeout;
+            int32_t                              _max_packet_size;
+            std::map<int, lowlevel_consumer2*>   _partition2consumers;
 
             // CLUSTER METADATA
             csi::kafka::low_level::client                                            _meta_client;

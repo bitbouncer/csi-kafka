@@ -4,6 +4,7 @@
 #include <boost/array.hpp>
 #include <boost/function.hpp>
 #include <boost/bind.hpp>
+#include <csi_kafka/internal/call_context.h>
 #include <csi_kafka/kafka.h>
 #include <csi_kafka/kafka_error_code.h>
 #include "spinlock.h"
@@ -17,29 +18,10 @@ namespace csi
     {
         namespace low_level
         {
-            class basic_call_context
-            {
-            public:
-                basic_call_context() : _tx_size(0), _rx_size(0), _rx_cursor(0), _expecting_reply(true){}
-
-                enum { MAX_BUFFER_SIZE = 1024 * 1024 };
-                typedef boost::function <void(const boost::system::error_code&, std::shared_ptr<basic_call_context>)>	callback;
-                typedef std::shared_ptr<basic_call_context>					                                            handle;
-
-                boost::array<uint8_t, MAX_BUFFER_SIZE>  _tx_buffer;
-                size_t                                  _tx_size;
-                boost::array<uint8_t, MAX_BUFFER_SIZE>  _rx_buffer;
-                size_t                                  _rx_size;
-                size_t                                  _rx_cursor;
-                bool                                    _expecting_reply;
-                callback                                _callback;
-            };
-
-
             class client
             {
             public:
-                typedef boost::function < void(const boost::system::error_code&)>       completetion_handler;
+                typedef boost::function < void(const boost::system::error_code&)>       connect_callback;
                 typedef boost::function <void(rpc_result<metadata_response>)>           get_metadata_callback;
                 typedef boost::function <void(rpc_result<produce_response>)>            send_produce_callback;
                 
@@ -53,7 +35,7 @@ namespace csi
                 client(boost::asio::io_service& io_service);
                 ~client();
 
-                void                                           connect_async(const boost::asio::ip::tcp::resolver::query& query, completetion_handler handler);
+                void                                           connect_async(const boost::asio::ip::tcp::resolver::query& query, connect_callback);
                 boost::system::error_code                      connect(const boost::asio::ip::tcp::resolver::query& query);
 
                 bool                                           close();
@@ -105,7 +87,7 @@ namespace csi
                 boost::asio::ip::tcp::resolver            _resolver;
                 boost::asio::deadline_timer			      _timer;
                 boost::posix_time::time_duration	      _timeout;
-                boost::asio::ip::tcp::socket              _socket; // array of connections to shard leaders???
+                boost::asio::ip::tcp::socket              _socket;
                 std::deque<basic_call_context::handle>    _tx_queue;
                 std::deque<basic_call_context::handle>    _rx_queue;
                 bool                                      _connected;

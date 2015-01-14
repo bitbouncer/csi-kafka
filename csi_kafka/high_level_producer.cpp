@@ -33,9 +33,7 @@ namespace csi
         void highlevel_producer::close()
         {
             _timer.cancel();
-
             _meta_client.close(); 
-
             for (std::map<int, async_producer*>::iterator i = _partition2producers.begin(); i != _partition2producers.end(); ++i)
             {
                 i->second->close();
@@ -60,6 +58,10 @@ namespace csi
             for (std::vector<csi::kafka::metadata_response::topic_data>::const_iterator i = _metadata->topics.begin(); i != _metadata->topics.end(); ++i)
             {
                 assert(i->topic_name == _topic);
+                if (i->error_code)
+                {
+                    std::cerr << "metatdata for topic " << _topic << " failed: " << to_string((error_codes) i->error_code) << std::endl;
+                }
                 for (std::vector<csi::kafka::metadata_response::topic_data::partition_data>::const_iterator j = i->partitions.begin(); j != i->partitions.end(); ++j)
                     _partition2producers.insert(std::make_pair(j->partition_id, new async_producer(_ios, _topic, j->partition_id, _required_acks, _tx_timeout, _max_packet_size)));
             };
@@ -115,7 +117,9 @@ namespace csi
                                 std::cerr << "can't connect to broker #" << leader << " (" << broker_uri << ") partition " << partition << " ec:" << ec1 << std::endl;
                             }
                             else
+                            {
                                 std::cerr << "connected to broker #" << leader << " (" << broker_uri << ") partition " << partition << std::endl;
+                            }
                         });
                     }
                 }
