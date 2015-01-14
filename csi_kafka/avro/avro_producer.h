@@ -32,7 +32,7 @@ namespace csi
             void send_async(int32_t required_acks, int32_t timeout, const std::vector<T>& src, int32_t correlation_id, send_callback cb)
             {
                 std::vector<std::shared_ptr<csi::kafka::basic_message>> src2;
-                for (std::vector<T>::const_iterator i = src.begin(); i != src.end(); ++i)
+                for (typename std::vector<T>::const_iterator i = src.begin(); i != src.end(); ++i)
                 {
                     auto ostr = avro::memoryOutputStream();
                     avro_binary_encode(*i, *ostr);
@@ -56,7 +56,7 @@ namespace csi
             std::shared_ptr<csi::kafka::produce_response> send_sync(int32_t required_acks, int32_t timeout, const std::vector<T>& src, int32_t correlation_id, send_callback cb)
             {
                 std::vector<csi::kafka::basic_message> src2;
-                for (std::vector<T>::const_iterator i = src.begin(); i != src.end(); ++i)
+                for (typename std::vector<T>::const_iterator i = src.begin(); i != src.end(); ++i)
                 {
                     auto ostr = avro::memoryOutputStream();
                     avro_binary_encode(*i, *ostr);
@@ -91,7 +91,7 @@ namespace csi
             void send_async(int32_t required_acks, int32_t timeout, const std::vector<std::pair<K, V>>& src, int32_t correlation_id, send_callback cb)
             {
                 std::vector<std::shared_ptr<csi::kafka::basic_message>> src2;
-                for (std::vector<std::pair<K, V>>::const_iterator i = src.begin(); i != src.end(); ++i)
+                for (typename std::vector<std::pair<K, V>>::const_iterator i = src.begin(); i != src.end(); ++i)
                 {
                     std::shared_ptr<csi::kafka::basic_message> msg(new csi::kafka::basic_message());
 
