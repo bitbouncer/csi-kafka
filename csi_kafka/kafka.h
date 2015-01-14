@@ -319,12 +319,14 @@ namespace csi
             inline rpc_result(const rpc_error_code& e, std::shared_ptr<T> d) : ec(e), data(d) {}
 
 
-            inline operator bool() const  BOOST_SYSTEM_NOEXCEPT // true if error
+            //inline operator bool() const  BOOST_SYSTEM_NOEXCEPT // true if error
+            inline operator bool() const  // true if error
             {
                 return ec || (data.get() == NULL);
             }
 
-            inline bool operator!() const  BOOST_SYSTEM_NOEXCEPT // true if no error
+            //inline bool operator!() const  BOOST_SYSTEM_NOEXCEPT // true if no error
+            inline bool operator!() const  // true if no error
             {
                 return !ec && (data.get() != NULL);
             }
