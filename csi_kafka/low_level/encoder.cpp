@@ -19,17 +19,20 @@ namespace csi
 
             inline void encode_i16(boost::iostreams::stream<boost::iostreams::array_sink>& stream, int16_t val)
             {
-                stream.write((const char*)&boost::endian::big_int16_t(val), 2);
+                boost::endian::big_int16_t bev(val);
+                stream.write((const char*)&bev, 2);
             }
 
             inline void encode_i32(boost::iostreams::stream<boost::iostreams::array_sink>& stream, int32_t val)
             {
-                stream.write((const char*)&boost::endian::big_int32_t(val), 4);
+                boost::endian::big_int32_t bev(val);
+                stream.write((const char*)&bev, 4);
             }
 
             inline void encode_i64(boost::iostreams::stream<boost::iostreams::array_sink>& stream, int64_t val)
             {
-                stream.write((const char*)&boost::endian::big_int64_t(val), 8);
+                boost::endian::big_int64_t bev(val);
+                stream.write((const char*)&bev, 8);
             }
 
             inline void encode_str(boost::iostreams::stream<boost::iostreams::array_sink>& stream, const std::string& s)
