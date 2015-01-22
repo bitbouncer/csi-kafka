@@ -20,7 +20,7 @@ int main(int argc, char** argv)
 
     csi::kafka::low_level::client client(io_service);
 
-    boost::system::error_code error = client.connect(query);
+    boost::system::error_code error = client.connect(query, 1000);
 
     auto res1 = client.get_metadata({}, 0);
     if (res1)

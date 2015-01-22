@@ -15,12 +15,12 @@ namespace csi
 
         void lowlevel_consumer::connect_async(const boost::asio::ip::tcp::resolver::query& query, connect_callback cb)
         {
-            _client.connect_async(query, cb);
+            _client.connect_async(query, 1000, cb);
         }
 
         boost::system::error_code lowlevel_consumer::connect(const boost::asio::ip::tcp::resolver::query& query)
         {
-            return _client.connect(query);
+            return _client.connect(query, 1000);
         }
 
         void lowlevel_consumer::set_offset_async(int32_t partition, int64_t start_time, set_offset_callback cb)
@@ -171,12 +171,12 @@ namespace csi
 
         void lowlevel_consumer2::connect_async(const boost::asio::ip::tcp::resolver::query& query, connect_callback cb)
         {
-            _client.connect_async(query, cb);
+            _client.connect_async(query, 1000, cb);
         }
 
         boost::system::error_code lowlevel_consumer2::connect(const boost::asio::ip::tcp::resolver::query& query)
         {
-            return _client.connect(query);
+            return _client.connect(query, 1000);
         }
 
         void lowlevel_consumer2::close()

@@ -12,5 +12,6 @@ endif()
 
 add_subdirectory(csi_kafka)
 add_subdirectory(examples)
+add_subdirectory(tests)
 
 

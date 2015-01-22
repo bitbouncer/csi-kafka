@@ -41,7 +41,7 @@ namespace csi
 
         boost::system::error_code highlevel_consumer::connect(const boost::asio::ip::tcp::resolver::query& query)
         {
-            boost::system::error_code ec = _meta_client.connect(query);
+            boost::system::error_code ec = _meta_client.connect(query, 1000);
 
             if (ec)
                 return ec;

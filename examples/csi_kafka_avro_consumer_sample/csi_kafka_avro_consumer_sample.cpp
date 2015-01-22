@@ -31,7 +31,7 @@ int main(int argc, char** argv)
     // just testing away
     {
         csi::kafka::low_level::client client(io_service);
-        boost::system::error_code ec = client.connect(query);
+        boost::system::error_code ec = client.connect(query, 1000);
         auto md = client.get_metadata({}, 0);
         auto resp = client.get_consumer_metadata("saka.test.avro-syslog2", 0);
     }

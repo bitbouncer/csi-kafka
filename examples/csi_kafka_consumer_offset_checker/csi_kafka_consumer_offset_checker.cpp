@@ -16,7 +16,7 @@ int main(int argc, char** argv)
     boost::thread bt(boost::bind(&boost::asio::io_service::run, &io_service));
 
     csi::kafka::low_level::client client(io_service);
-    boost::system::error_code ec = client.connect(query);
+    boost::system::error_code ec = client.connect(query, 1000);
     if (!ec)
     {
         auto md = client.get_metadata({}, 0);
@@ -28,7 +28,7 @@ int main(int argc, char** argv)
         {
             boost::asio::ip::tcp::resolver::query query(cmd->host_name, std::to_string(cmd->port));
             csi::kafka::low_level::client offset_client(io_service);
-            boost::system::error_code ec = offset_client.connect(query);
+            boost::system::error_code ec = offset_client.connect(query, 1000);
             if (!ec)
             {
                 auto od = offset_client.get_consumer_offset("my_test_group", 42);

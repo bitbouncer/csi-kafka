@@ -93,9 +93,11 @@ namespace csi
                 _io_service(io_service),
                 _resolver(io_service),
                 _timer(io_service),
+                _connect_timeout_timer(io_service),
                 _socket(io_service),
                 _connected(false),
                 _connection_in_progress(false),
+                _resolve_in_progress(false),
                 _tx_in_progress(false),
                 _rx_in_progress(false),
                 _timeout(boost::posix_time::milliseconds(1000))
@@ -106,15 +108,23 @@ namespace csi
 
             client::~client()
             {
+                if (_resolve_in_progress)
+                    _resolver.cancel();
+                _connect_timeout_timer.cancel(); // ec?
                 _timer.cancel();
                 close();
             }
 
-            void client::connect_async(const boost::asio::ip::tcp::resolver::query& query, connect_callback cb)
+            void client::connect_async(const boost::asio::ip::tcp::resolver::query& query, int32_t timeout, connect_callback cb)
             {
+                _connect_timeout_timer.expires_from_now(boost::posix_time::milliseconds(timeout));
+                _connect_timeout_timer.async_wait(boost::bind(&client::handle_connect_timeout, this, boost::asio::placeholders::error));
+
                 _connection_in_progress = true;
+                _resolve_in_progress = true;
                 _resolver.async_resolve(query, [this, cb](boost::system::error_code ec, boost::asio::ip::tcp::resolver::iterator iterator)
                 {
+                    _resolve_in_progress = false;
                     if (ec)
                     {
                         _connection_in_progress = false;
@@ -123,6 +133,7 @@ namespace csi
                     else
                         boost::asio::async_connect(_socket, iterator, [this, cb](boost::system::error_code ec, boost::asio::ip::tcp::resolver::iterator)
                     {
+                        _connect_timeout_timer.cancel();
                         _connection_in_progress = false;
                         if (!ec)
                             _connected = true;
@@ -131,16 +142,28 @@ namespace csi
                 });
             }
 
-            boost::system::error_code client::connect(const boost::asio::ip::tcp::resolver::query& query)
+            boost::system::error_code client::connect(const boost::asio::ip::tcp::resolver::query& query, int32_t timeout)
             {
                 std::promise<boost::system::error_code> p;
                 std::future<boost::system::error_code>  f = p.get_future();
-                connect_async(query, [&p](const boost::system::error_code& error)
+                connect_async(query, timeout, [&p](const boost::system::error_code& error)
                 {
                     p.set_value(error);
                 });
                 f.wait();
                 return f.get();
+            }
+
+            void client::connect_async(const std::string& host, int32_t port, int32_t timeout, connect_callback cb)
+            {
+                boost::asio::ip::tcp::resolver::query query(host, std::to_string(port));
+                connect_async(query, timeout, cb);
+            }
+            
+            boost::system::error_code client::connect(const std::string& host, int32_t port, int32_t timeout)
+            {
+                boost::asio::ip::tcp::resolver::query query(host, std::to_string(port));
+                return connect(query, timeout);
             }
 
             void client::handle_timer(const boost::system::error_code& ec)
@@ -152,8 +175,26 @@ namespace csi
                 }
             }
 
+            void  client::handle_connect_timeout(const boost::system::error_code& ec)
+            {
+                if (!ec)
+                {
+                    if (_resolve_in_progress)
+                        _resolver.cancel();
+                    _connected = false;
+                    boost::system::error_code ec;
+                    _socket.cancel(ec);
+                    _socket.close();
+                }
+            }
+
             bool client::close()
             {
+                if (_resolve_in_progress)
+                    _resolver.cancel();
+
+                _connect_timeout_timer.cancel(); // ec?
+
                 _connected = false;
                 boost::system::error_code ec;
                 _socket.cancel(ec);
@@ -424,10 +465,15 @@ namespace csi
 
             void client::socket_rx_cb(const boost::system::error_code& error_code, size_t bytes_received, basic_call_context::handle handle)
             {
+                //possibly set state -> not-connected????
                 if (error_code)
                 {
+                    _rx_in_progress = false;
+                    _connected = false;
+
                     if (handle->_callback)
                         handle->_callback(error_code, handle);
+                    return;
                 }
 
                 handle->_rx_cursor += bytes_received;
@@ -464,12 +510,19 @@ namespace csi
 
             void client::socket_tx_cb(const boost::system::error_code& error_code, basic_call_context::handle handle)
             {
+                //possibly set state -> not-connected????
+                // dont think we should send error codes here since we get error codes on the receiving end as well
+                // to simplify - we push all callbacks to a rx event if we know that the write will fail 
+                /*
                 if (error_code)
                 {
-                    if (handle->_callback)
-                        handle->_callback(error_code, handle);
+                    _tx_in_progress = false;
+                    _connected      = false;
+                    //if (handle->_callback)
+                    //    handle->_callback(error_code, handle);
                     return;
                 }
+                */
 
                 // if we're not expecing result the all we can say to the client is "NoError" when we posted the data on socket
                 if (!handle->_expecting_reply)

@@ -17,6 +17,15 @@ namespace csi
 {
     namespace kafka
     {
+        struct broker_address
+        {
+            broker_address() : port(-1) {}
+            broker_address(const std::string& h, int32_t p) : host_name(h), port(p) {}
+            std::string host_name;
+            int32_t     port;
+        };
+
+
         enum { ApiVersion = 0 };
 
         enum { latest_offsets = -1, earliest_available_offset = -2 };

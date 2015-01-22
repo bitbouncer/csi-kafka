@@ -16,12 +16,12 @@ namespace csi
 
         void producer::connect_async(const boost::asio::ip::tcp::resolver::query& query, connect_callback cb)
         {
-            _client.connect_async(query, cb);
+            _client.connect_async(query, 1000, cb);
         }
 
         boost::system::error_code producer::connect(const boost::asio::ip::tcp::resolver::query& query)
         {
-            return _client.connect(query);
+            return _client.connect(query, 1000);
         }
 
         void  producer::close()
@@ -93,12 +93,12 @@ namespace csi
 
         void async_producer::connect_async(const boost::asio::ip::tcp::resolver::query& query, connect_callback cb)
         {
-            _client.connect_async(query, cb);
+            _client.connect_async(query, 1000, cb);
         }
 
         boost::system::error_code async_producer::connect(const boost::asio::ip::tcp::resolver::query& query)
         {
-            return _client.connect(query);
+            return _client.connect(query, 1000);
         }
 
 
@@ -127,7 +127,7 @@ namespace csi
             if (_tx_in_progress || !_client.is_connected())
                 return;
 
-            std::cerr << "+";
+            //std::cerr << "+";
             _tx_in_progress = true;
 
             std::vector<std::shared_ptr<basic_message>> v;

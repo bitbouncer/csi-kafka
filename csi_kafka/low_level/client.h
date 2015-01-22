@@ -35,8 +35,11 @@ namespace csi
                 client(boost::asio::io_service& io_service);
                 ~client();
 
-                void                                           connect_async(const boost::asio::ip::tcp::resolver::query& query, connect_callback);
-                boost::system::error_code                      connect(const boost::asio::ip::tcp::resolver::query& query);
+                void                                           connect_async(const std::string& host, int32_t port, int32_t timeout, connect_callback);
+                boost::system::error_code                      connect(const std::string& host, int32_t port, int32_t timeout);
+
+                void                                           connect_async(const boost::asio::ip::tcp::resolver::query& query, int32_t timeout, connect_callback);
+                boost::system::error_code                      connect(const boost::asio::ip::tcp::resolver::query& query, int32_t timeout);
 
                 bool                                           close();
                 bool                                           is_connected() const;
@@ -73,6 +76,7 @@ namespace csi
 
                 // asio callbacks
                 void handle_timer(const boost::system::error_code& ec);
+                void handle_connect_timeout(const boost::system::error_code& ec);
 
                 void _perform(basic_call_context::handle handle);       // will be called in context of worker thread
 
@@ -87,10 +91,13 @@ namespace csi
                 boost::asio::ip::tcp::resolver            _resolver;
                 boost::asio::deadline_timer			      _timer;
                 boost::posix_time::time_duration	      _timeout;
+
+                boost::asio::deadline_timer			      _connect_timeout_timer;
                 boost::asio::ip::tcp::socket              _socket;
                 std::deque<basic_call_context::handle>    _tx_queue;
                 std::deque<basic_call_context::handle>    _rx_queue;
                 bool                                      _connected;
+                bool                                      _resolve_in_progress;
                 bool                                      _connection_in_progress;
                 bool                                      _tx_in_progress;
                 bool                                      _rx_in_progress;
