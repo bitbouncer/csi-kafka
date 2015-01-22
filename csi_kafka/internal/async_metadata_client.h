@@ -1,0 +1,53 @@
+#include <csi_kafka/low_level/client.h>
+
+#pragma once
+
+namespace csi
+{
+    namespace kafka
+    {
+        class async_metadata_client
+        {
+        public:
+            typedef boost::function < void(const boost::system::error_code&)>       connect_callback;
+            typedef boost::function <void(rpc_result<metadata_response>)>           get_metadata_callback;
+
+            async_metadata_client(boost::asio::io_service& io_service);
+            ~async_metadata_client();
+
+            void                                           connect_async(const std::vector<broker_address>& brokers);
+
+            void                                           close();
+            bool                                           is_connected() const;
+
+            void                                           get_metadata_async(const std::vector<std::string>& topics, int32_t correlation_id, get_metadata_callback);
+            rpc_result<metadata_response>                  get_metadata(const std::vector<std::string>& topics, int32_t correlation_id);
+
+        protected:
+            void                                           _connect_async_next();
+            void                                           handle_get_metadata(rpc_result<metadata_response> response);
+
+            // asio callbacks
+            void handle_connect_retry_timer(const boost::system::error_code& ec);
+            void handle_get_metadata_timer(const boost::system::error_code& ec);
+
+
+            boost::asio::io_service&                                                 _ios;
+            boost::asio::deadline_timer			                                     _metadata_timer;
+            boost::asio::deadline_timer			                                     _connect_retry_timer;
+            boost::posix_time::time_duration	                                     _metadata_timeout;
+            boost::posix_time::time_duration                                         _current_retry_timeout;
+            boost::posix_time::time_duration                                         _max_retry_timeout;
+
+            csi::kafka::low_level::client                                            _client;
+            csi::kafka::spinlock                                                     _spinlock; // protects the metadata below
+            std::vector<broker_address>                                              _known_brokers;
+            std::vector<broker_address>::iterator                                    _next_broker;
+            rpc_result<metadata_response>                                            _metadata;
+            std::map<int, broker_data>                                               _broker2brokers;
+            std::map<int, csi::kafka::metadata_response::topic_data::partition_data> _partition2partitions;
+        };
+    };
+};
+
+
