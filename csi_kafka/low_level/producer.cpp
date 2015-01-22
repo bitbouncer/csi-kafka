@@ -101,7 +101,6 @@ namespace csi
             return _client.connect(query, 1000);
         }
 
-
         void async_producer::send_async(std::shared_ptr<basic_message> message, tx_ack_callback cb)
         {
             {

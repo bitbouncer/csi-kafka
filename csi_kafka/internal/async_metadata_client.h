@@ -16,6 +16,7 @@ namespace csi
             ~async_metadata_client();
 
             void                                           connect_async(const std::vector<broker_address>& brokers);
+            void                                           connect(const std::vector<broker_address>& brokers);
 
             void                                           close();
             bool                                           is_connected() const;

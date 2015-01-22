@@ -1,4 +1,6 @@
 #include <csi_kafka/low_level/producer.h>
+#include <csi_kafka/internal/async_metadata_client.h>
+
 #pragma once
 
 namespace csi
@@ -26,7 +28,7 @@ namespace csi
 
             highlevel_producer(boost::asio::io_service& io_service, const std::string& topic, int32_t required_acks, int32_t tx_timeout, int32_t max_packet_size=-1);
             ~highlevel_producer();
-            boost::system::error_code connect(const boost::asio::ip::tcp::resolver::query& query);
+            void connect_async(const std::vector<broker_address>& brokers); // callback???
             void send_async(std::shared_ptr<basic_message> message, tx_ack_callback = NULL);
             void send_async(std::vector<std::shared_ptr<basic_message>>& messages, tx_ack_callback = NULL);
             void close(); 
@@ -34,6 +36,16 @@ namespace csi
             std::vector<metrics> get_metrics() const;
 
         private:
+            struct tx_item
+            {
+                tx_item(uint32_t h, std::shared_ptr<basic_message> message) : hash(h), msg(message) {}
+                tx_item(uint32_t h, std::shared_ptr<basic_message> message, tx_ack_callback callback) : hash(h), msg(message), cb(callback) {}
+                uint32_t                       hash;
+                std::shared_ptr<basic_message> msg;
+                tx_ack_callback                cb;
+            };
+
+
             // asio callbacks
             void handle_timer(const boost::system::error_code& ec);
             void _try_connect_brokers();
@@ -48,10 +60,13 @@ namespace csi
             boost::asio::deadline_timer			                                     _timer;
             boost::posix_time::time_duration	                                     _timeout;
 
+            std::deque<tx_item>                                                      _tx_queue; // used when waiting for cluster
+
             // CLUSTER METADATA
-            csi::kafka::low_level::client                                            _meta_client;
+            csi::kafka::async_metadata_client                                        _meta_client;
+            //csi::kafka::low_level::client                                            _meta_client;
             csi::kafka::spinlock                                                     _spinlock; // protects the metadata below
-            rpc_result<metadata_response>                                            _metadata;
+            //rpc_result<metadata_response>                                            _metadata;
             std::map<int, broker_data>                                               _broker2brokers;
             std::map<int, csi::kafka::metadata_response::topic_data::partition_data> _partition2partitions;
         };

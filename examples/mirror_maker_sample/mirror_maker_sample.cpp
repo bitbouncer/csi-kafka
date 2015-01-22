@@ -14,12 +14,7 @@ static int lognr = 0;
 
 int main(int argc, char** argv)
 {
-    //std::stringstream stream;
-    std::string hostname = (argc >= 2) ? argv[1] : "192.168.0.106";
-    //std::string hostname = (argc >= 2) ? argv[1] : "z8r102-mc12-4-4.sth-tc2.videoplaza.net";
-    std::string port = (argc >= 3) ? argv[2] : "9092";
-
-    boost::asio::ip::tcp::resolver::query query(hostname, port);
+    int32_t port = (argc >= 3) ? atoi(argv[2]) : 9092;
 
     boost::asio::io_service io_service;
     std::auto_ptr<boost::asio::io_service::work> work(new boost::asio::io_service::work(io_service));
@@ -27,6 +22,16 @@ int main(int argc, char** argv)
 
     csi::kafka::highlevel_producer producer(io_service, "saka.test.ext_datastream", -1, 500, 20000);
 
-    boost::system::error_code error = producer.connect(query);
-
+    if (argc >= 2)
+    {
+        producer.connect_async({ csi::kafka::broker_address(argv[1], port) });
+    }
+    else
+    {
+        producer.connect_async(
+        {
+            csi::kafka::broker_address("192.168.0.6", 9092),
+            csi::kafka::broker_address("10.1.3.238", 9092)
+        });
+    }
 }
