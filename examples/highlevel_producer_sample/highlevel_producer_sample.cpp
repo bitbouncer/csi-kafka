@@ -7,7 +7,7 @@
 #include <csi_kafka/high_level_producer.h>
 
 
-#define VALUE_SIZE 800
+#define VALUE_SIZE 300
 
 static boost::accumulators::accumulator_set<double, boost::accumulators::stats<boost::accumulators::tag::rolling_mean> > acc(boost::accumulators::tag::rolling_window::window_size = 10);
 static int64_t total = 0;
