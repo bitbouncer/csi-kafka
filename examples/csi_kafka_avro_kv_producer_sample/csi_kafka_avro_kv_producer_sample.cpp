@@ -41,9 +41,10 @@ void create_message(std::vector<std::pair<sample::contact_info_key, sample::cont
 int main(int argc, char** argv)
 {
     int64_t total = 0;
-    std::string hostname = (argc >= 2) ? argv[1] : "192.168.91.131";
-    std::string port = (argc >= 3) ? argv[2] : "9092";
-    boost::asio::ip::tcp::resolver::query query(hostname, port);
+    csi::kafka::broker_address addr("192.168.0.6", 9092);
+    int32_t port = (argc >= 3) ? atoi(argv[2]) : 9092;
+    if (argc >= 2)
+        addr = csi::kafka::broker_address(argv[1], port);
 
     boost::asio::io_service io_service;
     std::auto_ptr<boost::asio::io_service::work> work(new boost::asio::io_service::work(io_service));
@@ -64,7 +65,7 @@ int main(int argc, char** argv)
 
 
     csi::kafka::avro_producer2<sample::contact_info_key, sample::contact_info> producer(io_service, "saka.test.avro_key_value", 0);
-    boost::system::error_code error = producer.connect(query);
+    boost::system::error_code error = producer.connect(addr, 1000);
 
     int32_t cursor=0;
 

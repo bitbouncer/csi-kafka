@@ -25,11 +25,12 @@ struct contact_info_key_compare
 
 int main(int argc, char** argv)
 {
-    csi::kafka::table<sample::contact_info_key, sample::contact_info, contact_info_key_compare> datastore;
+    csi::kafka::broker_address addr("192.168.0.6", 9092);
+    int32_t port = (argc >= 3) ? atoi(argv[2]) : 9092;
+    if (argc >= 2)
+        addr = csi::kafka::broker_address(argv[1], port);
 
-    std::string hostname = (argc >= 2) ? argv[1] : "192.168.91.131";
-    std::string port = (argc >= 3) ? argv[2] : "9092";
-    boost::asio::ip::tcp::resolver::query query(hostname, port);
+    csi::kafka::table<sample::contact_info_key, sample::contact_info, contact_info_key_compare> datastore;
 
     boost::asio::io_service io_service;
     std::auto_ptr<boost::asio::io_service::work> work(new boost::asio::io_service::work(io_service));
@@ -39,7 +40,7 @@ int main(int argc, char** argv)
 
     int64_t message_total = 0;
 
-    boost::system::error_code ec1 = consumer.connect(query);
+    boost::system::error_code ec1 = consumer.connect(addr, 1000);
     auto ec2 = consumer.set_offset(0, csi::kafka::earliest_available_offset);
 
     csi::kafka::avro_key_value_decoder<sample::contact_info_key, sample::contact_info> decoder([&datastore, &message_total](

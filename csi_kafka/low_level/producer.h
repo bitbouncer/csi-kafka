@@ -19,8 +19,11 @@ namespace csi
 
             producer(boost::asio::io_service& io_service, const std::string& topic, int32_t partition);
 
-            void connect_async(const boost::asio::ip::tcp::resolver::query& query, connect_callback cb);
-            boost::system::error_code connect(const boost::asio::ip::tcp::resolver::query& query);
+            void                              connect_async(const broker_address& address, int32_t timeout, connect_callback);
+            boost::system::error_code         connect(const broker_address& address, int32_t timeout);
+
+            void                              connect_async(const boost::asio::ip::tcp::resolver::query& query, int32_t timeout, connect_callback cb);
+            boost::system::error_code         connect(const boost::asio::ip::tcp::resolver::query& query, int32_t timeout);
             void close();
             //void close_async();
 
@@ -50,10 +53,13 @@ namespace csi
             async_producer(boost::asio::io_service& io_service, const std::string& topic, int32_t partition, int32_t required_acks, int32_t timeout, int32_t max_packet_size=-1);
             ~async_producer();
 
-            void connect_async(const boost::asio::ip::tcp::resolver::query& query, connect_callback cb);
-            boost::system::error_code connect(const boost::asio::ip::tcp::resolver::query& query);
-            void close();
-            void send_async(std::shared_ptr<basic_message> message, tx_ack_callback = NULL);
+            void                              connect_async(const broker_address& address, int32_t timeout, connect_callback);
+            boost::system::error_code         connect(const broker_address& address, int32_t timeout);
+
+            void                              connect_async(const boost::asio::ip::tcp::resolver::query& query, int32_t timeout, connect_callback cb);
+            boost::system::error_code         connect(const boost::asio::ip::tcp::resolver::query& query, int32_t timeout);
+            void                              close();
+            void                              send_async(std::shared_ptr<basic_message> message, tx_ack_callback = NULL);
 
             //void wait_lowwater_async(int max_messages, lowwater_callback);
             //void close_async();

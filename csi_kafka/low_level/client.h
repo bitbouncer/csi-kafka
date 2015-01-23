@@ -35,6 +35,9 @@ namespace csi
                 client(boost::asio::io_service& io_service);
                 ~client();
 
+                void                                           connect_async(const broker_address& address, int32_t timeout, connect_callback);
+                boost::system::error_code                      connect(const broker_address& address, int32_t timeout);
+
                 void                                           connect_async(const std::string& host, int32_t port, int32_t timeout, connect_callback);
                 boost::system::error_code                      connect(const std::string& host, int32_t port, int32_t timeout);
 

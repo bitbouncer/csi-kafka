@@ -55,20 +55,16 @@ namespace csi
             int32_t                                                                  _tx_timeout;
             int32_t                                                                  _max_packet_size;
 
-            std::map<int, async_producer*>                                           _partition2producers;
-
             boost::asio::deadline_timer			                                     _timer;
             boost::posix_time::time_duration	                                     _timeout;
 
-            std::deque<tx_item>                                                      _tx_queue; // used when waiting for cluster
-
             // CLUSTER METADATA
             csi::kafka::async_metadata_client                                        _meta_client;
-            //csi::kafka::low_level::client                                            _meta_client;
             csi::kafka::spinlock                                                     _spinlock; // protects the metadata below
-            //rpc_result<metadata_response>                                            _metadata;
             std::map<int, broker_data>                                               _broker2brokers;
             std::map<int, csi::kafka::metadata_response::topic_data::partition_data> _partition2partitions;
+            std::deque<tx_item>                                                      _tx_queue; // used when waiting for cluster
+            std::map<int, async_producer*>                                           _partition2producers;
         };
     };
 };

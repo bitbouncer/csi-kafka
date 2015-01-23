@@ -39,15 +39,11 @@ namespace csi
             }
         }
 
-        boost::system::error_code highlevel_consumer::connect(const boost::asio::ip::tcp::resolver::query& query)
+        void highlevel_consumer::connect_async(const std::vector<broker_address>& brokers)
         {
-            boost::system::error_code ec = _meta_client.connect(query, 1000);
-
-            if (ec)
-                return ec;
-
-            _metadata = _meta_client.get_metadata({ _topic }, 0);
-
+            _meta_client.connect_async(brokers);
+            
+            /*
             if (_metadata)
             {
                 std::cerr << "metatdata for topic " << _topic << " failed" << std::endl;
@@ -64,10 +60,8 @@ namespace csi
                 for (std::vector<csi::kafka::metadata_response::topic_data::partition_data>::const_iterator j = i->partitions.begin(); j != i->partitions.end(); ++j)
                     _partition2consumers.insert(std::make_pair(j->partition_id, new lowlevel_consumer2(_ios, _topic, j->partition_id, _rx_timeout)));
             };
-
             _ios.post([this]{ _try_connect_brokers(); });
-
-            return ec;
+            */
         }
 
         void highlevel_consumer::set_offset(int64_t start_time)
@@ -99,14 +93,28 @@ namespace csi
                 {
                     {
                         csi::kafka::spinlock::scoped_lock xxx(_spinlock);
-                        _metadata = result;
 
-                        for (std::vector<csi::kafka::broker_data>::const_iterator i = _metadata->brokers.begin(); i != _metadata->brokers.end(); ++i)
+                        if (_partition2consumers.size() == 0)
+                        {
+                            for (std::vector<csi::kafka::metadata_response::topic_data>::const_iterator i = result->topics.begin(); i != result->topics.end(); ++i)
+                            {
+                                assert(i->topic_name == _topic);
+                                if (i->error_code)
+                                {
+                                    std::cerr << "metatdata for topic " << _topic << " failed: " << to_string((error_codes)i->error_code) << std::endl;
+                                }
+                                for (std::vector<csi::kafka::metadata_response::topic_data::partition_data>::const_iterator j = i->partitions.begin(); j != i->partitions.end(); ++j)
+                                    _partition2consumers.insert(std::make_pair(j->partition_id, new lowlevel_consumer2(_ios, _topic, j->partition_id, _rx_timeout)));
+                            };
+                        }
+
+                        for (std::vector<csi::kafka::broker_data>::const_iterator i = result->brokers.begin(); i != result->brokers.end(); ++i)
                         {
                             _broker2brokers[i->node_id] = *i;
                         };
 
-                        for (std::vector<csi::kafka::metadata_response::topic_data>::const_iterator i = _metadata->topics.begin(); i != _metadata->topics.end(); ++i)
+
+                        for (std::vector<csi::kafka::metadata_response::topic_data>::const_iterator i = result->topics.begin(); i != result->topics.end(); ++i)
                         {
                             assert(i->topic_name == _topic);
                             for (std::vector<csi::kafka::metadata_response::topic_data::partition_data>::const_iterator j = i->partitions.begin(); j != i->partitions.end(); ++j)
@@ -115,29 +123,30 @@ namespace csi
                             };
                         };
                     }
-                }
 
-                for (std::map<int, lowlevel_consumer2*>::iterator i = _partition2consumers.begin(); i != _partition2consumers.end(); ++i)
-                {
-                    if (!i->second->is_connected() && !i->second->is_connection_in_progress())
+                    for (std::map<int, lowlevel_consumer2*>::iterator i = _partition2consumers.begin(); i != _partition2consumers.end(); ++i)
                     {
-                        int partition = i->first;
-                        int leader = _partition2partitions[partition].leader;
-                        auto bd = _broker2brokers[leader];
-                        boost::asio::ip::tcp::resolver::query query(bd.host_name, std::to_string(bd.port));
-                        std::string broker_uri = bd.host_name + ":" + std::to_string(bd.port);
-                        std::cerr << "connecting to broker node_id:" << leader << " (" << broker_uri << ") partition:" << partition << std::endl;
-                        i->second->connect_async(query, [leader, partition, broker_uri](const boost::system::error_code& ec1)
+                        if (!i->second->is_connected() && !i->second->is_connection_in_progress())
                         {
-                            if (ec1)
+                            int partition = i->first;
+                            int leader = _partition2partitions[partition].leader;
+                            auto bd = _broker2brokers[leader];
+                            broker_address broker_addr(bd.host_name, bd.port);
+                            //boost::asio::ip::tcp::resolver::query query(bd.host_name, std::to_string(bd.port));
+                            //std::string broker_uri = bd.host_name + ":" + std::to_string(bd.port);
+                            std::cerr << "connecting to broker node_id:" << leader << " (" << to_string(broker_addr) << ") partition:" << partition << std::endl;
+                            i->second->connect_async(broker_addr, 1000, [leader, partition, broker_addr](const boost::system::error_code& ec1)
                             {
-                                std::cerr << "can't connect to broker #" << leader << " (" << broker_uri << ") partition " << partition << " ec:" << ec1 << std::endl;
-                            }
-                            else
-                            {
-                                std::cerr << "connected to broker #" << leader << " (" << broker_uri << ") partition " << partition << std::endl;
-                            }
-                        });
+                                if (ec1)
+                                {
+                                    std::cerr << "can't connect to broker #" << leader << " (" << to_string(broker_addr) << ") partition " << partition << " ec:" << ec1 << std::endl;
+                                }
+                                else
+                                {
+                                    std::cerr << "connected to broker #" << leader << " (" << to_string(broker_addr) << ") partition " << partition << std::endl;
+                                }
+                            });
+                        }
                     }
                 }
                 _timer.expires_from_now(_timeout);

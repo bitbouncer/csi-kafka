@@ -1,5 +1,6 @@
 #include <map>
 #include <csi_kafka/low_level/consumer.h>
+#include <csi_kafka/internal/async_metadata_client.h>
 
 #pragma once
 
@@ -29,7 +30,7 @@ namespace csi
             ~highlevel_consumer(); 
 
             void set_offset(int64_t start_time);
-            boost::system::error_code connect(const boost::asio::ip::tcp::resolver::query& query);
+            void connect_async(const std::vector<broker_address>& brokers); // callback?
             //void refresh_metadata_async();
 
 
@@ -52,9 +53,9 @@ namespace csi
             std::map<int, lowlevel_consumer2*>   _partition2consumers;
 
             // CLUSTER METADATA
-            csi::kafka::low_level::client                                            _meta_client;
+            csi::kafka::async_metadata_client                                        _meta_client;
             csi::kafka::spinlock                                                     _spinlock; // protects the metadata below
-            rpc_result<metadata_response>                                            _metadata;
+            //rpc_result<metadata_response>                                            _metadata;
             std::map<int, broker_data>                                               _broker2brokers;
             std::map<int, csi::kafka::metadata_response::topic_data::partition_data> _partition2partitions; // partition->partition_dat
         };

@@ -13,14 +13,24 @@ namespace csi
         {
         }
 
-        void lowlevel_consumer::connect_async(const boost::asio::ip::tcp::resolver::query& query, connect_callback cb)
+        void  lowlevel_consumer::connect_async(const broker_address& address, int32_t timeout, connect_callback cb)
         {
-            _client.connect_async(query, 1000, cb);
+            _client.connect_async(address, timeout, cb);
         }
 
-        boost::system::error_code lowlevel_consumer::connect(const boost::asio::ip::tcp::resolver::query& query)
+        boost::system::error_code lowlevel_consumer::connect(const broker_address& address, int32_t timeout)
         {
-            return _client.connect(query, 1000);
+            return _client.connect(address, timeout);
+        }
+
+        void lowlevel_consumer::connect_async(const boost::asio::ip::tcp::resolver::query& query, int32_t timeout, connect_callback cb)
+        {
+            _client.connect_async(query, timeout, cb);
+        }
+
+        boost::system::error_code lowlevel_consumer::connect(const boost::asio::ip::tcp::resolver::query& query, int32_t timeout)
+        {
+            return _client.connect(query, timeout);
         }
 
         void lowlevel_consumer::set_offset_async(int32_t partition, int64_t start_time, set_offset_callback cb)
@@ -169,14 +179,25 @@ namespace csi
             _ios.post([this](){_try_fetch(); }); // this will result in a delay of <5 sec connect before actuallt streaming restarts - harmless or we have to catch conmnect callback and retry from there
         }
 
-        void lowlevel_consumer2::connect_async(const boost::asio::ip::tcp::resolver::query& query, connect_callback cb)
+        void lowlevel_consumer2::connect_async(const broker_address& address, int32_t timeout, connect_callback cb)
         {
-            _client.connect_async(query, 1000, cb);
+            _client.connect_async(address, timeout, cb);
         }
 
-        boost::system::error_code lowlevel_consumer2::connect(const boost::asio::ip::tcp::resolver::query& query)
+        boost::system::error_code lowlevel_consumer2::connect(const broker_address& address, int32_t timeout)
         {
-            return _client.connect(query, 1000);
+            return _client.connect(address, timeout);
+        }
+
+
+        void lowlevel_consumer2::connect_async(const boost::asio::ip::tcp::resolver::query& query, int32_t timeout, connect_callback cb)
+        {
+            _client.connect_async(query, timeout, cb);
+        }
+
+        boost::system::error_code lowlevel_consumer2::connect(const boost::asio::ip::tcp::resolver::query& query, int32_t timeout)
+        {
+            return _client.connect(query, timeout);
         }
 
         void lowlevel_consumer2::close()

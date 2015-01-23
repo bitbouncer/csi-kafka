@@ -14,14 +14,24 @@ namespace csi
         {
         }
 
-        void producer::connect_async(const boost::asio::ip::tcp::resolver::query& query, connect_callback cb)
+        void producer::connect_async(const broker_address& address, int32_t timeout, connect_callback cb)
         {
-            _client.connect_async(query, 1000, cb);
+            _client.connect_async(address, timeout, cb);
         }
 
-        boost::system::error_code producer::connect(const boost::asio::ip::tcp::resolver::query& query)
+        boost::system::error_code producer::connect(const broker_address& address, int32_t timeout)
         {
-            return _client.connect(query, 1000);
+            return _client.connect(address, timeout);
+        }
+
+        void producer::connect_async(const boost::asio::ip::tcp::resolver::query& query, int32_t timeout, connect_callback cb)
+        {
+            _client.connect_async(query, timeout, cb);
+        }
+
+        boost::system::error_code producer::connect(const boost::asio::ip::tcp::resolver::query& query, int32_t timeout)
+        {
+            return _client.connect(query, timeout);
         }
 
         void  producer::close()
@@ -91,12 +101,23 @@ namespace csi
             _try_send();
         }
 
-        void async_producer::connect_async(const boost::asio::ip::tcp::resolver::query& query, connect_callback cb)
+        void async_producer::connect_async(const broker_address& address, int32_t timeout, connect_callback cb)
+        {
+            _client.connect_async(address, timeout, cb);
+        }
+
+        boost::system::error_code async_producer::connect(const broker_address& address, int32_t timeout)
+        {
+            return _client.connect(address, timeout);
+        }
+
+
+        void async_producer::connect_async(const boost::asio::ip::tcp::resolver::query& query, int32_t timeout, connect_callback cb)
         {
             _client.connect_async(query, 1000, cb);
         }
 
-        boost::system::error_code async_producer::connect(const boost::asio::ip::tcp::resolver::query& query)
+        boost::system::error_code async_producer::connect(const boost::asio::ip::tcp::resolver::query& query, int32_t timeout)
         {
             return _client.connect(query, 1000);
         }

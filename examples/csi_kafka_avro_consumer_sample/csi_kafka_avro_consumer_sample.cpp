@@ -17,11 +17,18 @@
 
 int main(int argc, char** argv)
 {
-    std::string hostname = (argc >= 2) ? argv[1] : "192.168.0.102";
-    //std::string hostname = (argc >= 2) ? argv[1] : "z8r102-mc12-4-4.sth-tc2.videoplaza.net";
+    int32_t port = (argc >= 3) ? atoi(argv[2]) : 9092;
 
-    std::string port = (argc >= 3) ? argv[2] : "9092";
-    boost::asio::ip::tcp::resolver::query query(hostname, port);
+    std::vector<csi::kafka::broker_address> brokers;
+    if (argc >= 2)
+    {
+        brokers.push_back(csi::kafka::broker_address(argv[1], port));
+    }
+    else
+    {
+        brokers.push_back(csi::kafka::broker_address("192.168.0.6", 9092));
+        brokers.push_back(csi::kafka::broker_address("10.1.3.238", 9092));
+    }
 
     boost::asio::io_service io_service;
     std::auto_ptr<boost::asio::io_service::work> work(new boost::asio::io_service::work(io_service));
@@ -31,19 +38,18 @@ int main(int argc, char** argv)
     // just testing away
     {
         csi::kafka::low_level::client client(io_service);
-        boost::system::error_code ec = client.connect(query, 1000);
+        boost::system::error_code ec = client.connect(brokers[0], 1000);
         auto md = client.get_metadata({}, 0);
         auto resp = client.get_consumer_metadata("saka.test.avro-syslog2", 0);
     }
 
     csi::kafka::highlevel_consumer consumer0(io_service, "saka.test.avro-syslog2", 100);
-    boost::system::error_code ec0 = consumer0.connect(query);
-
+    consumer0.connect_async(brokers);
 
     //sample begin
     csi::kafka::lowlevel_consumer consumer(io_service, "saka.test.avro-syslog2");
 
-    boost::system::error_code ec1 = consumer.connect(query);
+    boost::system::error_code ec1 = consumer.connect(brokers[0], 1000);
     auto ec2 = consumer.set_offset(0, csi::kafka::latest_offsets);
     auto ec3 = consumer.set_offset(4, csi::kafka::latest_offsets);
 

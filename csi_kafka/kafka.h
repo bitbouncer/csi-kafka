@@ -25,6 +25,7 @@ namespace csi
             int32_t     port;
         };
 
+        std::string to_string(const broker_address&);
 
         enum { ApiVersion = 0 };
 

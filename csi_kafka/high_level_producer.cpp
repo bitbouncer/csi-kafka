@@ -131,19 +131,18 @@ namespace csi
                             int partition = i->first;
                             int leader = _partition2partitions[partition].leader;
                             auto bd = _broker2brokers[leader];
-                            boost::asio::ip::tcp::resolver::query query(bd.host_name, std::to_string(bd.port));
-                            std::string broker_uri = bd.host_name + ":" + std::to_string(bd.port);
+                            broker_address addr(bd.host_name, bd.port);
                             i->second->close();
-                            std::cerr << "connecting to broker node_id:" << leader << " (" << broker_uri << ") partition:" << partition << std::endl;
-                            i->second->connect_async(query, [leader, partition, broker_uri](const boost::system::error_code& ec1)
+                            std::cerr << "connecting to broker node_id:" << leader << " (" << to_string(addr) << ") partition:" << partition << std::endl;
+                            i->second->connect_async(addr, 1000, [leader, partition, addr](const boost::system::error_code& ec1)
                             {
                                 if (ec1)
                                 {
-                                    std::cerr << "can't connect to broker #" << leader << " (" << broker_uri << ") partition " << partition << " ec:" << ec1 << std::endl;
+                                    std::cerr << "can't connect to broker #" << leader << " (" << to_string(addr) << ") partition " << partition << " ec:" << ec1 << std::endl;
                                 }
                                 else
                                 {
-                                    std::cerr << "connected to broker #" << leader << " (" << broker_uri << ") partition " << partition << std::endl;
+                                    std::cerr << "connected to broker #" << leader << " (" << to_string(addr) << ") partition " << partition << std::endl;
                                 }
                             });
                         }

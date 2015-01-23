@@ -154,6 +154,18 @@ namespace csi
                 return f.get();
             }
 
+            void client::connect_async(const broker_address& address, int32_t timeout, connect_callback cb)
+            {
+                boost::asio::ip::tcp::resolver::query query(address.host_name, std::to_string(address.port));
+                connect_async(query, timeout, cb);
+            }
+
+            boost::system::error_code client::connect(const broker_address& address, int32_t timeout)
+            {
+                boost::asio::ip::tcp::resolver::query query(address.host_name, std::to_string(address.port));
+                return connect(query, timeout);
+            }
+
             void client::connect_async(const std::string& host, int32_t port, int32_t timeout, connect_callback cb)
             {
                 boost::asio::ip::tcp::resolver::query query(host, std::to_string(port));
