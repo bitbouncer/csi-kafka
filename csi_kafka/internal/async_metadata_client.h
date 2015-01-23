@@ -15,7 +15,7 @@ namespace csi
             async_metadata_client(boost::asio::io_service& io_service);
             ~async_metadata_client();
 
-            void                                           connect_async(const std::vector<broker_address>& brokers);
+            void                                           connect_async(const std::vector<broker_address>& brokers, connect_callback cb); // should maybee an event stream that we can subcribe to like change-events.
             void                                           connect(const std::vector<broker_address>& brokers);
 
             void                                           close();
@@ -44,6 +44,7 @@ namespace csi
             csi::kafka::spinlock                                                     _spinlock; // protects the metadata below
             std::vector<broker_address>                                              _known_brokers;
             std::vector<broker_address>::iterator                                    _next_broker;
+            connect_callback                                                         _connect_cb;
             rpc_result<metadata_response>                                            _metadata;
             std::map<int, broker_data>                                               _broker2brokers;
             std::map<int, csi::kafka::metadata_response::topic_data::partition_data> _partition2partitions;

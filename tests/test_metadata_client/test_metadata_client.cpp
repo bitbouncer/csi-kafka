@@ -27,7 +27,7 @@ int main(int argc, char** argv)
 
     if (argc >= 2)
     {
-        client.connect_async({ csi::kafka::broker_address(argv[1], port) });
+        client.connect_async({ csi::kafka::broker_address(argv[1], port) }, NULL);
     }
     else
     {
@@ -36,7 +36,7 @@ int main(int argc, char** argv)
             csi::kafka::broker_address("192.168.0.6", 9092),
             csi::kafka::broker_address("z8r102-mc12-4-4.sth-tc2.videoplaza.net", 9092),
             //csi::kafka::broker_address("10.1.3.238", 9092)
-        });
+        }, NULL);
     }
 
     while (!client.is_connected())

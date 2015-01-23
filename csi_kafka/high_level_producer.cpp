@@ -42,30 +42,10 @@ namespace csi
 
         void highlevel_producer::connect_async(const std::vector<broker_address>& brokers)
         {
-            _meta_client.connect_async(brokers);
-
-            /*
-            auto metadata = _meta_client.get_metadata({ _topic }, 0);
-
-            if (_metadata)
+            _meta_client.connect_async(brokers, [this](const boost::system::error_code& ec)
             {
-            std::cerr << "metatdata for topic " << _topic << " failed" << std::endl;
-            return  make_error_code(boost::system::errc::no_message);
-            }
-
-            for (std::vector<csi::kafka::metadata_response::topic_data>::const_iterator i = _metadata->topics.begin(); i != _metadata->topics.end(); ++i)
-            {
-            assert(i->topic_name == _topic);
-            if (i->error_code)
-            {
-            std::cerr << "metatdata for topic " << _topic << " failed: " << to_string((error_codes) i->error_code) << std::endl;
-            }
-            for (std::vector<csi::kafka::metadata_response::topic_data::partition_data>::const_iterator j = i->partitions.begin(); j != i->partitions.end(); ++j)
-            _partition2producers.insert(std::make_pair(j->partition_id, new async_producer(_ios, _topic, j->partition_id, _required_acks, _tx_timeout, _max_packet_size)));
-            };
-            */
-
-            _ios.post([this]{ _try_connect_brokers(); });
+                _ios.post([this]{ _try_connect_brokers(); });
+            });
         }
 
         void highlevel_producer::_try_connect_brokers()

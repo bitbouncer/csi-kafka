@@ -33,9 +33,10 @@ namespace csi
             return _client.is_connected();
         }
 
-        void async_metadata_client::connect_async(const std::vector<broker_address>& brokers)
+        void async_metadata_client::connect_async(const std::vector<broker_address>& brokers, connect_callback cb)
         {
             _known_brokers = brokers;
+            _connect_cb = cb;
             _next_broker = _known_brokers.begin();
             _connect_async_next();
         }
@@ -143,6 +144,9 @@ namespace csi
                     std::cerr << " } " << std::endl;
                     _next_broker = _known_brokers.begin();
                 }
+
+                if (_connect_cb)
+                    _connect_cb(response.ec.ec1);
 
                 _metadata_timer.expires_from_now(_metadata_timeout);
                 _metadata_timer.async_wait(boost::bind(&async_metadata_client::handle_get_metadata_timer, this, boost::asio::placeholders::error));
