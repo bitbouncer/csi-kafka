@@ -29,8 +29,7 @@ int main(int argc, char** argv)
         cb(make_error_code(boost::system::errc::already_connected));
     });
 
-    auto ec = make_error_code(boost::system::errc::success);
-    csi::async::waterfall(work.begin(), work.end(), ec, [](const boost::system::error_code& ec)
+    csi::async::waterfall(work.begin(), work.end(), [](const boost::system::error_code& ec)
     {
         std::cerr << "done ec=" << ec.message() << std::endl;
     });

@@ -32,27 +32,25 @@ namespace csi
         //typedef std::pair<async_function, async_callback>                       async_work;
 
         template<typename RAIter>
-        void waterfall(RAIter begin, RAIter end, boost::system::error_code res, async_callback cb)
+        void waterfall(RAIter begin, RAIter end, async_callback cb)
         {
             if (begin == end)
             {
-                cb(res);
+                cb(make_error_code(boost::system::errc::success));
                 return;
             }
-            (*begin)([begin, end, &res, cb](const boost::system::error_code& ec)
+            (*begin)([begin, end, cb](const boost::system::error_code& ec)
             {
-                res = ec;  // += would make sense??
                 if (!ec)
-                    waterfall(begin + 1, end, res, cb);
+                    waterfall(begin + 1, end, cb);
                 else
-                    cb(res); // add iterator here...
+                    cb(ec); // add iterator here...
             });
         }
 
         void waterfall(const std::vector<async_function>& v, async_callback cb)
         {
-            auto ec = make_error_code(boost::system::errc::success);
-            waterfall(v.begin(), v.end(), ec, cb);
+            waterfall(v.begin(), v.end(), cb);
         }
 
         class parallel_result
