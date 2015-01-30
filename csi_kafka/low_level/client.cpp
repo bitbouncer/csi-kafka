@@ -4,6 +4,7 @@
 #include "client.h"
 #include "decoder.h"
 #include "encoder.h"
+#include <iostream>
 
 
 namespace csi
@@ -512,7 +513,7 @@ namespace csi
                             _rx_queue.pop_front();
                         }
                     }
-
+                    
                     if (item_to_receive)
                         boost::asio::async_read(_socket, boost::asio::buffer(&item_to_receive->_rx_buffer, 4), boost::bind(&client::socket_rx_cb, this, boost::asio::placeholders::error, boost::asio::placeholders::bytes_transferred, item_to_receive));
                     else

@@ -8,3 +8,5 @@ add_subdirectory(csi_kafka_consumer_offset_checker)
 add_subdirectory(highlevel_producer_sample)
 add_subdirectory(highlevel_consumer_sample)
 add_subdirectory(mirror_maker_sample)
+add_subdirectory(fixed_rate_producer)
+

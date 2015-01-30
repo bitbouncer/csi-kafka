@@ -34,7 +34,7 @@ int main(int argc, char** argv)
 
     csi::kafka::highlevel_consumer consumer(io_service, "saka.test.ext_datastream", 20000);
 
-    consumer.connect_async(brokers);
+    consumer.connect_forever(brokers);
 
     boost::thread do_log([&consumer]
     {

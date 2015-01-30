@@ -47,7 +47,9 @@ int main(int argc, char** argv)
         const boost::system::error_code& ec1, 
         csi::kafka::error_codes ec2, 
         std::shared_ptr<sample::contact_info_key> key, 
-        std::shared_ptr<sample::contact_info> value)
+        std::shared_ptr<sample::contact_info> value,
+        int partition,
+        int64_t offset)
     {
         if (ec1 || ec2)
         {

@@ -57,7 +57,7 @@ namespace csi
         class avro_key_value_decoder
         {
         public:
-            typedef boost::function <void(const boost::system::error_code& ec1, csi::kafka::error_codes ec2, std::shared_ptr<K> key, std::shared_ptr<V> value)> avro_callback;
+            typedef boost::function <void(const boost::system::error_code& ec1, csi::kafka::error_codes ec2, std::shared_ptr<K> key, std::shared_ptr<V> value, int partition, int64_t offset)> avro_callback;
 
             avro_key_value_decoder(avro_callback cb) : _cb(cb) {}
 
@@ -65,7 +65,7 @@ namespace csi
             {
                 if (ec1 || ec2)
                 {
-                    _cb(ec1, ec2, std::shared_ptr<K>(), std::shared_ptr<V>());
+                    _cb(ec1, ec2, std::shared_ptr<K>(), std::shared_ptr<V>(), data.partition_id, -1);
                     return;
                 }
 
@@ -90,7 +90,7 @@ namespace csi
                         avro_binary_decode(src, *value);
                     }
 
-                    _cb(ec1, ec2, key, value);
+                    _cb(ec1, ec2, key, value, data.partition_id, i->offset);
                 }
             }
 

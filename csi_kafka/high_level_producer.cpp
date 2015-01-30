@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <iostream>
 #include <boost/crc.hpp>
+#include <csi_kafka/internal/async.h>
 #include "high_level_producer.h"
 
 namespace csi
@@ -170,21 +171,12 @@ namespace csi
             }
         }
 
-        class cb_when_all_done
-        {
-        public:
-            cb_when_all_done(boost::function <void()>  callback) : cb(callback) {}
-            ~cb_when_all_done() { cb(); }
-        private:
-            boost::function <void()> cb;
-        };
-
         void highlevel_producer::send_async(std::vector<std::shared_ptr<basic_message>>& messages, tx_ack_callback cb)
         {
             for (std::vector<std::shared_ptr<basic_message>>::const_iterator i = messages.begin(); i != messages.end(); ++i)
                 send_async(*i);
             size_t partitions = _partition2producers.size();
-            std::shared_ptr<cb_when_all_done> final_cb(new cb_when_all_done(cb));
+            std::shared_ptr<csi::async::destructor_callback> final_cb(new csi::async::destructor_callback(cb));
             for (int i = 0; i != partitions; ++i)
             {
                 _partition2producers[i]->send_async(NULL, [i, final_cb]()

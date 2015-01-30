@@ -44,7 +44,7 @@ int main(int argc, char** argv)
     }
 
     csi::kafka::highlevel_consumer consumer0(io_service, "saka.test.avro-syslog2", 100);
-    consumer0.connect_async(brokers);
+    consumer0.connect_forever(brokers);
 
     //sample begin
     csi::kafka::lowlevel_consumer consumer(io_service, "saka.test.avro-syslog2");

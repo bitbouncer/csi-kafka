@@ -29,10 +29,15 @@ namespace csi
             highlevel_consumer(boost::asio::io_service& io_service, const std::string& topic, int32_t rx_timeout, int32_t max_packet_size = -1);
             ~highlevel_consumer(); 
 
-            void set_offset(int64_t start_time);
-            void connect_async(const std::vector<broker_address>& brokers); // callback?
+            void                        connect_forever(const std::vector<broker_address>& brokers); // , connect_callback cb);  // stream of connection events??
+            void                        connect_async(const std::vector<broker_address>& brokers, connect_callback cb);
+            boost::system::error_code   connect(const std::vector<broker_address>& brokers);
+            void                        set_offset(int64_t start_time);
+            void                        set_offsets(const std::vector<int64_t>&);
+            std::vector<int64_t>        get_offsets();
+            void                        commit_offsets();
+            
             //void refresh_metadata_async();
-
 
             void close();
             void stream_async(datastream_callback cb);
@@ -40,6 +45,7 @@ namespace csi
             std::vector<metrics> get_metrics() const;
 
         private:
+            void handle_response(rpc_result<metadata_response> result);
             void handle_timer(const boost::system::error_code& ec);
             void _try_connect_brokers();
 

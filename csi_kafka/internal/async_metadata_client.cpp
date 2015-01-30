@@ -41,6 +41,18 @@ namespace csi
             _connect_async_next();
         }
 
+        boost::system::error_code async_metadata_client::connect(const std::vector<broker_address>& brokers)
+        {
+            std::promise<boost::system::error_code> p;
+            std::future<boost::system::error_code>  f = p.get_future();
+            connect_async(brokers, [&p](const boost::system::error_code& error)
+            {
+                p.set_value(error);
+            });
+            f.wait();
+            return f.get();
+        }
+
         void async_metadata_client::_connect_async_next()
         {
             std::cerr << "_connect_async_next " << _next_broker->host_name << ":" << _next_broker->port << std::endl;
@@ -146,7 +158,10 @@ namespace csi
                 }
 
                 if (_connect_cb)
+                {
                     _connect_cb(response.ec.ec1);
+                    _connect_cb = NULL;
+                }
 
                 _metadata_timer.expires_from_now(_metadata_timeout);
                 _metadata_timer.async_wait(boost::bind(&async_metadata_client::handle_get_metadata_timer, this, boost::asio::placeholders::error));

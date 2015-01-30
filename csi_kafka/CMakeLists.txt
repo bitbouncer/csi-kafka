@@ -1,7 +1,9 @@
 SET(LIB_SRCS
 	avro/decoder.h
 	avro/avro_producer.h
-	internal/async_metadata_client.h
+    avro/avro_high_level_producer
+	internal/async.h
+    internal/async_metadata_client.h
     internal/async_metadata_client.cpp
     internal/call_context.h
     low_level/client.h
