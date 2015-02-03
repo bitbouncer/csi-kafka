@@ -1,4 +1,4 @@
-#include <boost/endian/types.hpp>
+#include <boost/endian/arithmetic.hpp>
 #include <boost/iostreams/stream.hpp>
 #include <boost/crc.hpp>
 
