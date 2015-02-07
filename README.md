@@ -11,9 +11,4 @@ https://github.com/bitbouncer/csi-build-scripts
 
 This is work in progress 
 
- - lowlevel consumers and produces are fast, efficient and stable
- - high level consumer and producers works, but work is in progress
- - avro encoding / decoding samples
-
-
-
+ 
