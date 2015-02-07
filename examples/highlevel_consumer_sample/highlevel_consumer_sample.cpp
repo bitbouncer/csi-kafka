@@ -1,17 +1,6 @@
 #include <boost/thread.hpp>
-#include <boost/accumulators/accumulators.hpp>
-#include <boost/accumulators/statistics/stats.hpp>
-#include <boost/accumulators/statistics/rolling_mean.hpp>
-#include <boost/accumulators/statistics/mean.hpp>
 #include <csi_kafka/kafka.h>
 #include <csi_kafka/high_level_consumer.h>
-
-
-#define VALUE_SIZE 800
-
-static boost::accumulators::accumulator_set<double, boost::accumulators::stats<boost::accumulators::tag::rolling_mean> > acc(boost::accumulators::tag::rolling_window::window_size = 10);
-static int64_t total = 0;
-static int lognr = 0;
 
 int main(int argc, char** argv)
 {
@@ -32,7 +21,7 @@ int main(int argc, char** argv)
     std::auto_ptr<boost::asio::io_service::work> work(new boost::asio::io_service::work(io_service));
     boost::thread bt(boost::bind(&boost::asio::io_service::run, &io_service));
 
-    csi::kafka::highlevel_consumer consumer(io_service, "saka.test.ext_datastream", 20000);
+    csi::kafka::highlevel_consumer consumer(io_service, "perf-8-new", 20000);
 
     consumer.connect_forever(brokers);
 
@@ -41,13 +30,9 @@ int main(int argc, char** argv)
         boost::accumulators::accumulator_set<double, boost::accumulators::stats<boost::accumulators::tag::rolling_mean> > acc(boost::accumulators::tag::rolling_window::window_size = 10);
         while (true)
         {
-            uint64_t last_total = total;
             boost::this_thread::sleep(boost::posix_time::seconds(1));
-            acc((double)total - last_total);
-            std::cerr << boost::accumulators::rolling_mean(acc) << " (ms)/s " << total << std::endl; // varför gör vi detta???
 
             std::vector<csi::kafka::highlevel_consumer::metrics>  metrics = consumer.get_metrics();
-
             uint32_t rx_msg_sec_total = 0;
             uint32_t rx_kb_sec_total = 0;
             for (std::vector<csi::kafka::highlevel_consumer::metrics>::const_iterator i = metrics.begin(); i != metrics.end(); ++i)

@@ -1,17 +1,10 @@
 #include <boost/thread.hpp>
-#include <boost/accumulators/accumulators.hpp>
-#include <boost/accumulators/statistics/stats.hpp>
-#include <boost/accumulators/statistics/rolling_mean.hpp>
-#include <boost/accumulators/statistics/mean.hpp>
 #include <csi_kafka/kafka.h>
 #include <csi_kafka/high_level_producer.h>
 
 #define VALUE_SIZE 800
-static boost::accumulators::accumulator_set<double, boost::accumulators::stats<boost::accumulators::tag::rolling_mean> > acc(boost::accumulators::tag::rolling_window::window_size = 10);
-static int64_t total = 0;
-static int lognr = 0;
 
-
+// NOT WORKING - JUST STARTED....
 int main(int argc, char** argv)
 {
     int32_t port = (argc >= 3) ? atoi(argv[2]) : 9092;

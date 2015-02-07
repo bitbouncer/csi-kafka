@@ -1,17 +1,9 @@
 #include <boost/thread.hpp>
-#include <boost/accumulators/accumulators.hpp>
-#include <boost/accumulators/statistics/stats.hpp>
-#include <boost/accumulators/statistics/rolling_mean.hpp>
-#include <boost/accumulators/statistics/mean.hpp>
 #include <csi_kafka/kafka.h>
 #include <csi_kafka/high_level_producer.h>
 
 
 #define VALUE_SIZE 300
-
-static boost::accumulators::accumulator_set<double, boost::accumulators::stats<boost::accumulators::tag::rolling_mean> > acc(boost::accumulators::tag::rolling_window::window_size = 10);
-static int64_t total = 0;
-static int lognr = 0;
 
 void start_send(csi::kafka::highlevel_producer& producer)
 {
@@ -28,7 +20,6 @@ void start_send(csi::kafka::highlevel_producer& producer)
         {
             start_send(producer); // send another
         });
-        total += v.size();
 }
 
 
@@ -40,7 +31,6 @@ int main(int argc, char** argv)
     std::auto_ptr<boost::asio::io_service::work> work(new boost::asio::io_service::work(io_service));
     boost::thread bt(boost::bind(&boost::asio::io_service::run, &io_service));
 
-    //csi::kafka::highlevel_producer producer(io_service, "saka.test.ext_datastream", -1, 500, 20000);
     csi::kafka::highlevel_producer producer(io_service, "perf-8-new", -1, 500, 20000);
 
     if (argc >= 2)
@@ -58,13 +48,9 @@ int main(int argc, char** argv)
     
     boost::thread do_log([&producer]
     {
-        //boost::accumulators::accumulator_set<double, boost::accumulators::stats<boost::accumulators::tag::rolling_mean> > acc(boost::accumulators::tag::rolling_window::window_size = 10);
         while (true)
         {
-            //uint64_t last_total = total;
             boost::this_thread::sleep(boost::posix_time::seconds(1));
-            //acc((double)total - last_total);
-            //std::cerr << boost::accumulators::rolling_mean(acc) << " (ms)/s " << total << std::endl;
 
             std::vector<csi::kafka::highlevel_producer::metrics>  metrics = producer.get_metrics();
 
@@ -73,7 +59,6 @@ int main(int argc, char** argv)
             uint32_t tx_kb_sec_total = 0;
             for (std::vector<csi::kafka::highlevel_producer::metrics>::const_iterator i = metrics.begin(); i != metrics.end(); ++i)
             {
-                //std::cerr << "\t partiton:" << (*i).partition << "\tqueue:" << (*i).msg_in_queue << "\t" << (*i).tx_msg_sec << " msg/s \t" << (*i).tx_kb_sec << "KB/s \troundtrip:" << (*i).tx_roundtrip  << " ms" << std::endl;
                 total_queue += (*i).msg_in_queue;
                 tx_msg_sec_total += (*i).tx_msg_sec;
                 tx_kb_sec_total += (*i).tx_kb_sec;
