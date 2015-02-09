@@ -56,7 +56,7 @@ namespace csi
             std::string                          _topic;
             int32_t                              _rx_timeout;
             int32_t                              _max_packet_size;
-            std::map<int, lowlevel_consumer2*>   _partition2consumers;
+            std::map<int, lowlevel_consumer*>    _partition2consumers;
 
             // CLUSTER METADATA
             csi::kafka::async_metadata_client                                        _meta_client;

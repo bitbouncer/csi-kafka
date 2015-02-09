@@ -36,12 +36,12 @@ int main(int argc, char** argv)
     std::auto_ptr<boost::asio::io_service::work> work(new boost::asio::io_service::work(io_service));
     boost::thread bt(boost::bind(&boost::asio::io_service::run, &io_service));
 
-    csi::kafka::lowlevel_consumer consumer(io_service, "saka.test.avro_key_value");
+    csi::kafka::lowlevel_consumer consumer(io_service, "saka.test.avro_key_value", 0, 1000);
 
     int64_t message_total = 0;
 
     boost::system::error_code ec1 = consumer.connect(addr, 1000);
-    auto ec2 = consumer.set_offset(0, csi::kafka::earliest_available_offset);
+    auto ec2 = consumer.set_offset(csi::kafka::earliest_available_offset);
 
     csi::kafka::avro_key_value_decoder<sample::contact_info_key, sample::contact_info> decoder([&datastore, &message_total](
         const boost::system::error_code& ec1, 

@@ -47,12 +47,9 @@ int main(int argc, char** argv)
     consumer0.connect_forever(brokers);
 
     //sample begin
-    csi::kafka::lowlevel_consumer consumer(io_service, "saka.test.avro-syslog2");
-
+    csi::kafka::lowlevel_consumer consumer(io_service, "saka.test.avro-syslog2", 0, 1000);
     boost::system::error_code ec1 = consumer.connect(brokers[0], 1000);
-    auto ec2 = consumer.set_offset(0, csi::kafka::latest_offsets);
-    auto ec3 = consumer.set_offset(4, csi::kafka::latest_offsets);
-
+    auto ec2 = consumer.set_offset(csi::kafka::latest_offsets);
 
 
     boost::accumulators::accumulator_set<double, boost::accumulators::stats<boost::accumulators::tag::rolling_mean> > acc(boost::accumulators::tag::rolling_window::window_size = 50000);

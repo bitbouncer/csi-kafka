@@ -35,7 +35,7 @@ namespace csi
         {
             _timer.cancel();
             _meta_client.close();
-            for (std::map<int, lowlevel_consumer2*>::iterator i = _partition2consumers.begin(); i != _partition2consumers.end(); ++i)
+            for (std::map<int, lowlevel_consumer*>::iterator i = _partition2consumers.begin(); i != _partition2consumers.end(); ++i)
             {
                 i->second->close();
             }
@@ -71,7 +71,7 @@ namespace csi
                             
                             std::shared_ptr<std::vector<csi::async::async_function>> work(new std::vector<csi::async::async_function>());
 
-                            for (std::map<int, lowlevel_consumer2*>::iterator i = _partition2consumers.begin(); i != _partition2consumers.end(); ++i)
+                            for (std::map<int, lowlevel_consumer*>::iterator i = _partition2consumers.begin(); i != _partition2consumers.end(); ++i)
                             {
                                 work->push_back([this, i](csi::async::async_callback cb)
                                 {
@@ -135,7 +135,7 @@ namespace csi
         void highlevel_consumer::set_offset(int64_t start_time)
         {
             // return value??? TBD what to do if this fails and if # partitions changes???
-            for (std::map<int, lowlevel_consumer2*>::iterator i = _partition2consumers.begin(); i != _partition2consumers.end(); ++i)
+            for (std::map<int, lowlevel_consumer*>::iterator i = _partition2consumers.begin(); i != _partition2consumers.end(); ++i)
             {
                 i->second->set_offset(start_time);
             }
@@ -158,7 +158,7 @@ namespace csi
             _meta_client.get_metadata_async({ _topic }, 0, [this](rpc_result<metadata_response> result)
             {
                 handle_response(result);
-                for (std::map<int, lowlevel_consumer2*>::iterator i = _partition2consumers.begin(); i != _partition2consumers.end(); ++i)
+                for (std::map<int, lowlevel_consumer*>::iterator i = _partition2consumers.begin(); i != _partition2consumers.end(); ++i)
                 {
                     if (!i->second->is_connected() && !i->second->is_connection_in_progress())
                     {
@@ -205,7 +205,7 @@ namespace csi
                         }
                         for (std::vector<csi::kafka::metadata_response::topic_data::partition_data>::const_iterator j = i->partitions.begin(); j != i->partitions.end(); ++j)
                         {
-                            _partition2consumers.insert(std::make_pair(j->partition_id, new lowlevel_consumer2(_ios, _topic, j->partition_id, _rx_timeout)));
+                            _partition2consumers.insert(std::make_pair(j->partition_id, new lowlevel_consumer(_ios, _topic, j->partition_id, _rx_timeout)));
                         }
                     };
                 }
@@ -240,7 +240,7 @@ namespace csi
     std::vector<highlevel_consumer::metrics>  highlevel_consumer::get_metrics() const
     {
         std::vector<metrics> metrics;
-        for (std::map<int, lowlevel_consumer2*>::const_iterator i = _partition2consumers.begin(); i != _partition2consumers.end(); ++i)
+        for (std::map<int, lowlevel_consumer*>::const_iterator i = _partition2consumers.begin(); i != _partition2consumers.end(); ++i)
         {
             highlevel_consumer::metrics item;
             item.partition = (*i).second->partition();

@@ -15,11 +15,11 @@ int main(int argc, char** argv)
     boost::thread bt(boost::bind(&boost::asio::io_service::run, &io_service));
 
 
-    csi::kafka::lowlevel_consumer consumer(io_service, "saka.test.sample2");
+    csi::kafka::lowlevel_consumer consumer(io_service, "saka.test.sample2", 0, 1000);
    
     consumer.connect(addr, 1000);
 
-    auto ec2 = consumer.set_offset(0, csi::kafka::earliest_available_offset);
+    auto ec2 = consumer.set_offset(csi::kafka::earliest_available_offset);
 
     consumer.stream_async([](const boost::system::error_code& ec1, csi::kafka::error_codes ec2, const csi::kafka::fetch_response::topic_data::partition_data& data)
     {
