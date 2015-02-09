@@ -1,7 +1,8 @@
 #include <algorithm>
-#include <iostream>
-#include "high_level_consumer.h"
+#include <boost/log/core.hpp>
+#include <boost/log/trivial.hpp>
 #include <csi_kafka/internal/async.h>
+#include "high_level_consumer.h"
 
 namespace csi
 {
@@ -51,16 +52,17 @@ namespace csi
 
         void highlevel_consumer::connect_async(const std::vector<broker_address>& brokers, connect_callback cb)
         {
-            std::cerr << "START highlevel_consumer::connect_async " << std::endl;
+
+            BOOST_LOG_TRIVIAL(trace) << "highlevel_consumer::connect_async START";
             _meta_client.connect_async(brokers, [this, cb](const boost::system::error_code& ec)
             {
-                std::cerr << "highlevel_consumer::connect_async CB" << std::endl;
+                BOOST_LOG_TRIVIAL(trace) << "highlevel_consumer::connect_async CB";
                 if (!ec)
                 {
-                    std::cerr << "_meta_client.get_metadata_async() STARTING" << std::endl;
+                    BOOST_LOG_TRIVIAL(trace) << "_meta_client.get_metadata_async() STARTING";
                     _meta_client.get_metadata_async({ _topic }, 0, [this, cb](rpc_result<metadata_response> result)
                     {
-                        std::cerr << "_meta_client.get_metadata_async() CALLBACK ENTERED..." << std::endl;
+                        BOOST_LOG_TRIVIAL(trace) << "_meta_client.get_metadata_async() CALLBACK ENTERED...";
                         handle_response(result);
                         if (!result)
                         {
@@ -82,35 +84,33 @@ namespace csi
                                     {
                                         if (ec1)
                                         {
-                                            std::cerr << "can't connect to broker #" << leader << " (" << to_string(broker_addr) << ") partition " << partition << " ec:" << ec1 << std::endl;
+                                            BOOST_LOG_TRIVIAL(warning) << "can't connect to broker #" << leader << " (" << to_string(broker_addr) << ") partition " << partition << " ec:" << ec1;
                                         }
                                         else
                                         {
-                                            std::cerr << "connected to broker #" << leader << " (" << to_string(broker_addr) << ") partition " << partition << std::endl;
+                                            BOOST_LOG_TRIVIAL(info) << "connected to broker #" << leader << " (" << to_string(broker_addr) << ") partition " << partition;
                                         }
                                         cb(ec1);
                                     });
                                 });
                             }
                             
-                            std::cerr << "START csi::async::waterfall" << std::endl;
+                            BOOST_LOG_TRIVIAL(trace) << "highlevel_consumer::connect_async / waterfall START";
                             csi::async::waterfall(*work, [work, cb](const boost::system::error_code& ec) // add iterator for last function
                             {
-                                std::cerr << "csi::async::waterfall" << ec << std::endl;
+                                BOOST_LOG_TRIVIAL(trace) << "highlevel_consumer::connect_async / waterfall CB ec=" << ec;
                                 if (ec)
                                 {
-                                    //std::cerr << "can't connect to broker #" << leader << " (" << to_string(broker_addr) << ") partition " << partition << " ec:" << ec << std::endl;
-                                    std::cerr << "can't connect to broker ec:" << ec << std::endl;
+                                    BOOST_LOG_TRIVIAL(warning) << "highlevel_consumer::connect_async can't connect to broker ec:" << ec;
                                 }
-                                std::cerr << "csi::async::waterfall CB" << std::endl;
                                 cb(ec);
-                                std::cerr << "EXIT csi::async::waterfall" << std::endl;
+                                BOOST_LOG_TRIVIAL(trace) << "highlevel_consumer::connect_async / waterfall EXIT";
                             }); //waterfall
-                            std::cerr << "_meta_client.get_metadata_async() CALLBACK EXIT.." << std::endl;
+                            BOOST_LOG_TRIVIAL(trace) << "_meta_client.get_metadata_async() CB EXIT";
                         } // get_metadata_async ok?
                         else
                         {
-                            std::cerr << "_meta_client.get_metadata_async() CALLBACK ERROR EXIT.." << std::endl;
+                            BOOST_LOG_TRIVIAL(trace) << "_meta_client.get_metadata_async() error cb";
                             cb(result.ec.ec1);
                         }
                     }); // get_metadata_async
@@ -120,7 +120,7 @@ namespace csi
 
         boost::system::error_code highlevel_consumer::connect(const std::vector<broker_address>& brokers)
         {
-            std::cerr << "highlevel_consumer::connect ENTER" << std::endl;
+            BOOST_LOG_TRIVIAL(trace) << "highlevel_consumer::connect START";
             std::promise<boost::system::error_code> p;
             std::future<boost::system::error_code>  f = p.get_future();
             connect_async(brokers, [&p](const boost::system::error_code& error)
@@ -128,7 +128,7 @@ namespace csi
                 p.set_value(error);
             });
             f.wait();
-            std::cerr << "highlevel_consumer::connect EXIT" << std::endl;
+            BOOST_LOG_TRIVIAL(trace) << "highlevel_consumer::connect EXIT";
             return f.get();
         }
 
@@ -168,16 +168,16 @@ namespace csi
                         broker_address broker_addr(bd.host_name, bd.port);
                         //boost::asio::ip::tcp::resolver::query query(bd.host_name, std::to_string(bd.port));
                         //std::string broker_uri = bd.host_name + ":" + std::to_string(bd.port);
-                        std::cerr << "connecting to broker node_id:" << leader << " (" << to_string(broker_addr) << ") partition:" << partition << std::endl;
+                        BOOST_LOG_TRIVIAL(info) << "connecting to broker node_id:" << leader << " (" << to_string(broker_addr) << ") partition:" << partition;
                         i->second->connect_async(broker_addr, 1000, [leader, partition, broker_addr](const boost::system::error_code& ec1)
                         {
                             if (ec1)
                             {
-                                std::cerr << "can't connect to broker #" << leader << " (" << to_string(broker_addr) << ") partition " << partition << " ec:" << ec1 << std::endl;
+                                BOOST_LOG_TRIVIAL(warning) << "can't connect to broker #" << leader << " (" << to_string(broker_addr) << ") partition " << partition << " ec:" << ec1;
                             }
                             else
                             {
-                                std::cerr << "connected to broker #" << leader << " (" << to_string(broker_addr) << ") partition " << partition << std::endl;
+                                BOOST_LOG_TRIVIAL(info) << "connected to broker #" << leader << " (" << to_string(broker_addr) << ") partition " << partition;
                             }
                         }); // connect_async
                     }
@@ -201,10 +201,12 @@ namespace csi
                         assert(i->topic_name == _topic);
                         if (i->error_code)
                         {
-                            std::cerr << "metatdata for topic " << _topic << " failed: " << to_string((error_codes)i->error_code) << std::endl;
+                            BOOST_LOG_TRIVIAL(warning) << "metatdata for topic " << _topic << " failed: " << to_string((error_codes)i->error_code);
                         }
                         for (std::vector<csi::kafka::metadata_response::topic_data::partition_data>::const_iterator j = i->partitions.begin(); j != i->partitions.end(); ++j)
+                        {
                             _partition2consumers.insert(std::make_pair(j->partition_id, new lowlevel_consumer2(_ios, _topic, j->partition_id, _rx_timeout)));
+                        }
                     };
                 }
 

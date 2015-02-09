@@ -1,6 +1,7 @@
 #include <algorithm>
-#include <iostream>
 #include <boost/crc.hpp>
+#include <boost/log/core.hpp>
+#include <boost/log/trivial.hpp>
 #include <csi_kafka/internal/async.h>
 #include "high_level_producer.h"
 
@@ -70,7 +71,7 @@ namespace csi
                                 assert(i->topic_name == _topic);
                                 if (i->error_code)
                                 {
-                                    std::cerr << "metadata for topic " << _topic << " failed: " << to_string((error_codes)i->error_code) << std::endl;
+                                    BOOST_LOG_TRIVIAL(warning) << "metadata for topic " << _topic << " failed: " << to_string((error_codes)i->error_code);
                                 }
                                 for (std::vector<csi::kafka::metadata_response::topic_data::partition_data>::const_iterator j = i->partitions.begin(); j != i->partitions.end(); ++j)
                                     _partition2producers.insert(std::make_pair(j->partition_id, new async_producer(_ios, _topic, j->partition_id, _required_acks, _tx_timeout, _max_packet_size)));
@@ -114,16 +115,16 @@ namespace csi
                             auto bd = _broker2brokers[leader];
                             broker_address addr(bd.host_name, bd.port);
                             i->second->close();
-                            std::cerr << "connecting to broker node_id:" << leader << " (" << to_string(addr) << ") partition:" << partition << std::endl;
+                            BOOST_LOG_TRIVIAL(info) << "connecting to broker node_id:" << leader << " (" << to_string(addr) << ") partition:" << partition;
                             i->second->connect_async(addr, 1000, [leader, partition, addr](const boost::system::error_code& ec1)
                             {
                                 if (ec1)
                                 {
-                                    std::cerr << "can't connect to broker #" << leader << " (" << to_string(addr) << ") partition " << partition << " ec:" << ec1 << std::endl;
+                                    BOOST_LOG_TRIVIAL(warning) << "can't connect to broker #" << leader << " (" << to_string(addr) << ") partition " << partition << " ec:" << ec1;
                                 }
                                 else
                                 {
-                                    std::cerr << "connected to broker #" << leader << " (" << to_string(addr) << ") partition " << partition << std::endl;
+                                    BOOST_LOG_TRIVIAL(info) << "connected to broker #" << leader << " (" << to_string(addr) << ") partition " << partition;
                                 }
                             });
                         }
@@ -150,7 +151,7 @@ namespace csi
             }
             else
             {
-                std::cerr << " no key -> enque in parition 0 FIXME" << std::endl;
+                BOOST_LOG_TRIVIAL(error) << " no key -> enque in parition 0 FIXME";
             }
 
             // enqueu in partition queue or store if we don't have a connection the cluster.

@@ -1,5 +1,6 @@
+#include <boost/log/core.hpp>
+#include <boost/log/trivial.hpp>
 #include "async_metadata_client.h"
-#include <iostream>
 
 namespace csi
 {
@@ -55,7 +56,7 @@ namespace csi
 
         void async_metadata_client::_connect_async_next()
         {
-            std::cerr << "_connect_async_next " << _next_broker->host_name << ":" << _next_broker->port << std::endl;
+            BOOST_LOG_TRIVIAL(trace) << "async_metadata_client::_connect_async_next() " << _next_broker->host_name << ":" << _next_broker->port;
             boost::asio::ip::tcp::resolver::query query(_next_broker->host_name, std::to_string(_next_broker->port));
             _next_broker++;
 
@@ -81,7 +82,7 @@ namespace csi
         {
             if (!ec)
             {
-                std::cerr << "handle_connect_retry_timer" << std::endl;
+                BOOST_LOG_TRIVIAL(trace) << "async_metadata_client::handle_connect_retry_timer()";
                 _current_retry_timeout + boost::posix_time::seconds(1);
                 if (_current_retry_timeout > _max_retry_timeout)
                     _current_retry_timeout = _max_retry_timeout;
@@ -92,15 +93,11 @@ namespace csi
         void async_metadata_client::handle_get_metadata_timer(const boost::system::error_code& ec)
         {
             if (!ec)
-            {
-                //std::cerr << "handle_get_metadata_timer" << std::endl;
                 _client.get_metadata_async({ "dummy_topic" }, 99, boost::bind(&async_metadata_client::handle_get_metadata, this, _1));
-            }
         }
 
         void async_metadata_client::handle_get_metadata(rpc_result<metadata_response> response)
         {
-            //std::cerr << "handle_get_metadata" << std::endl;
             if (response.ec)
             {
                 _client.close();
@@ -146,14 +143,17 @@ namespace csi
 
                 if (changed)
                 {
-                    std::cerr << "known brokers changed { ";
+                    std::string broker_list_str;
                     _known_brokers.clear();
                     for (std::vector<csi::kafka::broker_data>::const_iterator i = _metadata->brokers.begin(); i != _metadata->brokers.end(); ++i)
                     {
-                        std::cerr << i->host_name << ":" << i->port << ", ";
+                       if (broker_list_str.size() == 0) // first
+                            broker_list_str += i->host_name + ":" + std::to_string(i->port);
+                        else 
+                            broker_list_str += ", " + i->host_name + ":" + std::to_string(i->port);
                         _known_brokers.push_back(broker_address(i->host_name, i->port));
                     }
-                    std::cerr << " } " << std::endl;
+                    BOOST_LOG_TRIVIAL(info) << "known brokers changed { " << broker_list_str << " }";
                     _next_broker = _known_brokers.begin();
                 }
 
@@ -176,12 +176,6 @@ namespace csi
         rpc_result<metadata_response> async_metadata_client::get_metadata(const std::vector<std::string>& topics, int32_t correlation_id)
         {
             return _client.get_metadata(topics, correlation_id);
-            /*
-            if (_client.is_connected())
-                return _client.get_metadata(topics, correlation_id);
-            else
-                return  rpc_result<metadata_response>(make_error_code(boost::system::errc::not_connected));
-            */
         }
         };
 

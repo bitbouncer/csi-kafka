@@ -4,8 +4,6 @@
 #include "client.h"
 #include "decoder.h"
 #include "encoder.h"
-#include <iostream>
-
 
 namespace csi
 {
