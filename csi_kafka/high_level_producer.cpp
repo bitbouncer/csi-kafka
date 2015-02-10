@@ -162,9 +162,7 @@ namespace csi
             if (_partition2producers.size())
             {
                 uint32_t partition = hash % _partition2producers.size();
-                //uint32_t partition = 1;
                 _partition2producers[partition]->send_async(message, cb);
-                //std::cerr << "encqueue -> " << partition << " items:" << _partition2producers[partition]->items_in_queue() << ", buffer:" << _partition2producers[partition]->bytes_in_queue() / 1024 << " KB " << std::endl;
             }
             else
             {
@@ -182,7 +180,6 @@ namespace csi
             {
                 _partition2producers[i]->send_async(NULL, [i, final_cb]()
                 {
-                    //std::cerr << "ready partition:" << i << std::endl;
                 });
             }
         }

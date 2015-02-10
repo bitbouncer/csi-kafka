@@ -3,7 +3,9 @@
 #include <boost/bind.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
-
+#include <boost/log/core.hpp>
+#include <boost/log/trivial.hpp>
+#include <boost/log/expressions.hpp>
 #include <boost/accumulators/accumulators.hpp>
 #include <boost/accumulators/statistics/stats.hpp>
 #include <boost/accumulators/statistics/rolling_mean.hpp>
@@ -17,6 +19,8 @@
 
 int main(int argc, char** argv)
 {
+    boost::log::core::get()->set_filter(boost::log::trivial::severity >= boost::log::trivial::info);
+
     int32_t port = (argc >= 3) ? atoi(argv[2]) : 9092;
 
     std::vector<csi::kafka::broker_address> brokers;

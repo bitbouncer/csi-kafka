@@ -1,9 +1,13 @@
 #include <boost/thread.hpp>
+#include <boost/log/core.hpp>
+#include <boost/log/trivial.hpp>
+#include <boost/log/expressions.hpp>
 #include <csi_kafka/kafka.h>
 #include <csi_kafka/high_level_consumer.h>
 
 int main(int argc, char** argv)
 {
+    boost::log::core::get()->set_filter(boost::log::trivial::severity >= boost::log::trivial::info);
     int32_t port = (argc >= 3) ? atoi(argv[2]) : 9092;
 
     std::vector<csi::kafka::broker_address> brokers;

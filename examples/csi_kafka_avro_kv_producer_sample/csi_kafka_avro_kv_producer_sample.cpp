@@ -3,13 +3,14 @@
 #include <boost/bind.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
-#include <csi_kafka/avro/avro_producer.h>
-
+#include <boost/log/core.hpp>
+#include <boost/log/trivial.hpp>
+#include <boost/log/expressions.hpp>
 #include <boost/accumulators/accumulators.hpp>
 #include <boost/accumulators/statistics/stats.hpp>
 #include <boost/accumulators/statistics/rolling_mean.hpp>
 #include <boost/accumulators/statistics/mean.hpp>
-
+#include <csi_kafka/avro/avro_producer.h>
 #include "contact_info.h"
 #include "contact_info_key.h"
 
@@ -40,6 +41,7 @@ void create_message(std::vector<std::pair<sample::contact_info_key, sample::cont
 
 int main(int argc, char** argv)
 {
+    boost::log::core::get()->set_filter(boost::log::trivial::severity >= boost::log::trivial::info);
     int64_t total = 0;
     csi::kafka::broker_address addr("192.168.0.6", 9092);
     int32_t port = (argc >= 3) ? atoi(argv[2]) : 9092;

@@ -2,6 +2,9 @@
 #include <boost/thread.hpp>
 #include <boost/bind.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/log/core.hpp>
+#include <boost/log/trivial.hpp>
+#include <boost/log/expressions.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/accumulators/accumulators.hpp>
 #include <boost/accumulators/statistics/stats.hpp>
@@ -55,6 +58,7 @@ void send_batch(csi::kafka::avro_producer<sample::syslog>& producer)
 
 int main(int argc, char** argv)
 {
+    boost::log::core::get()->set_filter(boost::log::trivial::severity >= boost::log::trivial::info);
     csi::kafka::broker_address addr("192.168.0.6", 9092);
     int32_t port = (argc >= 3) ? atoi(argv[2]) : 9092;
     if (argc >= 2)

@@ -1,10 +1,14 @@
 #include <boost/thread.hpp>
 #include <boost/bind.hpp>
+#include <boost/log/core.hpp>
+#include <boost/log/trivial.hpp>
+#include <boost/log/expressions.hpp>
 #include <csi_kafka/low_level/consumer.h>
 #include <csi_kafka/low_level/producer.h>
 
 int main(int argc, char** argv)
 {
+    boost::log::core::get()->set_filter(boost::log::trivial::severity >= boost::log::trivial::info);
     //std::string hostname = (argc >= 2) ? argv[1] : "192.168.0.102";
     std::string hostname = (argc >= 2) ? argv[1] : "z8r102-mc12-4-4.sth-tc2.videoplaza.net";
 

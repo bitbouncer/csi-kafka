@@ -3,11 +3,15 @@
 #include <boost/accumulators/statistics/stats.hpp>
 #include <boost/accumulators/statistics/rolling_mean.hpp>
 #include <boost/accumulators/statistics/mean.hpp>
+#include <boost/log/core.hpp>
+#include <boost/log/trivial.hpp>
+#include <boost/log/expressions.hpp>
 #include <csi_kafka/kafka.h>
 #include <csi_kafka/internal/async_metadata_client.h>
 
 int main(int argc, char** argv)
 {
+    boost::log::core::get()->set_filter(boost::log::trivial::severity >= boost::log::trivial::info);
     int32_t port = (argc >= 3) ? atoi(argv[2]) : 9092;
    
     if (port <= 0)

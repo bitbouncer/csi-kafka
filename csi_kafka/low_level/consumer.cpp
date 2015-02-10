@@ -135,7 +135,6 @@ namespace csi
             if (_rx_in_progress || !_client.is_connected() || _next_offset<0 || !_cb)
                 return;
 
-            //std::cerr << "F";
             _rx_in_progress = true;
 
             const std::vector<partition_cursor> cursors = { { _partition, _next_offset } };
@@ -160,8 +159,6 @@ namespace csi
                         {
                             for (std::vector<csi::kafka::fetch_response::topic_data::partition_data>::const_iterator j = i->partitions.begin(); j != i->partitions.end(); ++j)
                             {
-                                //for (std::vector<partition_cursor>::iterator k = cursors.begin(); k != _cursors.end(); ++k)
-                                //{
                                 if (j->partition_id == _partition)  // a partition that have been closed will not exist here so it will not be added again in the next read loop  TBD handle error here....
                                 {
                                     _metrics_total_rx_msg += j->messages.size();
@@ -176,7 +173,6 @@ namespace csi
                                         _next_offset = j->messages[j->messages.size() - 1].offset + 1;
                                     _cb(response.ec.ec1, ((csi::kafka::error_codes) j->error_code), *j); // possibly partition & ack j->messages[j->messages.size() - 1].offset here or send it to application
                                 }
-                                //}
                             }
                         }
                     }

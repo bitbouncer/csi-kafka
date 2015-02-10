@@ -1,6 +1,9 @@
 #include "producer.h"
 #include <boost/thread.hpp>
 #include <boost/bind.hpp>
+#include <boost/log/core.hpp>
+#include <boost/log/trivial.hpp>
+
 
 namespace csi
 {
@@ -136,18 +139,10 @@ namespace csi
             _ios.post([this](){_try_send(); });
         }
 
-     /*   void  async_producer::wait_lowwater_async(int max_messages, lowwater_callback)
-        {
-            
-        }*/
-
-
         void async_producer::_try_send()
         {
             if (_tx_in_progress || !_client.is_connected())
                 return;
-
-            //std::cerr << "+";
             _tx_in_progress = true;
 
             std::vector<std::shared_ptr<basic_message>> v;
@@ -187,9 +182,17 @@ namespace csi
 
                     //TODO PARSE THE RESULT DEEP - WE MIGHT HAVE GOTTEN AN ERROR INSIDE
                     //IF SO WE SHOULD PROBASBLY CLOSE THE CONNECTION
+                    for (std::vector<produce_response::topic_data>::const_iterator i = result->topics.begin(); i != result->topics.end(); ++i)
+                    {
+                        for (std::vector<produce_response::topic_data::partition_data>::const_iterator j = i->partitions.begin(); j != i->partitions.end(); ++j)
+                        {
+                        }
+                    }
+                    
+                    
                     if (result)
                     {
-                        std::cerr << " _client.send_produce_async failed " << csi::kafka::to_string(result.ec) << std::endl;
+                        BOOST_LOG_TRIVIAL(error) << " _client.send_produce_async failed " << csi::kafka::to_string(result.ec);
                         _tx_in_progress = false;
                         _client.close();
                         //_try_send();
