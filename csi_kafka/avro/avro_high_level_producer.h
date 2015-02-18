@@ -25,6 +25,8 @@ namespace csi
         class avro_high_level_producer : public csi::kafka::highlevel_producer
         {
         public:
+            typedef std::pair<K, V> pair_type;
+
             avro_high_level_producer(boost::asio::io_service& io_service, const std::string& topic, int32_t required_acks, int32_t tx_timeout, int32_t max_packet_size = -1) :
                 highlevel_producer(io_service, topic, required_acks, tx_timeout, max_packet_size)
             {
