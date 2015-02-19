@@ -7,7 +7,7 @@ A C++11 asyncronous producer/consumer library for Apache Kafka based on boost as
 - support for avro encoded topics
 - high level producers supports commit-callback on checkpoints, ie when all sub partitions have committed all messages up to a specific point.
 - sync verisons of all (most?) calls
-- 
+
 
 Missing
 - compression
