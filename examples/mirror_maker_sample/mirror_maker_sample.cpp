@@ -21,11 +21,11 @@ int main(int argc, char** argv)
 
     if (argc >= 2)
     {
-        producer.connect_async({ csi::kafka::broker_address(argv[1], port) });
+        producer.connect_forever({ csi::kafka::broker_address(argv[1], port) });
     }
     else
     {
-        producer.connect_async(
+        producer.connect_forever(
         {
             csi::kafka::broker_address("192.168.0.6", 9092),
             csi::kafka::broker_address("10.1.3.238", 9092)

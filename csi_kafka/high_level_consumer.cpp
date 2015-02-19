@@ -53,16 +53,16 @@ namespace csi
         void highlevel_consumer::connect_async(const std::vector<broker_address>& brokers, connect_callback cb)
         {
 
-            BOOST_LOG_TRIVIAL(trace) << "highlevel_consumer::connect_async START";
+            BOOST_LOG_TRIVIAL(trace) << "HLC connect_async START";
             _meta_client.connect_async(brokers, [this, cb](const boost::system::error_code& ec)
             {
-                BOOST_LOG_TRIVIAL(trace) << "highlevel_consumer::connect_async CB";
+                BOOST_LOG_TRIVIAL(trace) << "HLC connect_async CB";
                 if (!ec)
                 {
-                    BOOST_LOG_TRIVIAL(trace) << "_meta_client.get_metadata_async() STARTING";
+                    BOOST_LOG_TRIVIAL(trace) << "HLC _meta_client.get_metadata_async() STARTING";
                     _meta_client.get_metadata_async({ _topic }, 0, [this, cb](rpc_result<metadata_response> result)
                     {
-                        BOOST_LOG_TRIVIAL(trace) << "_meta_client.get_metadata_async() CALLBACK ENTERED...";
+                        BOOST_LOG_TRIVIAL(trace) << "HLC _meta_client.get_metadata_async() CALLBACK ENTERED...";
                         handle_response(result);
                         if (!result)
                         {
@@ -80,37 +80,37 @@ namespace csi
                                     auto bd = _broker2brokers[leader];
                                     broker_address broker_addr(bd.host_name, bd.port);
 
-                                    i->second->connect_async(broker_addr, 1000, [leader, partition, broker_addr, cb](const boost::system::error_code& ec1)
+                                    i->second->connect_async(broker_addr, 1000, [this, leader, partition, broker_addr, cb](const boost::system::error_code& ec1)
                                     {
                                         if (ec1)
                                         {
-                                            BOOST_LOG_TRIVIAL(warning) << "can't connect to broker #" << leader << " (" << to_string(broker_addr) << ") partition " << partition << " ec:" << ec1;
+                                            BOOST_LOG_TRIVIAL(warning) << _topic << ":" << partition << ", HLC can't connect to broker #" << leader << " (" << to_string(broker_addr) << ") ec:" << ec1;
                                         }
                                         else
                                         {
-                                            BOOST_LOG_TRIVIAL(info) << "connected to broker #" << leader << " (" << to_string(broker_addr) << ") partition " << partition;
+                                            BOOST_LOG_TRIVIAL(info) << _topic << ":" << partition << ", HLC connected to broker #" << leader << " (" << to_string(broker_addr) << ")";
                                         }
                                         cb(ec1);
                                     });
                                 });
                             }
                             
-                            BOOST_LOG_TRIVIAL(trace) << "highlevel_consumer::connect_async / waterfall START";
+                            BOOST_LOG_TRIVIAL(trace) << "HLC connect_async / waterfall START";
                             csi::async::waterfall(*work, [work, cb](const boost::system::error_code& ec) // add iterator for last function
                             {
-                                BOOST_LOG_TRIVIAL(trace) << "highlevel_consumer::connect_async / waterfall CB ec=" << ec;
+                                BOOST_LOG_TRIVIAL(trace) << "HLC connect_async / waterfall CB ec=" << ec;
                                 if (ec)
                                 {
-                                    BOOST_LOG_TRIVIAL(warning) << "highlevel_consumer::connect_async can't connect to broker ec:" << ec;
+                                    BOOST_LOG_TRIVIAL(warning) << "HLC connect_async can't connect to broker ec:" << ec;
                                 }
                                 cb(ec);
-                                BOOST_LOG_TRIVIAL(trace) << "highlevel_consumer::connect_async / waterfall EXIT";
+                                BOOST_LOG_TRIVIAL(trace) << "HLC connect_async / waterfall EXIT";
                             }); //waterfall
-                            BOOST_LOG_TRIVIAL(trace) << "_meta_client.get_metadata_async() CB EXIT";
+                            BOOST_LOG_TRIVIAL(trace) << "HLC _meta_client.get_metadata_async() CB EXIT";
                         } // get_metadata_async ok?
                         else
                         {
-                            BOOST_LOG_TRIVIAL(trace) << "_meta_client.get_metadata_async() error cb";
+                            BOOST_LOG_TRIVIAL(trace) << "HLC _meta_client.get_metadata_async() error cb";
                             cb(result.ec.ec1);
                         }
                     }); // get_metadata_async
@@ -120,7 +120,6 @@ namespace csi
 
         boost::system::error_code highlevel_consumer::connect(const std::vector<broker_address>& brokers)
         {
-            BOOST_LOG_TRIVIAL(trace) << "highlevel_consumer::connect START";
             std::promise<boost::system::error_code> p;
             std::future<boost::system::error_code>  f = p.get_future();
             connect_async(brokers, [&p](const boost::system::error_code& error)
@@ -128,8 +127,16 @@ namespace csi
                 p.set_value(error);
             });
             f.wait();
-            BOOST_LOG_TRIVIAL(trace) << "highlevel_consumer::connect EXIT";
-            return f.get();
+            boost::system::error_code ec = f.get();
+            if (ec)
+            {
+                BOOST_LOG_TRIVIAL(warning) << _topic << ", HLC can't connect to broker all brokers " << ec.message();
+            }
+            else
+            {
+                BOOST_LOG_TRIVIAL(info) << _topic << ", HLC connect to all brokers OK";
+            }
+            return ec;
         }
 
         void highlevel_consumer::set_offset(int64_t start_time)
@@ -168,16 +175,16 @@ namespace csi
                         broker_address broker_addr(bd.host_name, bd.port);
                         //boost::asio::ip::tcp::resolver::query query(bd.host_name, std::to_string(bd.port));
                         //std::string broker_uri = bd.host_name + ":" + std::to_string(bd.port);
-                        BOOST_LOG_TRIVIAL(info) << "connecting to broker node_id:" << leader << " (" << to_string(broker_addr) << ") partition:" << partition;
-                        i->second->connect_async(broker_addr, 1000, [leader, partition, broker_addr](const boost::system::error_code& ec1)
+                        BOOST_LOG_TRIVIAL(trace) << _topic << ":" << partition << ", HLC connecting to broker node_id:" << leader << " (" << to_string(broker_addr) << ")";
+                        i->second->connect_async(broker_addr, 1000, [this, leader, partition, broker_addr](const boost::system::error_code& ec1)
                         {
                             if (ec1)
                             {
-                                BOOST_LOG_TRIVIAL(warning) << "can't connect to broker #" << leader << " (" << to_string(broker_addr) << ") partition " << partition << " ec:" << ec1;
+                                BOOST_LOG_TRIVIAL(warning) << _topic << ":" << partition << ", HLC can't connect to broker #" << leader << " (" << to_string(broker_addr) << ") ec:" << ec1;
                             }
                             else
                             {
-                                BOOST_LOG_TRIVIAL(info) << "connected to broker #" << leader << " (" << to_string(broker_addr) << ") partition " << partition;
+                                BOOST_LOG_TRIVIAL(info) << _topic << ":" << partition << ", HLC connected to broker #" << leader << " (" << to_string(broker_addr) << ")";
                             }
                         }); // connect_async
                     }
@@ -201,7 +208,7 @@ namespace csi
                         assert(i->topic_name == _topic);
                         if (i->error_code)
                         {
-                            BOOST_LOG_TRIVIAL(warning) << "metatdata for topic " << _topic << " failed: " << to_string((error_codes)i->error_code);
+                            BOOST_LOG_TRIVIAL(warning) << _topic << ", HLC get metatdata failed: " << to_string((error_codes)i->error_code);
                         }
                         for (std::vector<csi::kafka::metadata_response::topic_data::partition_data>::const_iterator j = i->partitions.begin(); j != i->partitions.end(); ++j)
                         {

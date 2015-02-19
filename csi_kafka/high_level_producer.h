@@ -28,7 +28,11 @@ namespace csi
 
             highlevel_producer(boost::asio::io_service& io_service, const std::string& topic, int32_t required_acks, int32_t tx_timeout, int32_t max_packet_size=-1);
             ~highlevel_producer();
-            void connect_async(const std::vector<broker_address>& brokers); // callback???
+            
+            void connect_forever(const std::vector<broker_address>& brokers); // , connect_callback cb);  // stream of connection events??
+            void connect_async(const std::vector<broker_address>& brokers, connect_callback cb);
+            boost::system::error_code connect(const std::vector<broker_address>& brokers);
+
             void send_async(std::shared_ptr<basic_message> message, tx_ack_callback = NULL);
             void send_async(std::vector<std::shared_ptr<basic_message>>& messages, tx_ack_callback = NULL);
             void close(); 
@@ -48,6 +52,7 @@ namespace csi
 
             // asio callbacks
             void handle_timer(const boost::system::error_code& ec);
+            void handle_response(rpc_result<metadata_response> result);
             void _try_connect_brokers();
             boost::asio::io_service&                                                 _ios;
             std::string                                                              _topic;

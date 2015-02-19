@@ -46,19 +46,19 @@ int main(int argc, char** argv)
 
     //csi::kafka::highlevel_producer producer(io_service, "saka.test.ext_datastream", -1, 500, 20000);
     csi::kafka::highlevel_producer producer(io_service, "perf-8-new", -1, 500, 20000);
-
+    
+    std::vector<csi::kafka::broker_address> brokers;
     if (argc >= 2)
     {
-        producer.connect_async({ csi::kafka::broker_address(argv[1], port) });
+        brokers.push_back(csi::kafka::broker_address(argv[1], port));
     }
     else
     {
-        producer.connect_async(
-        {
-            csi::kafka::broker_address("192.168.0.6", 9092),
-            csi::kafka::broker_address("10.1.3.238", 9092)
-        });
+        brokers.push_back(csi::kafka::broker_address("192.168.0.102", port));
+        brokers.push_back(csi::kafka::broker_address("10.1.3.238", port));
     }
+
+    producer.connect_forever(brokers);
     
     boost::thread do_log([&producer]
     {

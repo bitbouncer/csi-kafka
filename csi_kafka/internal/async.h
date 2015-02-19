@@ -38,7 +38,7 @@ namespace csi
             });
         }
 
-        void waterfall(const std::vector<async_function>& v, async_callback cb)
+        inline void waterfall(const std::vector<async_function>& v, async_callback cb)
         {
             waterfall(v.begin(), v.end(), cb);
         }
@@ -69,7 +69,7 @@ namespace csi
             }
         }
 
-        void parallel(const std::vector<async_function>& v, async_vcallback cb)
+        inline void parallel(const std::vector<async_function>& v, async_vcallback cb)
         {
             parallel(v.begin(), v.end(), cb);
         }

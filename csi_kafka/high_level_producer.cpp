@@ -42,7 +42,7 @@ namespace csi
             }
         }
 
-        void highlevel_producer::connect_async(const std::vector<broker_address>& brokers)
+        void highlevel_producer::connect_forever(const std::vector<broker_address>& brokers)
         {
             _meta_client.connect_async(brokers, [this](const boost::system::error_code& ec)
             {
@@ -50,90 +50,184 @@ namespace csi
             });
         }
 
+        void highlevel_producer::connect_async(const std::vector<broker_address>& brokers, connect_callback cb)
+        {
+            BOOST_LOG_TRIVIAL(trace) << "HLP ::connect_async START";
+            _meta_client.connect_async(brokers, [this, cb](const boost::system::error_code& ec)
+            {
+                BOOST_LOG_TRIVIAL(trace) << "HLP connect_async CB";
+                if (!ec)
+                {
+                    BOOST_LOG_TRIVIAL(trace) << "HLP _meta_client.get_metadata_async() STARTING";
+                    _meta_client.get_metadata_async({ _topic }, 0, [this, cb](rpc_result<metadata_response> result)
+                    {
+                        BOOST_LOG_TRIVIAL(trace) << "HLP _meta_client.get_metadata_async() CALLBACK ENTERED...";
+                        handle_response(result);
+                        if (!result)
+                        {
+                            //std::vector < boost::function <void( const boost::system::error_code&)>> f;
+                            //vector of async functions having callback on completion
+
+                            std::shared_ptr<std::vector<csi::async::async_function>> work(new std::vector<csi::async::async_function>());
+
+                            for (std::map<int, async_producer*>::iterator i = _partition2producers.begin(); i != _partition2producers.end(); ++i)
+                            {
+                                work->push_back([this, i](csi::async::async_callback cb)
+                                {
+                                    int partition = i->first;
+                                    int leader = _partition2partitions[partition].leader;
+                                    auto bd = _broker2brokers[leader];
+                                    broker_address broker_addr(bd.host_name, bd.port);
+
+                                    i->second->connect_async(broker_addr, 1000, [this, leader, partition, broker_addr, cb](const boost::system::error_code& ec1)
+                                    {
+                                        if (ec1)
+                                        {
+                                            BOOST_LOG_TRIVIAL(warning) << _topic << ":" << partition << ", HLP can't connect to broker #" << leader << " (" << to_string(broker_addr) << ") ec:" << ec1;
+                                        }
+                                        else
+                                        {
+                                            BOOST_LOG_TRIVIAL(info) << _topic << ":" << partition << ", HLP connected to broker #" << leader << " (" << to_string(broker_addr) << ")";
+                                        }
+                                        cb(ec1);
+                                    });
+                                });
+                            }
+
+                            BOOST_LOG_TRIVIAL(trace) << "HLP connect_async / waterfall START";
+                            csi::async::waterfall(*work, [work, cb](const boost::system::error_code& ec) // add iterator for last function
+                            {
+                                BOOST_LOG_TRIVIAL(trace) << "HLP connect_async / waterfall CB ec=" << ec;
+                                if (ec)
+                                {
+                                    BOOST_LOG_TRIVIAL(warning) << "HLP connect_async can't connect to broker ec:" << ec;
+                                }
+                                cb(ec);
+                                BOOST_LOG_TRIVIAL(trace) << "HLP connect_async / waterfall EXIT";
+                            }); //waterfall
+                            BOOST_LOG_TRIVIAL(trace) << "HLP _meta_client.get_metadata_async() CB EXIT";
+                        } // get_metadata_async ok?
+                        else
+                        {
+                            BOOST_LOG_TRIVIAL(trace) << _topic << ", HLP _meta_client.get_metadata_async() error cb";
+                            cb(result.ec.ec1);
+                        }
+                    }); // get_metadata_async
+                } // connect ok?
+            }); //connect_async
+        }
+
+        boost::system::error_code highlevel_producer::connect(const std::vector<broker_address>& brokers)
+        {
+            BOOST_LOG_TRIVIAL(trace) << _topic << ", HLP connect START";
+            std::promise<boost::system::error_code> p;
+            std::future<boost::system::error_code>  f = p.get_future();
+            connect_async(brokers, [&p](const boost::system::error_code& error)
+            {
+                p.set_value(error);
+            });
+            f.wait();
+
+            boost::system::error_code ec = f.get();
+            if (ec)
+            {
+                BOOST_LOG_TRIVIAL(warning) << _topic << ", HLP can't connect to broker all brokers " << ec.message();
+            }
+            else
+            {
+                BOOST_LOG_TRIVIAL(info) << _topic << ", HLP connect to all brokers OK";
+            }
+            return ec;
+        }
+
         void highlevel_producer::_try_connect_brokers()
         {
             // the number of partitions is constant but the serving hosts might differ
             _meta_client.get_metadata_async({ _topic }, 0, [this](rpc_result<metadata_response> result)
             {
-                if (!result)
+                handle_response(result);
+
+                for (std::map<int, async_producer*>::iterator i = _partition2producers.begin(); i != _partition2producers.end(); ++i)
                 {
+                    if (!i->second->is_connected() && !i->second->is_connection_in_progress())
                     {
-                        csi::kafka::spinlock::scoped_lock xxx(_spinlock);
-                        //_metadata = result;
 
-                        //changes?
-                        //TODO we need to create new producers if we have more partitions
-                        //TODO we cant shrink cluster at the moment...
-                        if (_partition2producers.size() == 0)
+                        int partition = i->first;
+                        int leader = _partition2partitions[partition].leader;
+                        auto bd = _broker2brokers[leader];
+                        broker_address addr(bd.host_name, bd.port);
+                        i->second->close();
+                        BOOST_LOG_TRIVIAL(info) << _topic << ":" << partition << ", HLP connecting to broker node_id:" << leader << " (" << to_string(addr) << ")";
+                        i->second->connect_async(addr, 1000, [this, leader, partition, addr](const boost::system::error_code& ec1)
                         {
-                            for (std::vector<csi::kafka::metadata_response::topic_data>::const_iterator i = result->topics.begin(); i != result->topics.end(); ++i)
+                            if (ec1)
                             {
-                                assert(i->topic_name == _topic);
-                                if (i->error_code)
-                                {
-                                    BOOST_LOG_TRIVIAL(warning) << "metadata for topic " << _topic << " failed: " << to_string((error_codes)i->error_code);
-                                }
-                                for (std::vector<csi::kafka::metadata_response::topic_data::partition_data>::const_iterator j = i->partitions.begin(); j != i->partitions.end(); ++j)
-                                    _partition2producers.insert(std::make_pair(j->partition_id, new async_producer(_ios, _topic, j->partition_id, _required_acks, _tx_timeout, _max_packet_size)));
+                                BOOST_LOG_TRIVIAL(warning) << _topic << ":" << partition << ", HLP can't connect to broker #" << leader << " (" << to_string(addr) << ") ec:" << ec1;
                             }
-
-                            //lets send all things that were collected before connecting
-                            std::deque<tx_item> ::reverse_iterator cursor = _tx_queue.rbegin();
-                           
-                            while (_tx_queue.size())
+                            else
                             {
-                                tx_item& item = *(_tx_queue.end() - 1);
-                                uint32_t partition = item.hash % _partition2producers.size();
-                                _partition2producers[partition]->send_async(item.msg, item.cb);
-                                _tx_queue.pop_back();
+                                BOOST_LOG_TRIVIAL(info) << _topic << ":" << partition << ", HLP connected to broker #" << leader << " (" << to_string(addr) << ")";
                             }
-                        }
-
-
-                        for (std::vector<csi::kafka::broker_data>::const_iterator i = result->brokers.begin(); i != result->brokers.end(); ++i)
-                        {
-                            _broker2brokers[i->node_id] = *i;
-                        };
-
-                        for (std::vector<csi::kafka::metadata_response::topic_data>::const_iterator i = result->topics.begin(); i != result->topics.end(); ++i)
-                        {
-                            assert(i->topic_name == _topic);
-                            for (std::vector<csi::kafka::metadata_response::topic_data::partition_data>::const_iterator j = i->partitions.begin(); j != i->partitions.end(); ++j)
-                            {
-                                _partition2partitions[j->partition_id] = *j;
-                            };
-                        };
-                    }
-
-                    for (std::map<int, async_producer*>::iterator i = _partition2producers.begin(); i != _partition2producers.end(); ++i)
-                    {
-                        if (!i->second->is_connected() && !i->second->is_connection_in_progress())
-                        {
-
-                            int partition = i->first;
-                            int leader = _partition2partitions[partition].leader;
-                            auto bd = _broker2brokers[leader];
-                            broker_address addr(bd.host_name, bd.port);
-                            i->second->close();
-                            BOOST_LOG_TRIVIAL(info) << "connecting to broker node_id:" << leader << " (" << to_string(addr) << ") partition:" << partition;
-                            i->second->connect_async(addr, 1000, [leader, partition, addr](const boost::system::error_code& ec1)
-                            {
-                                if (ec1)
-                                {
-                                    BOOST_LOG_TRIVIAL(warning) << "can't connect to broker #" << leader << " (" << to_string(addr) << ") partition " << partition << " ec:" << ec1;
-                                }
-                                else
-                                {
-                                    BOOST_LOG_TRIVIAL(info) << "connected to broker #" << leader << " (" << to_string(addr) << ") partition " << partition;
-                                }
-                            });
-                        }
+                        });
                     }
                 }
-
                 _timer.expires_from_now(_timeout);
                 _timer.async_wait(boost::bind(&highlevel_producer::handle_timer, this, boost::asio::placeholders::error));
             });
+        }
+
+        void highlevel_producer::handle_response(rpc_result<metadata_response> result)
+        {
+            if (!result)
+            {
+                {
+                    csi::kafka::spinlock::scoped_lock xxx(_spinlock);
+                    //_metadata = result;
+
+                    //changes?
+                    //TODO we need to create new producers if we have more partitions
+                    //TODO we cant shrink cluster at the moment...
+                    if (_partition2producers.size() == 0)
+                    {
+                        for (std::vector<csi::kafka::metadata_response::topic_data>::const_iterator i = result->topics.begin(); i != result->topics.end(); ++i)
+                        {
+                            assert(i->topic_name == _topic);
+                            if (i->error_code)
+                            {
+                                BOOST_LOG_TRIVIAL(warning) << _topic << ", HLP get_metadata failed: " << to_string((error_codes)i->error_code);
+                            }
+                            for (std::vector<csi::kafka::metadata_response::topic_data::partition_data>::const_iterator j = i->partitions.begin(); j != i->partitions.end(); ++j)
+                                _partition2producers.insert(std::make_pair(j->partition_id, new async_producer(_ios, _topic, j->partition_id, _required_acks, _tx_timeout, _max_packet_size)));
+                        }
+
+                        //lets send all things that were collected before connecting
+                        std::deque<tx_item> ::reverse_iterator cursor = _tx_queue.rbegin();
+
+                        while (_tx_queue.size())
+                        {
+                            tx_item& item = *(_tx_queue.end() - 1);
+                            uint32_t partition = item.hash % _partition2producers.size();
+                            _partition2producers[partition]->send_async(item.msg, item.cb);
+                            _tx_queue.pop_back();
+                        }
+                    }
+
+
+                    for (std::vector<csi::kafka::broker_data>::const_iterator i = result->brokers.begin(); i != result->brokers.end(); ++i)
+                    {
+                        _broker2brokers[i->node_id] = *i;
+                    };
+
+                    for (std::vector<csi::kafka::metadata_response::topic_data>::const_iterator i = result->topics.begin(); i != result->topics.end(); ++i)
+                    {
+                        assert(i->topic_name == _topic);
+                        for (std::vector<csi::kafka::metadata_response::topic_data::partition_data>::const_iterator j = i->partitions.begin(); j != i->partitions.end(); ++j)
+                        {
+                            _partition2partitions[j->partition_id] = *j;
+                        };
+                    };
+                }
+            }
         }
 
         void highlevel_producer::send_async(std::shared_ptr<basic_message> message, tx_ack_callback cb)
@@ -151,12 +245,12 @@ namespace csi
             }
             else
             {
-                BOOST_LOG_TRIVIAL(error) << " no key -> enque in parition 0 FIXME";
+                BOOST_LOG_TRIVIAL(error) << "HLP no key -> enque in parition 0 FIXME";
             }
 
             // enqueu in partition queue or store if we don't have a connection the cluster.
             csi::kafka::spinlock::scoped_lock xxx(_spinlock);
-            
+
             // TBD change below when we can accept repartitioning - for now it's okay to store initial data and send it when we find the cluster.
             //if (_meta_client.is_connected() && _partition2producers.size())
             if (_partition2producers.size())
