@@ -36,17 +36,15 @@ namespace csi
             void                        set_offsets(const std::vector<int64_t>&);
             std::vector<int64_t>        get_offsets();
             void                        commit_offsets();
-            
-            //void refresh_metadata_async();
-
-            void close();
-            void stream_async(datastream_callback cb);
+            void                        close();
+            void                        stream_async(datastream_callback cb);
 
             std::vector<metrics> get_metrics() const;
 
         private:
             void handle_response(rpc_result<metadata_response> result);
             void handle_timer(const boost::system::error_code& ec);
+            void _connect_async(connect_callback cb);
             void _try_connect_brokers();
 
             boost::asio::io_service&             _ios;
@@ -61,7 +59,6 @@ namespace csi
             // CLUSTER METADATA
             csi::kafka::async_metadata_client                                        _meta_client;
             csi::kafka::spinlock                                                     _spinlock; // protects the metadata below
-            //rpc_result<metadata_response>                                            _metadata;
             std::map<int, broker_data>                                               _broker2brokers;
             std::map<int, csi::kafka::metadata_response::topic_data::partition_data> _partition2partitions; // partition->partition_dat
         };
