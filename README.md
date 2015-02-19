@@ -9,6 +9,6 @@ Building
 see
 https://github.com/bitbouncer/csi-build-scripts
 
-This is work in progress 
+
 
  
