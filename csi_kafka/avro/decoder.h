@@ -1,7 +1,8 @@
+#include <memory>
+#include <boost/function.hpp>
 #include <avro/Specific.hh>
 #include <avro/Encoder.hh>
 #include <avro/Decoder.hh>
-
 #include <csi_kafka/kafka.h>
 
 #pragma once
