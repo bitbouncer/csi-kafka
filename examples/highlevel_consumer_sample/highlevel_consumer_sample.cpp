@@ -27,7 +27,9 @@ int main(int argc, char** argv)
 
     csi::kafka::highlevel_consumer consumer(io_service, "perf-8-new", 20000);
 
-    consumer.connect_forever(brokers);
+    //consumer.connect_forever(brokers);
+    consumer.connect(brokers);
+    consumer.set_offset(csi::kafka::earliest_available_offset);
 
     boost::thread do_log([&consumer]
     {
