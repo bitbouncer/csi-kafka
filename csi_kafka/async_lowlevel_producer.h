@@ -1,57 +1,24 @@
-#include "client.h"
 #include <deque>
 #include <boost/accumulators/accumulators.hpp>
 #include <boost/accumulators/statistics/stats.hpp>
 #include <boost/accumulators/statistics/rolling_mean.hpp>
 #include <boost/accumulators/statistics/mean.hpp>
+#include <csi_kafka/lowlevel_client.h>
 
 #pragma once
+
 namespace csi
 {
     namespace kafka
     {
-        class producer
-        {
-        public:
-            typedef boost::function <void(const boost::system::error_code&)>                                connect_callback;
-            typedef boost::function <void(rpc_result<csi::kafka::produce_response>)>                        send_callback;
-            typedef boost::function <void(csi::kafka::error_codes, std::shared_ptr<metadata_response>)>     get_metadata_callback;
-
-            producer(boost::asio::io_service& io_service, const std::string& topic, int32_t partition);
-
-            void                              connect_async(const broker_address& address, int32_t timeout, connect_callback);
-            boost::system::error_code         connect(const broker_address& address, int32_t timeout);
-
-            void                              connect_async(const boost::asio::ip::tcp::resolver::query& query, int32_t timeout, connect_callback cb);
-            boost::system::error_code         connect(const boost::asio::ip::tcp::resolver::query& query, int32_t timeout);
-            void close();
-            //void close_async();
-
-            void send_async(int32_t required_acks, int32_t timeout, const std::vector<std::shared_ptr<basic_message>>& v, int32_t correlation_id, send_callback);
-            
-            inline bool is_connected() const    { return _client.is_connected(); }
-            inline bool is_connection_in_progress() const { return _client.is_connection_in_progress(); }
-            int32_t partition() const           { return _partition_id; }
-            const std::string& topic() const    { return _topic; }
-
-        protected:
-            boost::asio::io_service&             _ios;
-            csi::kafka::low_level::client        _client;
-            const std::string                    _topic;
-            const int32_t                        _partition_id;
-        };
-
-        class async_producer
+       class async_lowlevel_producer
         {
         public:
             typedef boost::function <void(const boost::system::error_code&)>         connect_callback;
             typedef boost::function <void()>                                         tx_ack_callback;
-            //typedef boost::function <void(rpc_result<csi::kafka::produce_response>)> send_callback;
 
-         
-
-            async_producer(boost::asio::io_service& io_service, const std::string& topic, int32_t partition, int32_t required_acks, int32_t timeout, int32_t max_packet_size=-1);
-            ~async_producer();
+            async_lowlevel_producer(boost::asio::io_service& io_service, const std::string& topic, int32_t partition, int32_t required_acks, int32_t timeout, int32_t max_packet_size = -1);
+            ~async_lowlevel_producer();
 
             void                              connect_async(const broker_address& address, int32_t timeout, connect_callback);
             boost::system::error_code         connect(const broker_address& address, int32_t timeout);
@@ -91,7 +58,7 @@ namespace csi
             void _try_send(); // gets posted from enqueue so actual call comes from correct thread
 
             boost::asio::io_service&                   _ios;
-            csi::kafka::low_level::client              _client;
+            csi::kafka::lowlevel_client                _client;
             const std::string                          _topic;
             const int32_t                              _partition_id;
             //TX queue

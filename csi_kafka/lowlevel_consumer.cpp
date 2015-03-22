@@ -1,4 +1,4 @@
-#include "consumer.h"
+#include "lowlevel_consumer.h"
 #include <boost/thread.hpp>
 #include <boost/bind.hpp>
 
@@ -24,13 +24,6 @@ namespace csi
             __metrics_last_total_rx_kb(0),
             __metrics_last_total_rx_msg(0)
         {
-            /*
-            if (_max_packet_size <0)
-                _max_packet_size = (csi::kafka::low_level::basic_call_context::MAX_BUFFER_SIZE - 1000);
-            if (_max_packet_size >(csi::kafka::low_level::basic_call_context::MAX_BUFFER_SIZE - 1000))
-                _max_packet_size = (csi::kafka::low_level::basic_call_context::MAX_BUFFER_SIZE - 1000);
-            */
-
             _metrics_timer.expires_from_now(_metrics_timeout);
             _metrics_timer.async_wait([this](const boost::system::error_code& ec){ handle_metrics_timer(ec); });
         }

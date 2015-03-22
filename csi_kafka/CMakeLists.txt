@@ -6,23 +6,25 @@ SET(LIB_SRCS
     internal/async_metadata_client.h
     internal/async_metadata_client.cpp
     internal/call_context.h
-    low_level/client.h
-	low_level/client.cpp
-	low_level/encoder.h
-	low_level/encoder.cpp
-	low_level/decoder.h
-	low_level/decoder.cpp
-	low_level/spinlock.cpp
-	low_level/spinlock.h
-	low_level/utility.h
-	low_level/consumer.cpp
-	low_level/consumer.h
-	low_level/producer.cpp
-	low_level/producer.h
+    internal/utility.h
+	internal/spinlock.cpp
+	internal/spinlock.h
+    lowlevel_client.h
+	lowlevel_client.cpp
+	encoder.h
+	encoder.cpp
+	decoder.h
+	decoder.cpp
+	lowlevel_consumer.cpp
+	lowlevel_consumer.h
+	lowlevel_producer.cpp
+	lowlevel_producer.h
     high_level_consumer.h
     high_level_consumer.cpp
     high_level_producer.h
     high_level_producer.cpp
+    async_lowlevel_producer.h
+    async_lowlevel_producer.cpp
 	kafka.h
 	kafka.cpp
     kafka_error_code.h

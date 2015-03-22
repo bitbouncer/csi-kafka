@@ -1,5 +1,5 @@
 #include <map>
-#include <csi_kafka/low_level/consumer.h>
+#include <csi_kafka/lowlevel_consumer.h>
 #include <csi_kafka/internal/async_metadata_client.h>
 
 #pragma once

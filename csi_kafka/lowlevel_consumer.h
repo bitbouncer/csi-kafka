@@ -2,7 +2,7 @@
 #include <boost/accumulators/statistics/stats.hpp>
 #include <boost/accumulators/statistics/rolling_mean.hpp>
 #include <boost/accumulators/statistics/mean.hpp>
-#include "client.h"
+#include "lowlevel_client.h"
 
 #pragma once
 namespace csi
@@ -46,7 +46,7 @@ namespace csi
             void _try_set_offset();
 
             boost::asio::io_service&        _ios;
-            csi::kafka::low_level::client   _client;
+            csi::kafka::lowlevel_client     _client;
             const std::string               _topic;
             int32_t                         _rx_timeout;
             bool                            _rx_in_progress;

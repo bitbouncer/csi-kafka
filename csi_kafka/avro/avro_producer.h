@@ -1,7 +1,7 @@
 #include <avro/Specific.hh>
 #include <avro/Encoder.hh>
 #include <avro/Decoder.hh>
-#include <csi_kafka/low_level/producer.h>
+#include <csi_kafka/lowlevel_producer.h>
 
 #pragma once
 
@@ -21,11 +21,11 @@ namespace csi
         }
 
         template<class T>
-        class avro_value_producer : public csi::kafka::producer
+        class avro_value_producer : public csi::kafka::lowlevel_producer
         {
         public:
             avro_value_producer(boost::asio::io_service& io_service, const std::string& topic, int32_t partition) :
-                producer(io_service, topic, partition)
+                lowlevel_producer(io_service, topic, partition)
             {
             }
 
@@ -50,16 +50,16 @@ namespace csi
                         msg->value.push_back(stream_reader.read());
                     src2.push_back(msg);
                 }
-                csi::kafka::producer::send_async(required_acks, timeout, src2, correlation_id, cb);
+                csi::kafka::lowlevel_producer::send_async(required_acks, timeout, src2, correlation_id, cb);
             }
         };
 
         template<class K, class V>
-        class avro_key_value_producer : public csi::kafka::producer
+        class avro_key_value_producer : public csi::kafka::lowlevel_producer
         {
         public:
             avro_key_value_producer(boost::asio::io_service& io_service, const std::string& topic, int32_t partition) :
-                producer(io_service, topic, partition)
+                lowlevel_producer(io_service, topic, partition)
             {
             }
 
@@ -99,7 +99,7 @@ namespace csi
                     }
                     src2.push_back(msg);
                 }
-                csi::kafka::producer::send_async(required_acks, timeout, src2, correlation_id, cb);
+                csi::kafka::lowlevel_producer::send_async(required_acks, timeout, src2, correlation_id, cb);
             }
         };
     }
