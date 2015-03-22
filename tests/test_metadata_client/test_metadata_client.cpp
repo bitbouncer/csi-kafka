@@ -37,9 +37,8 @@ int main(int argc, char** argv)
     {
         client.connect_async(
         {
-            csi::kafka::broker_address("192.168.0.6", 9092),
-            csi::kafka::broker_address("z8r102-mc12-4-4.sth-tc2.videoplaza.net", 9092),
-            //csi::kafka::broker_address("10.1.3.238", 9092)
+            csi::kafka::broker_address("192.168.0.102", port),
+            csi::kafka::broker_address("10.1.3.238", port)
         }, NULL);
     }
 

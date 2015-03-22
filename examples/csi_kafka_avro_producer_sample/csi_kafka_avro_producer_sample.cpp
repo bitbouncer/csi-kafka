@@ -37,7 +37,7 @@ void create_message(std::vector<sample::syslog>& msg)
     }
 }
 
-void send_batch(csi::kafka::avro_producer<sample::syslog>& producer)
+void send_batch(csi::kafka::avro_value_producer<sample::syslog>& producer)
 {
     std::vector<sample::syslog> x;
     create_message(x);
@@ -59,26 +59,16 @@ void send_batch(csi::kafka::avro_producer<sample::syslog>& producer)
 int main(int argc, char** argv)
 {
     boost::log::core::get()->set_filter(boost::log::trivial::severity >= boost::log::trivial::info);
-    csi::kafka::broker_address addr("192.168.0.6", 9092);
+    csi::kafka::broker_address addr("192.168.0.102", 9092);
     int32_t port = (argc >= 3) ? atoi(argv[2]) : 9092;
     if (argc >= 2)
         addr = csi::kafka::broker_address(argv[1], port);
-
-    /*
-    bin/kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic sample-avro-syslog2
-    bin/kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic test
-    bin/kafka-topics.sh --list --zookeeper localhost:2181
-    */
-
-    std::string hostname = (argc >= 2) ? argv[1] : "192.168.0.102";
-    //std::string hostname = (argc >= 2) ? argv[1] : "z8r102-mc12-4-4.sth-tc2.videoplaza.net";
-    //std::string hostname = (argc >= 2) ? argv[1] : "10.1.3.238";
 
     boost::asio::io_service io_service;
     std::auto_ptr<boost::asio::io_service::work> work(new boost::asio::io_service::work(io_service));
     boost::thread bt(boost::bind(&boost::asio::io_service::run, &io_service));
 
-    csi::kafka::avro_producer<sample::syslog> producer(io_service, "saka.test.avro-syslog2", 0);
+    csi::kafka::avro_value_producer<sample::syslog> producer(io_service, "saka.test.avro-syslog2", 0);
     
     boost::system::error_code error = producer.connect(addr, 1000);
 

@@ -66,24 +66,23 @@ int main(int argc, char** argv)
     });
 
 
-    csi::kafka::avro_producer2<sample::contact_info_key, sample::contact_info> producer(io_service, "saka.test.avro_key_value", 0);
+    csi::kafka::avro_key_value_producer<sample::contact_info_key, sample::contact_info> producer(io_service, "saka.test.avro_key_value", 0);
     boost::system::error_code error = producer.connect(addr, 1000);
 
     int32_t cursor=0;
 
 
     //produce messages
-    /*
     while (true)
     {
         std::vector<std::pair<sample::contact_info_key, sample::contact_info>> v;
         create_message(v, cursor);
-        producer.send_sync(0, 1000, v, 0, NULL);
+        producer.send_async(-1, 1000, v, 0, NULL);
         total += v.size();
         if (cursor > 10000000)
             cursor = 0;
+        boost::this_thread::sleep(boost::posix_time::milliseconds(100));
     }
-    */
 
 
     work.reset();
