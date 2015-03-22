@@ -26,9 +26,12 @@ int main(int argc, char** argv)
     boost::thread bt(boost::bind(&boost::asio::io_service::run, &io_service));
 
     csi::kafka::highlevel_consumer consumer(io_service, "perf-8-new", 20000);
-
-    //consumer.connect_forever(brokers);
+      
     consumer.connect(brokers);
+    //std::vector<int64_t> result = consumer.get_offsets();
+
+    consumer.connect_forever(brokers);
+
     consumer.set_offset(csi::kafka::earliest_available_offset);
 
     boost::thread do_log([&consumer]

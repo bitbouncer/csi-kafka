@@ -34,8 +34,12 @@ namespace csi
             boost::system::error_code   connect(const std::vector<broker_address>& brokers);
             void                        set_offset(int64_t start_time);
             void                        set_offsets(const std::vector<int64_t>&);
+            
+            //bad name
             std::vector<int64_t>        get_offsets();
             void                        commit_offsets();
+            
+
             void                        close();
             void                        stream_async(datastream_callback cb);
 
@@ -61,6 +65,9 @@ namespace csi
             csi::kafka::spinlock                                                     _spinlock; // protects the metadata below
             std::map<int, broker_data>                                               _broker2brokers;
             std::map<int, csi::kafka::metadata_response::topic_data::partition_data> _partition2partitions; // partition->partition_dat
+
+            // CONSUMER METADATA
+            csi::kafka::async_metadata_client                                        _consumer_meta_client;
         };
     };
 };

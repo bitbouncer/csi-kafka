@@ -13,6 +13,7 @@ namespace csi
             _timer(io_service),
             _timeout(boost::posix_time::milliseconds(5000)),
             _meta_client(io_service),
+            _consumer_meta_client(io_service),
             _topic(topic),
             _rx_timeout(rx_timeout),
             _max_packet_size(max_packet_size)
@@ -34,6 +35,7 @@ namespace csi
         {
             _timer.cancel();
             _meta_client.close();
+            _consumer_meta_client.close();
             for (std::map<int, lowlevel_consumer*>::iterator i = _partition2consumers.begin(); i != _partition2consumers.end(); ++i)
             {
                 i->second->close();
@@ -177,7 +179,7 @@ namespace csi
                             assert(i->topic_name == _topic);
                             if (i->error_code)
                             {
-                                BOOST_LOG_TRIVIAL(warning) << _topic << ", HLC get metatdata failed: " << to_string((error_codes)i->error_code);
+                                BOOST_LOG_TRIVIAL(warning) << _topic << ", HLC get metadata failed: " << to_string((error_codes)i->error_code);
                             }
                             for (std::vector<csi::kafka::metadata_response::topic_data::partition_data>::const_iterator j = i->partitions.begin(); j != i->partitions.end(); ++j)
                             {
@@ -212,6 +214,12 @@ namespace csi
                 _partition2consumers[i]->stream_async(cb);
             }
         }
+
+        /*
+        std::vector<int64_t> highlevel_consumer::get_offsets()
+        {
+        }
+        */
 
         std::vector<highlevel_consumer::metrics>  highlevel_consumer::get_metrics() const
         {
