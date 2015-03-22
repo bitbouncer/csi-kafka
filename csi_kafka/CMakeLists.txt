@@ -1,7 +1,7 @@
 SET(LIB_SRCS
 	avro/decoder.h
-	avro/avro_producer.h
-    avro/avro_high_level_producer
+	avro/avro_lowlevel_producer.h
+    avro/avro_highlevel_producer
 	internal/async.h
     internal/async_metadata_client.h
     internal/async_metadata_client.cpp
@@ -19,10 +19,10 @@ SET(LIB_SRCS
 	lowlevel_consumer.h
 	lowlevel_producer.cpp
 	lowlevel_producer.h
-    high_level_consumer.h
-    high_level_consumer.cpp
-    high_level_producer.h
-    high_level_producer.cpp
+    highlevel_consumer.h
+    highlevel_consumer.cpp
+    highlevel_producer.h
+    highlevel_producer.cpp
     async_lowlevel_producer.h
     async_lowlevel_producer.cpp
 	kafka.h

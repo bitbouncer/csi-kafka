@@ -3,8 +3,8 @@
 #include <boost/log/trivial.hpp>
 #include <boost/log/expressions.hpp>
 #include <csi_kafka/kafka.h>
-#include <csi_kafka/low_level/client.h>
-#include <csi_kafka/low_level/encoder.h>
+#include <csi_kafka/lowlevel_client.h>
+#include <csi_kafka/encoder.h>
 
 int main(int argc, char** argv)
 {
@@ -21,7 +21,7 @@ int main(int argc, char** argv)
     std::auto_ptr<boost::asio::io_service::work> work(new boost::asio::io_service::work(io_service));
     boost::thread bt(boost::bind(&boost::asio::io_service::run, &io_service));
 
-    csi::kafka::low_level::client client(io_service);
+    csi::kafka::lowlevel_client client(io_service);
 
     boost::system::error_code error = client.connect(query, 1000);
 

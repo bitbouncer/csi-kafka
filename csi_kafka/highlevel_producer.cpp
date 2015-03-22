@@ -3,7 +3,7 @@
 #include <boost/log/core.hpp>
 #include <boost/log/trivial.hpp>
 #include <csi_kafka/internal/async.h>
-#include "high_level_producer.h"
+#include "highlevel_producer.h"
 
 namespace csi
 {

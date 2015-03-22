@@ -10,7 +10,7 @@
 #include <boost/accumulators/statistics/stats.hpp>
 #include <boost/accumulators/statistics/rolling_mean.hpp>
 #include <boost/accumulators/statistics/mean.hpp>
-#include <csi_kafka/avro/avro_producer.h>
+#include <csi_kafka/avro/avro_lowlevel_producer.h>
 #include "contact_info.h"
 #include "contact_info_key.h"
 
@@ -43,7 +43,8 @@ int main(int argc, char** argv)
 {
     boost::log::core::get()->set_filter(boost::log::trivial::severity >= boost::log::trivial::info);
     int64_t total = 0;
-    csi::kafka::broker_address addr("192.168.0.6", 9092);
+    
+    csi::kafka::broker_address addr("192.168.0.102", 9092);
     int32_t port = (argc >= 3) ? atoi(argv[2]) : 9092;
     if (argc >= 2)
         addr = csi::kafka::broker_address(argv[1], port);

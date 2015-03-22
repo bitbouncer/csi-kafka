@@ -3,7 +3,7 @@
 #include <boost/log/trivial.hpp>
 #include <boost/log/expressions.hpp>
 #include <csi_kafka/kafka.h>
-#include <csi_kafka/high_level_producer.h>
+#include <csi_kafka/highlevel_producer.h>
 
 
 #define VALUE_SIZE 300

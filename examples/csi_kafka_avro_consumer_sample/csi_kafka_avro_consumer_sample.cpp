@@ -11,8 +11,8 @@
 #include <boost/accumulators/statistics/rolling_mean.hpp>
 #include <boost/accumulators/statistics/mean.hpp>
 
-#include <csi_kafka/low_level/consumer.h>
-#include <csi_kafka/high_level_consumer.h>
+#include <csi_kafka/lowlevel_consumer.h>
+#include <csi_kafka/highlevel_consumer.h>
 
 #include <csi_kafka/avro/decoder.h>
 #include "syslog.h"
@@ -30,7 +30,7 @@ int main(int argc, char** argv)
     }
     else
     {
-        brokers.push_back(csi::kafka::broker_address("192.168.0.6", 9092));
+        brokers.push_back(csi::kafka::broker_address("192.168.0.102", 9092));
         brokers.push_back(csi::kafka::broker_address("10.1.3.238", 9092));
     }
 
@@ -41,7 +41,7 @@ int main(int argc, char** argv)
 
     // just testing away
     {
-        csi::kafka::low_level::client client(io_service);
+        csi::kafka::lowlevel_client client(io_service);
         boost::system::error_code ec = client.connect(brokers[0], 1000);
         auto md = client.get_metadata({}, 0);
         auto resp = client.get_consumer_metadata("saka.test.avro-syslog2", 0);

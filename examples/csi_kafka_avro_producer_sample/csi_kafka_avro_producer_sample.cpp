@@ -10,7 +10,7 @@
 #include <boost/accumulators/statistics/stats.hpp>
 #include <boost/accumulators/statistics/rolling_mean.hpp>
 #include <boost/accumulators/statistics/mean.hpp>
-#include <csi_kafka/avro/avro_producer.h>
+#include <csi_kafka/avro/avro_lowlevel_producer.h>
 #include "syslog.h"
 
 static boost::accumulators::accumulator_set<double, boost::accumulators::stats<boost::accumulators::tag::rolling_mean> > acc(boost::accumulators::tag::rolling_window::window_size = 10);
@@ -59,6 +59,7 @@ void send_batch(csi::kafka::avro_value_producer<sample::syslog>& producer)
 int main(int argc, char** argv)
 {
     boost::log::core::get()->set_filter(boost::log::trivial::severity >= boost::log::trivial::info);
+    
     csi::kafka::broker_address addr("192.168.0.102", 9092);
     int32_t port = (argc >= 3) ? atoi(argv[2]) : 9092;
     if (argc >= 2)

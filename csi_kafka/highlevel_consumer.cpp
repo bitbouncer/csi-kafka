@@ -2,7 +2,7 @@
 #include <boost/log/core.hpp>
 #include <boost/log/trivial.hpp>
 #include <csi_kafka/internal/async.h>
-#include "high_level_consumer.h"
+#include "highlevel_consumer.h"
 
 namespace csi
 {

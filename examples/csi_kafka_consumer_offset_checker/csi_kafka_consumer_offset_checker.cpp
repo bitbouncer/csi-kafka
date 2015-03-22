@@ -3,8 +3,8 @@
 #include <boost/log/core.hpp>
 #include <boost/log/trivial.hpp>
 #include <boost/log/expressions.hpp>
-#include <csi_kafka/low_level/consumer.h>
-#include <csi_kafka/low_level/producer.h>
+#include <csi_kafka/lowlevel_consumer.h>
+#include <csi_kafka/lowlevel_producer.h>
 
 int main(int argc, char** argv)
 {
@@ -17,7 +17,7 @@ int main(int argc, char** argv)
     std::auto_ptr<boost::asio::io_service::work> work(new boost::asio::io_service::work(io_service));
     boost::thread bt(boost::bind(&boost::asio::io_service::run, &io_service));
 
-    csi::kafka::low_level::client client(io_service);
+    csi::kafka::lowlevel_client client(io_service);
     boost::system::error_code ec = client.connect(query, 1000);
     if (!ec)
     {
@@ -29,7 +29,7 @@ int main(int argc, char** argv)
         if (!cmd)
         {
             boost::asio::ip::tcp::resolver::query query(cmd->host_name, std::to_string(cmd->port));
-            csi::kafka::low_level::client offset_client(io_service);
+            csi::kafka::lowlevel_client offset_client(io_service);
             boost::system::error_code ec = offset_client.connect(query, 1000);
             if (!ec)
             {

@@ -3,7 +3,7 @@
 #include <boost/log/trivial.hpp>
 #include <boost/log/expressions.hpp>
 #include <csi_kafka/kafka.h>
-#include <csi_kafka/high_level_consumer.h>
+#include <csi_kafka/highlevel_consumer.h>
 
 int main(int argc, char** argv)
 {
@@ -17,7 +17,7 @@ int main(int argc, char** argv)
     }
     else
     {
-        brokers.push_back(csi::kafka::broker_address("192.168.0.6", 9092));
+        brokers.push_back(csi::kafka::broker_address("192.168.0.102", 9092));
         brokers.push_back(csi::kafka::broker_address("10.1.3.238", 9092));
     }
 
@@ -27,7 +27,7 @@ int main(int argc, char** argv)
 
 
     
-    csi::kafka::low_level::client client(io_service);
+    csi::kafka::lowlevel_client client(io_service);
     auto res0 = client.connect(csi::kafka::broker_address("kafka-1", 9092), 3000);
     if (res0)
     {
