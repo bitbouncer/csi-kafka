@@ -10,7 +10,7 @@
 #include <boost/accumulators/statistics/stats.hpp>
 #include <boost/accumulators/statistics/rolling_mean.hpp>
 #include <boost/accumulators/statistics/mean.hpp>
-#include <csi_kafka/avro/avro_lowlevel_producer.h>
+#include <csi_kafka/avro_lowlevel_producer.h>
 #include "syslog.h"
 
 static boost::accumulators::accumulator_set<double, boost::accumulators::stats<boost::accumulators::tag::rolling_mean> > acc(boost::accumulators::tag::rolling_window::window_size = 10);

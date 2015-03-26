@@ -1,9 +1,11 @@
-#include "decoder.h"
 #include <boost/asio.hpp>
 #include <boost/endian/arithmetic.hpp>
 #include <boost/iostreams/stream.hpp>
 #include <boost/crc.hpp>
 
+//#include <iostream>
+
+#include "protocol_decoder.h"
 
 namespace csi
 {
@@ -23,6 +25,11 @@ namespace csi
                 decode_i16(src, len);
                 if (len < 0)
                     len = 0;
+                if (len == 0)
+                {
+                    dst = "";
+                    return;
+                }
                 dst.reserve(len);
                 std::istream_iterator<char> isi(src);
                 std::copy_n(isi, len, std::insert_iterator<std::string>(dst, dst.begin()));
@@ -185,7 +192,9 @@ namespace csi
 
                 //uncompressed? then this is an actual value
                 if (attributes == 0)
+                {
                     v->push_back(item);
+                }
                 else
                 {
                     // this is compressed - uncompress and parse this again as a message set...
@@ -386,8 +395,6 @@ namespace csi
         //ErrorCode = > int16
         rpc_result<offset_fetch_response> parse_offset_fetch_response(const char* buffer, size_t len)
         {
-            //assert(false); // not working in kafka head yet
-
             boost::iostreams::stream<boost::iostreams::array_source> str(buffer, len);
             rpc_result<offset_fetch_response> response(new offset_fetch_response());
             internal::decode_i32(str, response->correlation_id);

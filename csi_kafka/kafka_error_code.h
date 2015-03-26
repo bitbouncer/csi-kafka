@@ -23,7 +23,7 @@ namespace csi
             MessageSizeTooLarge = 10,       // The server has a configurable maximum message size to avoid unbounded memory allocation.This error is thrown if the client attempt to produce a message larger than this maximum.
             StaleControllerEpochCode = 11,  // Internal error code for broker-to-broker communication.
             OffsetMetadataTooLargeCode = 12,// If you specify a string larger than configured maximum for offset metadata
-            StaleLeaderEpochCode = 13,
+            NetworkException = 13,
             OffsetsLoadInProgressCode = 14, // The broker returns this error code for an offset fetch request if it is still loading offsets (after a leader change for that offsets topic partition).
             ConsumerCoordinatorNotAvailableCode = 15, // The broker returns this error code for consumer metadata requests or offset commit requests if the offsets topic has not yet been created.
             NotCoordinatorForConsumerCode = 16, // The broker returns this error code if it receives an offset fetch or commit request for a consumer group that it is not a coordinator for.

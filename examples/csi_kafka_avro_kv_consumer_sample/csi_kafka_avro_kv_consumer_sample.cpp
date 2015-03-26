@@ -12,7 +12,7 @@
 #include <boost/log/expressions.hpp>
 #include <csi_kafka/lowlevel_consumer.h>
 #include <csi_kafka/internal/utility.h>
-#include <csi_kafka/avro/decoder.h>
+#include <csi_kafka/avro_decoder.h>
 
 #include "contact_info.h"
 #include "contact_info_key.h"

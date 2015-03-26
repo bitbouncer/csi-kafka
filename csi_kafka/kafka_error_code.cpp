@@ -22,17 +22,17 @@ namespace csi
             case MessageSizeTooLarge: return "MessageSizeTooLarge";
             case StaleControllerEpochCode: return "StaleControllerEpochCode";
             case OffsetMetadataTooLargeCode: return "OffsetMetadataTooLargeCode";
-            case StaleLeaderEpochCode: return "StaleLeaderEpochCode";
+            case NetworkException: return "The server disconnected before a response was received.";
             case OffsetsLoadInProgressCode: return "OffsetsLoadInProgressCode";
             case ConsumerCoordinatorNotAvailableCode: return "ConsumerCoordinatorNotAvailableCode";
             case NotCoordinatorForConsumerCode: return "NotCoordinatorForConsumerCode";
-            case InvalidTopicCode: return "InvalidTopicCode";
-            case MessageSetSizeTooLargeCode: return "MessageSetSizeTooLargeCode";
-            case NotEnoughReplicasCode: return "NotEnoughReplicasCode";
-            case NotEnoughReplicasAfterAppendCode: return "NotEnoughReplicasAfterAppendCode";
-            case InvalidRequiredAcks: return "InvalidRequiredAcks";
-            case IllegalConsumerGeneration: return "IllegalConsumerGeneration";
-            case NoOffsetsCommittedCode: return "NoOffsetsCommittedCode";
+            case InvalidTopicCode: return "The request attempted to perform an operation on an invalid topic.";
+            case MessageSetSizeTooLargeCode: return "The request included message batch larger than the configured segment size on the server";
+            case NotEnoughReplicasCode: return "Messages are rejected since there are fewer in-sync replicas than required.";
+            case NotEnoughReplicasAfterAppendCode: return "Messages are written to the log, but to fewer in-sync replicas than required.";
+            case InvalidRequiredAcks: return "Produce request specified an invalid value for required acks";
+            case IllegalConsumerGeneration: return "Specified consumer generation id is not valid.";
+            case NoOffsetsCommittedCode: return "No offsets have been committed so far";
             default:
                 return "Undefined error #" + std::to_string((int)error);
             }

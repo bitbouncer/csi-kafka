@@ -14,7 +14,7 @@
 #include <csi_kafka/lowlevel_consumer.h>
 #include <csi_kafka/highlevel_consumer.h>
 
-#include <csi_kafka/avro/decoder.h>
+#include <csi_kafka/avro_decoder.h>
 #include "syslog.h"
 
 int main(int argc, char** argv)

@@ -2,7 +2,7 @@
 #include <boost/iostreams/stream.hpp>
 #include <boost/crc.hpp>
 
-#include "encoder.h"
+#include "protocol_encoder.h"
 
 namespace csi
 {

@@ -8,7 +8,7 @@
 #include <csi_kafka/internal/spinlock.h>
 #include <csi_kafka/kafka.h>
 #include <csi_kafka/kafka_error_code.h>
-#include "decoder.h"
+#include <csi_kafka/protocol_decoder.h>
 
 #pragma once
 

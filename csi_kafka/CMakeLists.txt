@@ -1,7 +1,7 @@
 SET(LIB_SRCS
-	avro/decoder.h
-	avro/avro_lowlevel_producer.h
-    avro/avro_highlevel_producer
+	avro_decoder.h
+	avro_lowlevel_producer.h
+    avro_highlevel_producer
 	internal/async.h
     internal/async_metadata_client.h
     internal/async_metadata_client.cpp
@@ -11,10 +11,10 @@ SET(LIB_SRCS
 	internal/spinlock.h
     lowlevel_client.h
 	lowlevel_client.cpp
-	encoder.h
-	encoder.cpp
-	decoder.h
-	decoder.cpp
+	protocol_encoder.h
+	protocol_encoder.cpp
+	protocol_decoder.h
+	protocol_decoder.cpp
 	lowlevel_consumer.cpp
 	lowlevel_consumer.h
 	lowlevel_producer.cpp

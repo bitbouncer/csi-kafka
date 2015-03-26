@@ -1,9 +1,9 @@
 #include <future>
 #include <boost/lexical_cast.hpp>
 #include <csi_kafka/kafka.h>
-#include "lowlevel_client.h"
-#include "decoder.h"
-#include "encoder.h"
+#include <csi_kafka/lowlevel_client.h>
+#include <csi_kafka/protocol_decoder.h>
+#include <csi_kafka/protocol_encoder.h>
 
 namespace csi
 {

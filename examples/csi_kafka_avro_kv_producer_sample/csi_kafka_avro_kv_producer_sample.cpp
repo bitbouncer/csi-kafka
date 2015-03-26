@@ -10,7 +10,7 @@
 #include <boost/accumulators/statistics/stats.hpp>
 #include <boost/accumulators/statistics/rolling_mean.hpp>
 #include <boost/accumulators/statistics/mean.hpp>
-#include <csi_kafka/avro/avro_lowlevel_producer.h>
+#include <csi_kafka/avro_lowlevel_producer.h>
 #include "contact_info.h"
 #include "contact_info_key.h"
 
