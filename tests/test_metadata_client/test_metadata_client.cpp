@@ -26,9 +26,6 @@ int main(int argc, char** argv)
 
     csi::kafka::async_metadata_client client(io_service);
 
-
-    auto res0 = client.get_metadata({ "saka.test.ext_datastream" }, 42);
-
     if (argc >= 2)
     {
         client.connect_async({ csi::kafka::broker_address(argv[1], port) }, NULL);

@@ -1,7 +1,7 @@
 #include <avro/Specific.hh>
 #include <avro/Encoder.hh>
 #include <avro/Decoder.hh>
-#include <csi_kafka/high_level_producer.h>
+#include <csi_kafka/highlevel_producer.h>
 
 #pragma once
 
