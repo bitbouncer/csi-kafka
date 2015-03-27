@@ -67,7 +67,7 @@ int main(int argc, char** argv)
                 tx_msg_sec_total += (*i).tx_msg_sec;
                 tx_kb_sec_total += (*i).tx_kb_sec;
             }
-            std::cerr << "\t        \tqueue:" << total_queue << "\t" << tx_msg_sec_total << " msg/s \t" << tx_kb_sec_total << "KB/s" << std::endl;
+            std::cerr << "\t        \tqueue:" << total_queue << "\t" << tx_msg_sec_total << " msg/s \t" << (tx_kb_sec_total/1024) << "MB/s" << std::endl;
         }
     });
 
