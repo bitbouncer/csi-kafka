@@ -61,8 +61,8 @@ namespace csi
             void                                            get_consumer_metadata_async(const std::string& consumer_group, int32_t correlation_id, get_consumer_metadata_callback);
             rpc_result<consumer_metadata_response>          get_consumer_metadata(const std::string& consumer_group, int32_t correlation_id);
 
-            void                                            commit_consumer_offset_async(const std::string& consumer_group, const std::string& topic, int32_t partition_id, int64_t offset, int64_t timestamp, const std::string& metadata, int32_t correlation_id, commit_offset_callback);
-            rpc_result<offset_commit_response>              commit_consumer_offset(const std::string& consumer_group, const std::string& topic, int32_t partition, int64_t offset, int64_t timestamp, const std::string& metadata, int32_t correlation_id);
+            void                                            commit_consumer_offset_async(const std::string& consumer_group, int32_t consumer_group_generation_id, const std::string& consumer_id, const std::string& topic, int32_t partition_id, int64_t offset, const std::string& metadata, int32_t correlation_id, commit_offset_callback);
+            rpc_result<offset_commit_response>              commit_consumer_offset(const std::string& consumer_group, int32_t consumer_group_generation_id, const std::string& consumer_id, const std::string& topic, int32_t partition, int64_t offset, const std::string& metadata, int32_t correlation_id);
 
             void                                            get_consumer_offset_async(const std::string& consumer_group, const std::string& topic, int32_t partition_id, int32_t correlation_id, get_consumer_offset_callback);
             rpc_result<offset_fetch_response>               get_consumer_offset(const std::string& consumer_group, const std::string& topic, int32_t partition_id, int32_t correlation_id);

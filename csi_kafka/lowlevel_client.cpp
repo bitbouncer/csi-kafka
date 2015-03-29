@@ -52,10 +52,18 @@ namespace csi
             return handle;
         }
 
-        basic_call_context::handle create_simple_offset_commit_request(const std::string& consumer_group, const std::string& topic, int32_t partition_id, int64_t offset, int64_t timestamp, const std::string& metadata, int32_t correlation_id)
+        basic_call_context::handle create_simple_offset_commit_request(
+            const std::string& ConsumerGroupId,
+            int32_t ConsumerGroupGenerationId,
+            const std::string& ConsumerId,
+            const std::string& topic,
+            int32_t partition_id,
+            int64_t offset,
+            const std::string& metadata,
+            int32_t correlation_id)
         {
             basic_call_context::handle handle(new basic_call_context());
-            handle->_tx_size = encode_simple_offset_commit_request(consumer_group, topic, partition_id, offset, timestamp, metadata, correlation_id, (char*)&handle->_tx_buffer[0], basic_call_context::MAX_BUFFER_SIZE);
+            handle->_tx_size = encode_simple_offset_commit_request(ConsumerGroupId, ConsumerGroupGenerationId, ConsumerId, topic, partition_id, offset, metadata, correlation_id, (char*)&handle->_tx_buffer[0], basic_call_context::MAX_BUFFER_SIZE);
             return handle;
         }
 
@@ -336,9 +344,9 @@ namespace csi
         }
 
 
-        void lowlevel_client::commit_consumer_offset_async(const std::string& consumer_group, const std::string& topic, int32_t partition, int64_t offset, int64_t timestamp, const std::string& metadata, int32_t correlation_id, commit_offset_callback cb)
+        void lowlevel_client::commit_consumer_offset_async(const std::string& consumer_group, int32_t consumer_group_generation_id, const std::string& consumer_id, const std::string& topic, int32_t partition, int64_t offset, const std::string& metadata, int32_t correlation_id, commit_offset_callback cb)
         {
-            perform_async(create_simple_offset_commit_request(consumer_group, topic, partition, offset, timestamp, metadata, correlation_id), [this, cb](const boost::system::error_code& ec, basic_call_context::handle handle)
+            perform_async(create_simple_offset_commit_request(consumer_group, consumer_group_generation_id, consumer_id, topic, partition, offset, metadata, correlation_id), [this, cb](const boost::system::error_code& ec, basic_call_context::handle handle)
             {
                 if (ec)
                     cb(rpc_result<offset_commit_response>(ec));
@@ -347,11 +355,11 @@ namespace csi
             });
         }
 
-        rpc_result<offset_commit_response> lowlevel_client::commit_consumer_offset(const std::string& consumer_group, const std::string& topic, int32_t partition, int64_t offset, int64_t timestamp, const std::string& metadata, int32_t correlation_id)
+        rpc_result<offset_commit_response> lowlevel_client::commit_consumer_offset(const std::string& consumer_group, int32_t consumer_group_generation_id, const std::string& consumer_id, const std::string& topic, int32_t partition, int64_t offset, const std::string& metadata, int32_t correlation_id)
         {
             std::promise<rpc_result<offset_commit_response> > p;
             std::future<rpc_result<offset_commit_response>>  f = p.get_future();
-            commit_consumer_offset_async(consumer_group, topic, partition, offset, timestamp, metadata, correlation_id, [&p](rpc_result<offset_commit_response> response)
+            commit_consumer_offset_async(consumer_group, consumer_group_generation_id, consumer_id, topic, partition, offset, metadata, correlation_id, [&p](rpc_result<offset_commit_response> response)
             {
                 p.set_value(response);
             });

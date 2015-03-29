@@ -110,7 +110,7 @@ namespace csi
             {
                 internal::delayed_size total_message_size(ostr);
                 internal::encode_i16(ostr, csi::kafka::ProduceRequest);
-                internal::encode_i16(ostr, csi::kafka::ApiVersion);
+                internal::encode_i16(ostr, csi::kafka::ApiVersionV0);
                 internal::encode_i32(ostr, correlation_id);
                 internal::encode_str(ostr, client_id);
 
@@ -152,7 +152,7 @@ namespace csi
             {
                 internal::delayed_size message_size(ostr);
                 internal::encode_i16(ostr, csi::kafka::MetadataRequest);
-                internal::encode_i16(ostr, csi::kafka::ApiVersion);
+                internal::encode_i16(ostr, csi::kafka::ApiVersionV0);
                 internal::encode_i32(ostr, correlation_id);
                 internal::encode_str(ostr, client_id);
 
@@ -169,7 +169,7 @@ namespace csi
             {
                 internal::delayed_size message_size(ostr);
                 internal::encode_i16(ostr, csi::kafka::FetchRequest);
-                internal::encode_i16(ostr, csi::kafka::ApiVersion);
+                internal::encode_i16(ostr, csi::kafka::ApiVersionV0);
                 internal::encode_i32(ostr, correlation_id);
                 internal::encode_str(ostr, client_id);
 
@@ -197,7 +197,7 @@ namespace csi
             {
                 internal::delayed_size message_size(ostr);
                 internal::encode_i16(ostr, csi::kafka::FetchRequest);
-                internal::encode_i16(ostr, csi::kafka::ApiVersion);
+                internal::encode_i16(ostr, csi::kafka::ApiVersionV0);
                 internal::encode_i32(ostr, correlation_id);
                 internal::encode_str(ostr, client_id);
 
@@ -225,7 +225,7 @@ namespace csi
             {
                 internal::delayed_size message_size(ostr);
                 internal::encode_i16(ostr, csi::kafka::OffsetRequest);
-                internal::encode_i16(ostr, csi::kafka::ApiVersion);
+                internal::encode_i16(ostr, csi::kafka::ApiVersionV0);  // TBD VERSION1 
                 internal::encode_i32(ostr, correlation_id);
                 internal::encode_str(ostr, client_id);
 
@@ -247,7 +247,7 @@ namespace csi
             {
                 internal::delayed_size message_size(ostr);
                 internal::encode_i16(ostr, csi::kafka::ConsumerMetadataRequest);
-                internal::encode_i16(ostr, csi::kafka::ApiVersion);
+                internal::encode_i16(ostr, csi::kafka::ApiVersionV0);
                 internal::encode_i32(ostr, correlation_id);
                 internal::encode_str(ostr, client_id);
                 internal::encode_str(ostr, consumer_group);
@@ -256,30 +256,55 @@ namespace csi
         }
 
         /*
+        v0 (supported in 0.8.1 or later)
         OffsetCommitRequest => ConsumerGroup [TopicName [Partition Offset Metadata]]
         ConsumerGroup => string
         TopicName => string
         Partition => int32
         Offset => int64
         Metadata => string
+
+        v1 (supported in 0.8.2 or later)
+        OffsetCommitRequest => ConsumerGroupId ConsumerGroupGenerationId ConsumerId [TopicName [Partition Offset TimeStamp Metadata]]
+        ConsumerGroupId => string
+        ConsumerGroupGenerationId => int32
+        ConsumerId => string
+        TopicName => string
+        Partition => int32
+        Offset => int64
+        TimeStamp => int64
+        Metadata => string
+
         */
         //Offset Commit Request
-        size_t encode_simple_offset_commit_request(const std::string& consumer_group, const std::string& topic, int32_t partition_id, int64_t offset, int64_t timestamp, const std::string& metadata, int32_t correlation_id, char* buffer, size_t capacity)
+        size_t encode_simple_offset_commit_request(
+            const std::string& ConsumerGroupId, 
+            int32_t ConsumerGroupGenerationId, 
+            const std::string& ConsumerId, 
+            const std::string& topic, 
+            int32_t partition_id, 
+            int64_t offset,
+            const std::string& metadata,
+            int32_t correlation_id, 
+            char* buffer, 
+            size_t capacity)
         {
             boost::iostreams::stream<boost::iostreams::array_sink> ostr(buffer, capacity);
             {
                 internal::delayed_size message_size(ostr);
                 internal::encode_i16(ostr, csi::kafka::OffsetCommitRequest);
-                internal::encode_i16(ostr, csi::kafka::ApiVersion);
+                internal::encode_i16(ostr, csi::kafka::ApiVersionV1);
                 internal::encode_i32(ostr, correlation_id);
                 internal::encode_str(ostr, client_id);
-                internal::encode_str(ostr, consumer_group);
+                internal::encode_str(ostr, ConsumerGroupId);
+                internal::encode_i32(ostr, ConsumerGroupGenerationId);
+                internal::encode_str(ostr, ConsumerId);
                 internal::encode_i32(ostr, 1); // nr of topics
                 internal::encode_str(ostr, topic);
                 internal::encode_i32(ostr, 1); // nr of partitions
                 internal::encode_i32(ostr, partition_id);
                 internal::encode_i64(ostr, offset);
-                internal::encode_i64(ostr, timestamp);
+                internal::encode_i64(ostr, 0); // next version will change again to require 0 and have an added retention. lets prepare for that
                 internal::encode_str(ostr, metadata);
             }
             return ostr.tellp();
@@ -296,7 +321,7 @@ namespace csi
             {
                 internal::delayed_size message_size(ostr);
                 internal::encode_i16(ostr, csi::kafka::OffsetFetchRequest);
-                internal::encode_i16(ostr, csi::kafka::ApiVersion);
+                internal::encode_i16(ostr, csi::kafka::ApiVersionV1); // V0 reads from zookeeper V1 from topic.... SAME API
                 internal::encode_i32(ostr, correlation_id);
                 internal::encode_str(ostr, client_id);
                 internal::encode_str(ostr, consumer_group);
@@ -315,7 +340,7 @@ namespace csi
             {
                 internal::delayed_size message_size(ostr);
                 internal::encode_i16(ostr, csi::kafka::OffsetFetchRequest);
-                internal::encode_i16(ostr, csi::kafka::ApiVersion);
+                internal::encode_i16(ostr, csi::kafka::ApiVersionV1);
                 internal::encode_i32(ostr, correlation_id);
                 internal::encode_str(ostr, client_id);
                 internal::encode_str(ostr, consumer_group);

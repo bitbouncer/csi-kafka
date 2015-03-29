@@ -30,7 +30,7 @@ int main(int argc, char** argv)
     csi::kafka::lowlevel_client client(io_service);
     
     //auto res0 = client.connect(csi::kafka::broker_address("kafka-1", 9092), 3000); 
-    auto res0 = client.connect(csi::kafka::broker_address("10.1.3.239", 9092), 3000);
+    auto res0 = client.connect(csi::kafka::broker_address("192.168.0.102", 9092), 3000);
     if (res0)
     {
         std::cerr << res0.message() << std::endl;
@@ -58,7 +58,7 @@ int main(int argc, char** argv)
 
     auto res3 = client.get_consumer_offset("consumer_offset_sample", "perf-8-new", 0, 44);
 
-    auto res4 = client.commit_consumer_offset("consumer_offset_sample", "perf-8-new", 0, 22, 0, "nisse", 44);
+    auto res4 = client.commit_consumer_offset("consumer_offset_sample", 1, "client1", "perf-8-new", 0, 22, "nisse", 44);
 
 
     /*

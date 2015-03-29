@@ -23,7 +23,7 @@ int main(int argc, char** argv)
     {
         auto md = client.get_metadata({}, 0);
 
-        auto cco = client.commit_consumer_offset("my_test_group", "saka.test.avro-syslog2", 0, 17, 111111, "gnarf", 17);
+        auto cco = client.commit_consumer_offset("my_test_group", 1, "offset_checker", "saka.test.avro-syslog2", 0, 17, "gnarf", 17);
         auto cmd = client.get_consumer_metadata("my_test_group", 42);
 
         if (!cmd)

@@ -27,7 +27,10 @@ namespace csi
 
         std::string to_string(const broker_address&);
 
-        enum { ApiVersion = 0 };
+        //v0(supported in 0.8.1 or later)
+        //v1(supported in 0.8.2 or later)
+        //v2(supported in 0.8.3 or later)
+        enum { ApiVersionV0 = 0, ApiVersionV1 = 1, ApiVersionV2 = 2 };
 
         enum { latest_offsets = -1, earliest_available_offset = -2 };
 
