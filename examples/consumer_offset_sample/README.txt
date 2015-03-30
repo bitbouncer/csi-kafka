@@ -2,8 +2,8 @@
 #sudo dpkg -i zookeepercli_1.0.5_amd64.deb
 
 #create topic
-bin/kafka-create-topic.sh --zookeeper localhost --replica 1 --partition 2 --topic test-text
+kafka-topics --zookeeper zk1 --create --replication-factor 1 --partitions 2 --topic test-text
 
 #required for v0 API ??
-zookeepercli -servers localhost /consumers/consumer_offset_sample/offsets "path_placeholder"
+zookeepercli -servers zk1 -c creater /consumers/consumer_offset_sample/offsets "path_placeholder"
 

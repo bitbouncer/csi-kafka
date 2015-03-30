@@ -10,8 +10,8 @@
 #define TOPIC_NAME     "test-text"
 #define CONSUMER_ID    "consumer_offset_sample_consumer_id"
 //#define DEFAULT_BROKER_ADDRESS "10.1.3.239"
-#define DEFAULT_BROKER_ADDRESS "52.17.87.118"
-
+//#define DEFAULT_BROKER_ADDRESS "52.17.87.118"
+#define DEFAULT_BROKER_ADDRESS "52.0.43.130"
 /*
     to get this working you have to prepare the broker
     1) first make sure the topic is existing
