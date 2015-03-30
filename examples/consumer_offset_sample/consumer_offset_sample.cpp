@@ -5,20 +5,33 @@
 #include <csi_kafka/kafka.h>
 #include <csi_kafka/highlevel_consumer.h>
 
+
+#define CONSUMER_GROUP "consumer_offset_sample"
+#define TOPIC_NAME     "test-text"
+#define CONSUMER_ID    "consumer_offset_sample_consumer_id"
+//#define DEFAULT_BROKER_ADDRESS "10.1.3.239"
+#define DEFAULT_BROKER_ADDRESS "52.17.87.118"
+
+/*
+    to get this working you have to prepare the broker
+    1) first make sure the topic is existing
+    2) create a path in zookeeper
+    see README.txt
+*/
+
 int main(int argc, char** argv)
 {
     boost::log::core::get()->set_filter(boost::log::trivial::severity >= boost::log::trivial::info);
     int32_t port = (argc >= 3) ? atoi(argv[2]) : 9092;
 
-    std::vector<csi::kafka::broker_address> brokers;
+    csi::kafka::broker_address broker;
     if (argc >= 2)
     {
-        brokers.push_back(csi::kafka::broker_address(argv[1], port));
+        broker = csi::kafka::broker_address(argv[1], port);
     }
     else
     {
-        brokers.push_back(csi::kafka::broker_address("192.168.0.102", 9092));
-        brokers.push_back(csi::kafka::broker_address("10.1.3.238", 9092));
+        broker = csi::kafka::broker_address(DEFAULT_BROKER_ADDRESS, port);
     }
 
     boost::asio::io_service io_service;
@@ -26,18 +39,17 @@ int main(int argc, char** argv)
     boost::thread bt(boost::bind(&boost::asio::io_service::run, &io_service));
 
 
-    
+    //LOWLEVEL CLIENT (INTERNALS...)
     csi::kafka::lowlevel_client client(io_service);
-    
-    //auto res0 = client.connect(csi::kafka::broker_address("kafka-1", 9092), 3000); 
-    auto res0 = client.connect(csi::kafka::broker_address("192.168.0.102", 9092), 3000);
+
+    auto res0 = client.connect(broker, 3000);
     if (res0)
     {
         std::cerr << res0.message() << std::endl;
         return -1;
     }
 
-    auto res1 = client.get_consumer_metadata("consumer_offset_sample", 44);
+    auto res1 = client.get_consumer_metadata(CONSUMER_GROUP, 44);
     if (res1)
     {
         std::cerr << to_string(res1.ec) << std::endl;
@@ -56,35 +68,28 @@ int main(int argc, char** argv)
         return -1;
     }
 
-    auto res3 = client.get_consumer_offset("consumer_offset_sample", "perf-8-new", 0, 44);
+    auto res3 = client.get_consumer_offset(CONSUMER_GROUP, TOPIC_NAME, 0, 44);
+    if (res3)
+    {
+        std::cerr << to_string(res3.ec) << std::endl;
+        return -1;
+    }
 
-    auto res4 = client.commit_consumer_offset("consumer_offset_sample", 1, "client1", "perf-8-new", 0, 22, "nisse", 44);
+    auto res4 = client.commit_consumer_offset(CONSUMER_GROUP, 1, CONSUMER_ID, TOPIC_NAME, 0, 22, "nisse", 44);
+    if (res4)
+    {
+        std::cerr << to_string(res4.ec) << std::endl;
+        return -1;
+    }
+    client.close();
 
+    //LOWLEVEL CONSUMER
 
-    /*
-    void                                            get_consumer_metadata_async(const std::string& consumer_group, int32_t correlation_id, get_consumer_metadata_callback);
-    rpc_result<consumer_metadata_response>          get_consumer_metadata(const std::string& consumer_group, int32_t correlation_id);
-
-    void                                            commit_consumer_offset_async(const std::string& consumer_group, const std::string& topic, int32_t partition_id, int64_t offset, int64_t timestamp, const std::string& metadata, int32_t correlation_id, commit_offset_callback);
-    rpc_result<offset_commit_response>              commit_consumer_offset(const std::string& consumer_group, const std::string& topic, int32_t partition, int64_t offset, int64_t timestamp, const std::string& metadata, int32_t correlation_id);
-
-    void                                            get_consumer_offset_async(const std::string& consumer_group, const std::string& topic, int32_t partition_id, int32_t correlation_id, get_consumer_offset_callback);
-    rpc_result<offset_fetch_response>               get_consumer_offset(const std::string& consumer_group, const std::string& topic, int32_t partition_id, int32_t correlation_id);
-
-    void                                            get_consumer_offset_async(const std::string& consumer_group, int32_t correlation_id, get_consumer_offset_callback);
-    rpc_result<offset_fetch_response>               get_consumer_offset(const std::string& consumer_group, int32_t correlation_id);
-    */
-
-
-
-
-
-    csi::kafka::highlevel_consumer consumer(io_service, "perf-8-new", 20000);
-      
-    consumer.connect(brokers);
+    //HIGHLEVEL CONSUMER
+    csi::kafka::highlevel_consumer consumer(io_service, TOPIC_NAME, 20000);
+    consumer.connect( { broker } );
     //std::vector<int64_t> result = consumer.get_offsets();
-
-    consumer.connect_forever(brokers);
+    consumer.connect_forever({ broker } );
 
     consumer.set_offset(csi::kafka::earliest_available_offset);
 
