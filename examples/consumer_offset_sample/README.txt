@@ -4,6 +4,9 @@
 #create topic
 kafka-topics --zookeeper zk1 --create --replication-factor 1 --partitions 2 --topic test-text
 
-#required for v0 API ??
+#required for v0 API?
 zookeepercli -servers zk1 -c creater /consumers/consumer_offset_sample/offsets "path_placeholder"
 
+#required for v1 API
+zookeepercli -servers zk1 -c creater /consumers/consumer_offset_sample/offsets "path_placeholder"
+zookeepercli -servers zk1 -c creater /consumers/consumer_offset_sample/owners "path_placeholder"
