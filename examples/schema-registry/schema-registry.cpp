@@ -52,9 +52,6 @@ public:
                 BOOST_LOG_TRIVIAL(error) << " decode error: ec1:" << ec1.message() << " ec2" << csi::kafka::to_string(ec2) << std::endl;
                 return;
             }
-
-            //BOOST_LOG_TRIVIAL(debug) << "partition: " << data.partition_id << ", highwatermark: " << data.highwater_mark_offset << std::endl;
-
             for (std::vector<csi::kafka::basic_message>::const_iterator i = data.messages.begin(); i != data.messages.end(); ++i)
             {
                 boost::uuids::uuid uuid;
@@ -160,23 +157,14 @@ public:
     csi::kafka::table<boost::uuids::uuid, std::string>  _store;
 };
 
-void print_stat(csi::http::request_handler* handler)
-{
-    uint64_t last = handler->get_no_of_requests();
-    while (true)
-    {
-        std::this_thread::sleep_for(std::chrono::milliseconds(5000));
-        uint64_t stat = handler->get_no_of_requests();
-        BOOST_LOG_TRIVIAL(info) << (stat - last) / 5.0 << " RPC/s " << " connections = " << csi::http::connection::connection_count();
-        last = stat;
-    }
-}
-
 int main(int argc, char** argv)
 {
-    boost::log::core::get()->set_filter(boost::log::trivial::severity >= boost::log::trivial::info);
-
+#ifdef WIN32
     std::string my_address = "127.0.0.1";
+#else
+    std::string my_address = "0.0.0.0";
+#endif
+    boost::log::core::get()->set_filter(boost::log::trivial::severity >= boost::log::trivial::info);
     int http_port = 8081;
     std::vector<csi::kafka::broker_address> brokers;
 
@@ -198,8 +186,8 @@ int main(int argc, char** argv)
     }
     else
     {
-        brokers.push_back(csi::kafka::broker_address("192.168.0.102", kafka_port));
-        brokers.push_back(csi::kafka::broker_address("10.1.3.238", kafka_port));
+        brokers.push_back(csi::kafka::broker_address("192.168.0.102", kafka_port)); // my home cluster...
+        brokers.push_back(csi::kafka::broker_address("127.0.0.1", kafka_port));
     }
 
     boost::asio::io_service ios;
@@ -211,10 +199,7 @@ int main(int argc, char** argv)
         schema_registry             registry(ios, "_uuid_schema");
         registry.connect(brokers);  
         csi::http::http_server      s1(ios, my_address, http_port);
-        //boost::thread               stat_thread(boost::bind(print_stat, &registry));
-
         s1.add_request_handler("/subjects", &registry);
-
         while (true)
         {
             boost::this_thread::sleep(boost::posix_time::seconds(1000));
