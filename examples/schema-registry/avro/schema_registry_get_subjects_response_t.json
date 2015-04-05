@@ -1,0 +1,7 @@
+{
+  "name": "schema_registry_get_subjects_response_t", "type": "record", "fields": 
+  [ 
+    { "name": "schema",   "type": "string"}
+  ],
+  "doc:" : "A schema for schema_registry_get response"
+}

@@ -1,0 +1,3 @@
+csi_avrogencpp -i avro/schema_registry_post_subjects_request_t.json -o avro/schema_registry_post_subjects_request_t.h
+csi_avrogencpp -i avro/schema_registry_post_subjects_response_t.json -o avro/schema_registry_post_subjects_response_t.h
+csi_avrogencpp -i avro/schema_registry_get_subjects_response_t.json -o avro/schema_registry_get_subjects_response_t.h
