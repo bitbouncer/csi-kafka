@@ -23,10 +23,10 @@ namespace csi
                 _data[key] = v;
             }
 
-            std::shared_ptr<value_type> get(const key_type& key)
+            std::shared_ptr<value_type> get(const key_type& key) const
             {
                 csi::kafka::spinlock::scoped_lock xx(_spinlock);
-                iterator item = _data.find(key);
+                const_iterator item = _data.find(key);
                 if (item != _data.end())
                     return item->second;
                 return std::shared_ptr<value_type>(NULL);
@@ -35,7 +35,7 @@ namespace csi
             size_t size() const { return _data.size(); } // skip the lock - it should be ok anyway
 
         private:
-            csi::kafka::spinlock                                         _spinlock;
+            mutable csi::kafka::spinlock                                 _spinlock;
             std::map<key_type, std::shared_ptr<value_type>, key_compare> _data;
         };
     }
