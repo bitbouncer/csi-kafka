@@ -5,4 +5,4 @@ csi_kafka_sample2.cpp
 )
 
 add_executable(csi_kafka_sample2 ${SRCS})
-target_link_libraries(csi_kafka_sample2 csi_kafka ${EXT_LIBS})
+target_link_libraries(csi_kafka_sample2 ${EXT_LIBS})

@@ -31,5 +31,5 @@ SET(LIB_SRCS
     kafka_error_code.cpp
 	)
 	
-add_library (csi_kafka STATIC ${LIB_SRCS})
+add_library (csi-kafka STATIC ${LIB_SRCS})
 

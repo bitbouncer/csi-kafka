@@ -7,4 +7,4 @@ contact_info_key.h
 )
 
 add_executable(csi_kafka_avro_kv_producer_sample ${SRCS})
-target_link_libraries(csi_kafka_avro_kv_producer_sample csi_kafka ${EXT_LIBS})
+target_link_libraries(csi_kafka_avro_kv_producer_sample ${EXT_LIBS})
