@@ -3,7 +3,7 @@ csi-kafka
 
 A C++11 asyncronous producer/consumer library for Apache Kafka based on boost asio, supporting v0.8.2+ of the Kafka protocol, including commit/offset/fetch API. Does not require zookeeper integration
 
-- high and low lever producers and consumers
+- high and low level producers and consumers
 - support for avro encoded topics (value or key/value)
 - high level producers 
   - commit-callback on checkpoints, ie when all sub partitions have committed all messages up to a specific point.
