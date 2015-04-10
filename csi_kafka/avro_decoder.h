@@ -23,14 +23,14 @@ namespace csi
         class avro_value_decoder
         {
         public:
-            typedef boost::function <void(const boost::system::error_code& ec1, csi::kafka::error_codes ec2, std::shared_ptr<V> value)> avro_callback;
+            typedef boost::function <void(const boost::system::error_code& ec1, csi::kafka::error_codes ec2, int32_t partition, std::shared_ptr<V> value)> avro_callback;
             avro_value_decoder(avro_callback cb) : _cb(cb) {}
 
             void operator()(const boost::system::error_code& ec1, csi::kafka::error_codes ec2, const csi::kafka::fetch_response::topic_data::partition_data& data)
             {
                 if (ec1 || ec2)
                 {
-                    _cb(ec1, ec2, std::shared_ptr<V>(NULL));
+                    _cb(ec1, ec2, -1, std::shared_ptr<V>(NULL));
                     return;
                 }
 
@@ -41,12 +41,12 @@ namespace csi
                         // decode avro in value...
                         std::shared_ptr<V> value = std::shared_ptr<V>(new V());
                         std::auto_ptr<avro::InputStream> src = avro::memoryInputStream(&i->value[0], i->value.size()); // lets always reserve 128 bits for md5 hash of avro schema so it's possible to dynamically decode things
-                        avro_binary_decode(src, *value);
-                        _cb(ec1, ec2, value); 
+                        avro_binary_decode(src, *value);   //TBD try catch guard here....
+                        _cb(ec1, ec2, data.partition_id, value); // offset, highwatermark as well???
                     }
                     else
                     {
-                        _cb(ec1, ec2, std::shared_ptr<V>(NULL)); // can this happen???
+                        _cb(ec1, ec2, data.partition_id, std::shared_ptr<V>(NULL)); // can this happen???  // offset, highwatermark as well???
                     }
                 }
             }

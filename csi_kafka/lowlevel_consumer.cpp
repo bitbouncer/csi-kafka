@@ -154,17 +154,13 @@ namespace csi
                             {
                                 if (j->partition_id == _partition)  // a partition that have been closed will not exist here so it will not be added again in the next read loop  TBD handle error here....
                                 {
-                                    _metrics_total_rx_msg += j->messages.size();
-
                                     // there might be a better way of doiung this on lower leverl since we know the socket rx size.... TBD
                                     for (std::vector<basic_message>::const_iterator k = j->messages.begin(); k != j->messages.end(); ++k)
-                                        _metrics_total_rx_kb += k->key.size() + k->value.size();
-
+                                        _metrics_total_rx_kb += (k->key.size() + k->value.size());
                                     _metrics_total_rx_msg += j->messages.size();
-
                                     if (j->messages.size())
                                         _next_offset = j->messages[j->messages.size() - 1].offset + 1;
-                                    _cb(response.ec.ec1, ((csi::kafka::error_codes) j->error_code), *j); // possibly partition & ack j->messages[j->messages.size() - 1].offset here or send it to application
+                                    _cb(response.ec.ec1, ((csi::kafka::error_codes) j->error_code), *j);
                                 }
                             }
                         }

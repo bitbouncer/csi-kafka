@@ -61,7 +61,7 @@ int main(int argc, char** argv)
 
     consumer.stream_async(
         csi::kafka::avro_value_decoder<sample::syslog>(
-        [&acc, &total](const boost::system::error_code& ec1, csi::kafka::error_codes ec2, std::shared_ptr<sample::syslog> log)
+        [&acc, &total](const boost::system::error_code& ec1, csi::kafka::error_codes ec2, int32_t partition, std::shared_ptr<sample::syslog> log)
     {
         if (ec1 || ec2)
         {
