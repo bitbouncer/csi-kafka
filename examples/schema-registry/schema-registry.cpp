@@ -29,7 +29,7 @@
 #include "avro/schema_registry_post_subjects_response_t.h"
 #include "avro/schema_registry_get_subjects_response_t.h"
 
-class schema_registry : public csi::http::request_handler
+class schema_registry
 {
 public:
     schema_registry(boost::asio::io_service& ios, const std::string& topic_name) :
@@ -74,15 +74,10 @@ public:
     }
 
     /// Handle a request and produce a reply.
-    virtual void handle_request(const std::string& rel_url, csi::http::connection* context)
+    void handle_post_request(std::shared_ptr<csi::http::connection> context)
     {
         if (context->request().method() == csi::http::POST)
         {
-            if (rel_url.size()) // only accept exact match
-            {
-                context->reply().create(csi::http::bad_request);
-                return;
-            }
             BOOST_LOG_TRIVIAL(debug) << to_string(context->request().content()) << std::endl;
 
             schema_registry_post_subjects_request_t request;
@@ -120,12 +115,20 @@ public:
                 return;
             }
         }
-        else if (context->request().method() == csi::http::GET)
+        else
+        {
+            context->reply().create(csi::http::bad_request);
+        }
+    }
+
+    void handle_get_request(const std::string& id, std::shared_ptr<csi::http::connection> context)
+    {
+        if (context->request().method() == csi::http::GET)
         {
             boost::uuids::uuid uuid;
             try
             {
-                uuid = boost::uuids::string_generator()(rel_url.substr(1)); // strip first slash (because our http server impl is crappy...)
+                uuid = boost::uuids::string_generator()(id);
             }
             catch (std::exception& e)
             {
@@ -199,7 +202,18 @@ int main(int argc, char** argv)
         schema_registry             registry(ios, "_uuid_schema");
         registry.connect(brokers);  
         csi::http::http_server      s1(ios, my_address, http_port);
-        s1.add_request_handler("/subjects", &registry);
+
+        s1.add_handler("/subjects", [&registry](const std::vector<std::string>&, std::shared_ptr<csi::http::connection> c)
+        {
+            registry.handle_post_request(c);
+        });
+
+        s1.add_handler("/subjects/+", [&registry](const std::vector<std::string>& s, std::shared_ptr<csi::http::connection> c)
+        {
+            registry.handle_get_request(s[2], c);
+        });
+
+
         while (true)
         {
             boost::this_thread::sleep(boost::posix_time::seconds(1000));

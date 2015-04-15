@@ -7,23 +7,22 @@ bin/kafka-topics --zookeeper zk_host:port --create --topic _uuid_schema --partit
   "schema": "{\"type\": \"string\"}"
 }    
 
-
+# Register a schema 
 curl -X POST -i --data "{\"schema\": \"{\\\"type\\\": \\\"string\\\"}\"}" http://localhost:8081/subjects
 HTTP/1.1 200 OK
 Content-Length: 47
 Content-Type: text/html
 
-{"uuid":"ccda95e1-5cdf-5438-be1b-c8cab417fede"}
+{"uuid":"095d71cf-1255-6b9d-5e33-0ad575b3df5d"}
 
 
-curl -i http://localhost:8081/subjects/ccda95e1-5cdf-5438-be1b-c8cab417fede
+# Get a schema 
+curl -i http://localhost:8081/subjects/095d71cf-1255-6b9d-5e33-0ad575b3df5d
 HTTP/1.1 200 OK
 Content-Length: 23
 Content-Type: text/html
 
 {"schema":"\"string\""}
-
-
 
 
 curl -i http://localhost:8081/subjects/ccda95e1-4cdf-5438-be1b-c8cab417fede
