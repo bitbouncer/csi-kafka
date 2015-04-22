@@ -23,9 +23,12 @@
 
 #include <sstream>
 #include "boost/any.hpp"
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/string_generator.hpp>
 #include "avro/Specific.hh"
 #include "avro/Encoder.hh"
 #include "avro/Decoder.hh"
+#include "avro/Compiler.hh"
 
 namespace sample {
 struct contact_info_key {
@@ -33,6 +36,10 @@ struct contact_info_key {
     contact_info_key() :
         md5(std::string())
         { }
+//  avro extension
+    static inline const boost::uuids::uuid schema_hash()      { static const boost::uuids::uuid _hash(boost::uuids::string_generator()("e38e149b-1ade-778e-60fb-04a0f4ec3d75")); return _hash; }
+    static inline const char*              schema_as_string() { return "{\"type\":\"record\",\"name\":\"contact_info_key\",\"fields\":[{\"name\":\"md5\",\"type\":\"string\"}]}"; } 
+    static const avro::ValidSchema         valid_schema()     { static const avro::ValidSchema _validSchema(avro::compileJsonSchemaFromString(schema_as_string())); return _validSchema; }
 };
 
 }
@@ -42,7 +49,22 @@ template<> struct codec_traits<sample::contact_info_key> {
         avro::encode(e, v.md5);
     }
     static void decode(Decoder& d, sample::contact_info_key& v) {
-        avro::decode(d, v.md5);
+        if (avro::ResolvingDecoder *rd =
+            dynamic_cast<avro::ResolvingDecoder *>(&d)) {
+            const std::vector<size_t> fo = rd->fieldOrder();
+            for (std::vector<size_t>::const_iterator it = fo.begin();
+                it != fo.end(); ++it) {
+                switch (*it) {
+                case 0:
+                    avro::decode(d, v.md5);
+                    break;
+                default:
+                    break;
+                }
+            }
+        } else {
+            avro::decode(d, v.md5);
+        }
     }
 };
 

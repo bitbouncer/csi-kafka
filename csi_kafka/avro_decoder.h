@@ -3,6 +3,7 @@
 #include <avro/Specific.hh>
 #include <avro/Encoder.hh>
 #include <avro/Decoder.hh>
+#include <csi_avro/encoding.h>
 #include <csi_kafka/kafka.h>
 
 #pragma once
@@ -10,15 +11,6 @@ namespace csi
 {
     namespace kafka
     {
-        template<class T>
-        T& avro_binary_decode(std::auto_ptr<avro::InputStream> src, T& dst)
-        {
-            avro::DecoderPtr e = avro::binaryDecoder();
-            e->init(*src);
-            avro::decode(*e, dst);
-            return dst;
-        }
-
         template<class V>
         class avro_value_decoder
         {
@@ -41,8 +33,10 @@ namespace csi
                         // decode avro in value...
                         std::shared_ptr<V> value = std::shared_ptr<V>(new V());
                         std::auto_ptr<avro::InputStream> src = avro::memoryInputStream(&i->value[0], i->value.size()); // lets always reserve 128 bits for md5 hash of avro schema so it's possible to dynamically decode things
-                        avro_binary_decode(src, *value);   //TBD try catch guard here....
-                        _cb(ec1, ec2, data.partition_id, value); // offset, highwatermark as well???
+                        if avro_binary_decode_with_schema(src, *value)
+                            _cb(ec1, ec2, data.partition_id, value); // offset, highwatermark as well???
+                        else
+                            _cb(ec1, csi::kafka::InvalidMessage, partition, std::shared_ptr<V>(NULL));
                     }
                     else
                     {
@@ -80,7 +74,11 @@ namespace csi
                     {
                         key = std::shared_ptr<K>(new K());
                         std::auto_ptr<avro::InputStream> src = avro::memoryInputStream(&i->key[0], i->key.size()); // lets always reserve 128 bits for md5 hash of avro schema so it's possible to dynamically decode things
-                        avro_binary_decode(src, *key);
+                        if (!avro_binary_decode_with_schema(src, *key))
+                        {
+                            _cb(ec1, csi::kafka::InvalidMessage, std::shared_ptr<K>(NULL), std::shared_ptr<V>(NULL), data.partition_id, i->offset);
+                            return;
+                        }
                     }
 
                     //decode value
@@ -88,9 +86,12 @@ namespace csi
                     {
                         value = std::shared_ptr<V>(new V());
                         std::auto_ptr<avro::InputStream> src = avro::memoryInputStream(&i->value[0], i->value.size()); // lets always reserve 128 bits for md5 hash of avro schema so it's possible to dynamically decode things
-                        avro_binary_decode(src, *value);
+                        if (!avro_binary_decode_with_schema(src, *value))
+                        {
+                            _cb(ec1, csi::kafka::InvalidMessage, key, std::shared_ptr<V>(NULL), data.partition_id, i->offset);
+                            return;
+                        }
                     }
-
                     _cb(ec1, ec2, key, value, data.partition_id, i->offset);
                 }
             }

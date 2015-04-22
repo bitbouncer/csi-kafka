@@ -253,10 +253,13 @@ namespace csi
         {
             perform_async(create_produce_request(topic, partition_id, required_acks, timeout, v, correlation_id), [cb](const boost::system::error_code& ec, basic_call_context::handle handle)
             {
-                if (ec)
-                    cb(rpc_result<produce_response>(ec));
-                else
-                    cb(parse_produce_response(handle));
+                if (cb) // ok to the handle callback
+                {
+                    if (ec)
+                        cb(rpc_result<produce_response>(ec));
+                    else
+                        cb(parse_produce_response(handle));
+                }
             });
         }
 
@@ -274,6 +277,7 @@ namespace csi
 
         void lowlevel_client::get_data_async(const std::string& topic, const std::vector<partition_cursor>& partitions, uint32_t max_wait_time, size_t min_bytes, int32_t correlation_id, get_data_callback cb)
         {
+            assert(cb); // no point of not having callback
             perform_async(create_multi_fetch_request(topic, partitions, max_wait_time, min_bytes, correlation_id), [cb](const boost::system::error_code& ec, basic_call_context::handle handle)
             {
                 if (ec)
@@ -299,6 +303,7 @@ namespace csi
 
         void lowlevel_client::get_consumer_metadata_async(const std::string& consumer_group, int32_t correlation_id, get_consumer_metadata_callback cb)
         {
+            assert(cb); // no point of not having callback
             perform_async(create_consumer_metadata_request(consumer_group, correlation_id), [cb](const boost::system::error_code& ec, basic_call_context::handle handle)
             {
                 if (ec)
@@ -322,6 +327,7 @@ namespace csi
 
         void lowlevel_client::get_offset_async(const std::string& topic, int32_t partition, int64_t start_time, int32_t max_number_of_offsets, int32_t correlation_id, get_offset_callback cb)
         {
+            assert(cb); // no point of not having callback
             perform_async(create_simple_offset_request(topic, partition, start_time, max_number_of_offsets, correlation_id), [this, cb](const boost::system::error_code& ec, basic_call_context::handle handle)
             {
                 if (ec)
@@ -348,10 +354,13 @@ namespace csi
         {
             perform_async(create_simple_offset_commit_request(consumer_group, consumer_group_generation_id, consumer_id, topic, partition, offset, metadata, correlation_id), [this, cb](const boost::system::error_code& ec, basic_call_context::handle handle)
             {
-                if (ec)
-                    cb(rpc_result<offset_commit_response>(ec));
-                else
-                    cb(parse_offset_commit_response(handle));
+                if (cb) // ok not to have callback
+                {
+                    if (ec)
+                        cb(rpc_result<offset_commit_response>(ec));
+                    else
+                        cb(parse_offset_commit_response(handle));
+                }
             });
         }
 
@@ -369,6 +378,7 @@ namespace csi
 
         void lowlevel_client::get_consumer_offset_async(const std::string& consumer_group, const std::string& topic, int32_t partition, int32_t correlation_id, get_consumer_offset_callback cb)
         {
+            assert(cb); // no point of not having callback
             perform_async(create_simple_offset_fetch_request(consumer_group, topic, partition, correlation_id), [this, cb](const boost::system::error_code& ec, basic_call_context::handle handle)
             {
                 if (ec)
@@ -394,6 +404,7 @@ namespace csi
 
         void lowlevel_client::get_consumer_offset_async(const std::string& consumer_group, int32_t correlation_id, get_consumer_offset_callback cb)
         {
+            assert(cb); // no point of not having callback
             perform_async(create_simple_offset_fetch_request(consumer_group, correlation_id), [this, cb](const boost::system::error_code& ec, basic_call_context::handle handle)
             {
                 if (ec)

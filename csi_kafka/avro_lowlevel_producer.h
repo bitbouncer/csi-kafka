@@ -1,6 +1,7 @@
 #include <avro/Specific.hh>
 #include <avro/Encoder.hh>
 #include <avro/Decoder.hh>
+#include <csi_avro/encoding.h>
 #include <csi_kafka/lowlevel_producer.h>
 
 #pragma once
@@ -9,17 +10,6 @@ namespace csi
 {
     namespace kafka
     {
-        template<class T>
-        void avro_binary_encode(const T& src, avro::OutputStream& dst)
-        {
-            avro::EncoderPtr e = avro::binaryEncoder();
-            e->init(dst);
-            avro::encode(*e, src);
-            // push back unused characters to the output stream again... really strange... 			
-            // otherwise content_length will be a multiple of 4096
-            e->flush();
-        }
-
         template<class T>
         class avro_value_producer : public csi::kafka::lowlevel_producer
         {
@@ -35,7 +25,7 @@ namespace csi
                 for (typename std::vector<T>::const_iterator i = src.begin(); i != src.end(); ++i)
                 {
                     auto ostr = avro::memoryOutputStream();
-                    avro_binary_encode(*i, *ostr);
+                    avro_binary_encode_with_schema(*i, *ostr);
                     size_t sz = ostr->byteCount();
 
                     auto in = avro::memoryInputStream(*ostr);
@@ -73,7 +63,7 @@ namespace csi
                     //encode key
                     {
                         auto ostr = avro::memoryOutputStream();
-                        avro_binary_encode(i->first, *ostr);
+                        avro_binary_encode_with_schema(i->first, *ostr);
                         size_t sz = ostr->byteCount();
 
                         auto in = avro::memoryInputStream(*ostr);
@@ -87,7 +77,7 @@ namespace csi
                     //encode value
                     {
                         auto ostr = avro::memoryOutputStream();
-                        avro_binary_encode(i->second, *ostr);
+                        avro_binary_encode_with_schema(i->second, *ostr);
                         size_t sz = ostr->byteCount();
 
                         auto in = avro::memoryInputStream(*ostr);

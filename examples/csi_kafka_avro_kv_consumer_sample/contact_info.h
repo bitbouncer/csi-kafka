@@ -23,9 +23,12 @@
 
 #include <sstream>
 #include "boost/any.hpp"
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/string_generator.hpp>
 #include "avro/Specific.hh"
 #include "avro/Encoder.hh"
 #include "avro/Decoder.hh"
+#include "avro/Compiler.hh"
 
 namespace sample {
 struct contact_info_json_Union__0__ {
@@ -241,6 +244,10 @@ struct contact_info {
         city(city_t()),
         country(country_t())
         { }
+//  avro extension
+    static inline const boost::uuids::uuid schema_hash()      { static const boost::uuids::uuid _hash(boost::uuids::string_generator()("f1934b69-f795-1baa-2460-1497003e3f8f")); return _hash; }
+    static inline const char*              schema_as_string() { return "{\"type\":\"record\",\"name\":\"contact_info\",\"fields\":[{\"name\":\"email\",\"type\":[\"string\",\"null\"]},{\"name\":\"nin\",\"type\":[\"string\",\"null\"]},{\"name\":\"given_name\",\"type\":[\"string\",\"null\"]},{\"name\":\"family_name\",\"type\":[\"string\",\"null\"]},{\"name\":\"date_of_birth\",\"type\":[\"string\",\"null\"]},{\"name\":\"care_of\",\"type\":[\"string\",\"null\"]},{\"name\":\"street_address\",\"type\":[\"string\",\"null\"]},{\"name\":\"postal_code\",\"type\":[\"string\",\"null\"]},{\"name\":\"city\",\"type\":[\"string\",\"null\"]},{\"name\":\"country\",\"type\":[\"string\",\"null\"]}]}"; } 
+    static const avro::ValidSchema         valid_schema()     { static const avro::ValidSchema _validSchema(avro::compileJsonSchemaFromString(schema_as_string())); return _validSchema; }
 };
 
 inline
@@ -719,16 +726,58 @@ template<> struct codec_traits<sample::contact_info> {
         avro::encode(e, v.country);
     }
     static void decode(Decoder& d, sample::contact_info& v) {
-        avro::decode(d, v.email);
-        avro::decode(d, v.nin);
-        avro::decode(d, v.given_name);
-        avro::decode(d, v.family_name);
-        avro::decode(d, v.date_of_birth);
-        avro::decode(d, v.care_of);
-        avro::decode(d, v.street_address);
-        avro::decode(d, v.postal_code);
-        avro::decode(d, v.city);
-        avro::decode(d, v.country);
+        if (avro::ResolvingDecoder *rd =
+            dynamic_cast<avro::ResolvingDecoder *>(&d)) {
+            const std::vector<size_t> fo = rd->fieldOrder();
+            for (std::vector<size_t>::const_iterator it = fo.begin();
+                it != fo.end(); ++it) {
+                switch (*it) {
+                case 0:
+                    avro::decode(d, v.email);
+                    break;
+                case 1:
+                    avro::decode(d, v.nin);
+                    break;
+                case 2:
+                    avro::decode(d, v.given_name);
+                    break;
+                case 3:
+                    avro::decode(d, v.family_name);
+                    break;
+                case 4:
+                    avro::decode(d, v.date_of_birth);
+                    break;
+                case 5:
+                    avro::decode(d, v.care_of);
+                    break;
+                case 6:
+                    avro::decode(d, v.street_address);
+                    break;
+                case 7:
+                    avro::decode(d, v.postal_code);
+                    break;
+                case 8:
+                    avro::decode(d, v.city);
+                    break;
+                case 9:
+                    avro::decode(d, v.country);
+                    break;
+                default:
+                    break;
+                }
+            }
+        } else {
+            avro::decode(d, v.email);
+            avro::decode(d, v.nin);
+            avro::decode(d, v.given_name);
+            avro::decode(d, v.family_name);
+            avro::decode(d, v.date_of_birth);
+            avro::decode(d, v.care_of);
+            avro::decode(d, v.street_address);
+            avro::decode(d, v.postal_code);
+            avro::decode(d, v.city);
+            avro::decode(d, v.country);
+        }
     }
 };
 
