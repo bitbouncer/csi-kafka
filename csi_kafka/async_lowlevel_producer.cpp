@@ -160,7 +160,7 @@ namespace csi
                         return;
                     }
 
-                    std::vector<tx_ack_callback> callbacks; // we cant run the callbacks when the spilock is locked so copy those and run them after
+                    std::vector<tx_ack_callback> callbacks; // we cant run the callbacks when the spinlock is locked so copy those and run them after
                     {
                         csi::kafka::spinlock::scoped_lock xxx(_spinlock);
                         {
@@ -183,7 +183,7 @@ namespace csi
                         }
                     }
                     for (std::vector<tx_ack_callback>::const_iterator i = callbacks.begin(); i != callbacks.end(); ++i)
-                        (*i)();
+                        (*i)(0); // no error?
 
                     _tx_in_progress = false; // here is a small gap where an external enqueu would trigger a post(_try_send()) - thus callinmg twice but it should be harmless
                     _try_send();

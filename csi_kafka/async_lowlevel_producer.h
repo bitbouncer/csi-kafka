@@ -15,7 +15,7 @@ namespace csi
         {
         public:
             typedef boost::function <void(const boost::system::error_code&)>         connect_callback;
-            typedef boost::function <void()>                                         tx_ack_callback;
+            typedef boost::function <void(int32_t ec)>                               tx_ack_callback;
 
             async_lowlevel_producer(boost::asio::io_service& io_service, const std::string& topic, int32_t partition, int32_t required_acks, int32_t timeout, int32_t max_packet_size = -1);
             ~async_lowlevel_producer();

@@ -12,17 +12,17 @@ void start_send(csi::kafka::highlevel_producer& producer)
 {
     uint32_t key = 0;
     std::vector<std::shared_ptr<csi::kafka::basic_message>> v;
-        for (int i = 0; i != 10000; ++i, ++key)
-        {
-            v.push_back(std::shared_ptr<csi::kafka::basic_message>(new csi::kafka::basic_message(
-                std::to_string(key),
-                std::string(VALUE_SIZE, 'z')
-                )));
-        }
-        producer.send_async(v, [&producer]()
-        {
-            start_send(producer); // send another
-        });
+    for (int i = 0; i != 10000; ++i, ++key)
+    {
+        v.push_back(std::shared_ptr<csi::kafka::basic_message>(new csi::kafka::basic_message(
+            std::to_string(key),
+            std::string(VALUE_SIZE, 'z')
+            )));
+    }
+    producer.send_async(v, [&producer](int32_t ec)
+    {
+        start_send(producer); // send another
+    });
 }
 
 
@@ -49,7 +49,7 @@ int main(int argc, char** argv)
     }
 
     producer.connect_forever(brokers);
-    
+
     boost::thread do_log([&producer]
     {
         while (true)
@@ -67,7 +67,7 @@ int main(int argc, char** argv)
                 tx_msg_sec_total += (*i).tx_msg_sec;
                 tx_kb_sec_total += (*i).tx_kb_sec;
             }
-            std::cerr << "\t        \tqueue:" << total_queue << "\t" << tx_msg_sec_total << " msg/s \t" << (tx_kb_sec_total/1024) << "MB/s" << std::endl;
+            std::cerr << "\t        \tqueue:" << total_queue << "\t" << tx_msg_sec_total << " msg/s \t" << (tx_kb_sec_total / 1024) << "MB/s" << std::endl;
         }
     });
 

@@ -272,8 +272,12 @@ namespace csi
             std::shared_ptr<csi::async::destructor_callback> final_cb(new csi::async::destructor_callback(cb));
             for (int i = 0; i != partitions; ++i)
             {
-                _partition2producers[i]->send_async(NULL, [i, final_cb]()
+                _partition2producers[i]->send_async(NULL, [i, final_cb](int32_t ec)
                 {
+                    if (ec)
+                    {
+                        final_cb->set_ec(ec);
+                    }
                 });
             }
         }

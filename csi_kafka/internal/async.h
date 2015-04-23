@@ -11,10 +11,12 @@ namespace csi
         class destructor_callback
         {
         public:
-            destructor_callback(boost::function <void()>  callback) : cb(callback) {}
-            ~destructor_callback() { cb(); }
+            destructor_callback(boost::function <void(int32_t ec)>  callback) : _cb(callback), _ec(0) {}
+            ~destructor_callback() { _cb(_ec); }
+            void set_ec(int32_t ec) { _ec = ec; }
         private:
-            boost::function <void()> cb;
+            boost::function <void(int32_t ec)> _cb;
+            int32_t _ec;
         };
 
         typedef boost::function <void(std::vector<boost::system::error_code>)>  async_vcallback;
