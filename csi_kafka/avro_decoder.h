@@ -36,7 +36,7 @@ namespace csi
                         if (avro_binary_decode_with_schema(src, *value))
                             _cb(ec1, ec2, data.partition_id, value); // offset, highwatermark as well???
                         else
-                            _cb(ec1, csi::kafka::InvalidMessage, partition, std::shared_ptr<V>(NULL));
+                            _cb(ec1, csi::kafka::InvalidMessage, data.partition_id, std::shared_ptr<V>(NULL));
                     }
                     else
                     {
