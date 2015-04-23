@@ -33,7 +33,7 @@ namespace csi
                         // decode avro in value...
                         std::shared_ptr<V> value = std::shared_ptr<V>(new V());
                         std::auto_ptr<avro::InputStream> src = avro::memoryInputStream(&i->value[0], i->value.size()); // lets always reserve 128 bits for md5 hash of avro schema so it's possible to dynamically decode things
-                        if avro_binary_decode_with_schema(src, *value)
+                        if (avro_binary_decode_with_schema(src, *value))
                             _cb(ec1, ec2, data.partition_id, value); // offset, highwatermark as well???
                         else
                             _cb(ec1, csi::kafka::InvalidMessage, partition, std::shared_ptr<V>(NULL));
