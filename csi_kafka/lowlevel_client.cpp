@@ -216,6 +216,11 @@ namespace csi
             return true;
         }
 
+        boost::asio::ip::tcp::endpoint  lowlevel_client::remote_endpoint(boost::system::error_code ec)
+        {
+            return _socket.remote_endpoint(ec);
+        }
+
         bool lowlevel_client::is_connected() const
         {
             return _connected;

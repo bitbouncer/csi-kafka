@@ -47,11 +47,11 @@ int main(int argc, char** argv)
             uint32_t rx_kb_sec_total = 0;
             for (std::vector<csi::kafka::highlevel_consumer::metrics>::const_iterator i = metrics.begin(); i != metrics.end(); ++i)
             {
-                std::cerr << "\t partiton:" << (*i).partition << "\t" << (*i).rx_msg_sec << " msg/s \t" << ((*i).rx_kb_sec/1024) << "MB/s \troundtrip:" << (*i).rx_roundtrip << " ms" << std::endl;
+                //std::cerr << "\t partiton:" << (*i).partition << "\t" << (*i).rx_msg_sec << " msg/s \t" << ((*i).rx_kb_sec/1024) << "MB/s \troundtrip:" << (*i).rx_roundtrip << " ms" << std::endl;
                 rx_msg_sec_total += (*i).rx_msg_sec;
                 rx_kb_sec_total += (*i).rx_kb_sec;
             }
-            std::cerr << "\t          \t" << rx_msg_sec_total << " msg/s \t" << (rx_kb_sec_total/1024) << "MB/s" << std::endl;
+            BOOST_LOG_TRIVIAL(info) << "RX: " << rx_msg_sec_total << " msg/s \t" << (rx_kb_sec_total / 1024) << "MB/s";
         }
     });
 
@@ -60,10 +60,9 @@ int main(int argc, char** argv)
     {
         if (ec1 || ec2)
         {
-            std::cerr << "  fetch next failed ec1::" << ec1 << " ec2" << csi::kafka::to_string(ec2) << std::endl;
+            BOOST_LOG_TRIVIAL(error) << "stream failed ec1::" << ec1 << " ec2" << csi::kafka::to_string(ec2);
             return;
         }
-        std::cerr << "+";
     });
 
     while (true)

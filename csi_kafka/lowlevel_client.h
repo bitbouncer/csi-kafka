@@ -69,6 +69,10 @@ namespace csi
 
             void                                            get_consumer_offset_async(const std::string& consumer_group, int32_t correlation_id, get_consumer_offset_callback);
             rpc_result<offset_fetch_response>               get_consumer_offset(const std::string& consumer_group, int32_t correlation_id);
+
+            boost::asio::ip::tcp::endpoint                  remote_endpoint(); // error ignored - not thrown...
+            boost::asio::ip::tcp::endpoint                  remote_endpoint(boost::system::error_code ec);
+
         protected:
             void                                            perform_async(basic_call_context::handle, basic_call_context::callback cb);
             basic_call_context::handle                      perform_sync(basic_call_context::handle, basic_call_context::callback cb);

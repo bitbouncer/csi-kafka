@@ -56,7 +56,8 @@ namespace csi
             {
                 _transient_failure = false;
                 //_client.get-address() << 
-                BOOST_LOG_TRIVIAL(info) << "LLC " << _topic << ":" << _partition << " retrying fetch";
+                boost::system::error_code ignored;
+                BOOST_LOG_TRIVIAL(info) << "LLC " << _client.remote_endpoint(ignored).address().to_string() << " " << _topic << ":" << _partition << " retrying fetch";
                 //LOG restartring fetch
             }
 
@@ -153,8 +154,10 @@ namespace csi
 
                 if (response)
                 {
-                    BOOST_LOG_TRIVIAL(info) << "LLC " << _topic << ":" << _partition << " fetch error: " << to_string(response.ec);
-                    _transient_failure = true;
+                    boost::system::error_code ignored;
+                    BOOST_LOG_TRIVIAL(info) << "LLC " << _client.remote_endpoint(ignored).address().to_string() << " " << _topic << ":" << _partition << " fetch error: " << to_string(response.ec);
+                    //_transient_failure = true;
+                    close();
                     _cb(response.ec.ec1, response.ec.ec2, csi::kafka::fetch_response::topic_data::partition_data());
                 }
                 else
