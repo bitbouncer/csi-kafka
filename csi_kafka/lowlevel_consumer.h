@@ -53,7 +53,7 @@ namespace csi
             datastream_callback             _cb;
             const int32_t                   _partition;
             int64_t                         _next_offset;
-
+            bool                            _transient_failure;
 
             //METRICS
             typedef boost::accumulators::accumulator_set<double, boost::accumulators::stats<boost::accumulators::tag::rolling_mean> >   metrics_accumulator_t;

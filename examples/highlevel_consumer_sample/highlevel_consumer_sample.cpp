@@ -17,15 +17,16 @@ int main(int argc, char** argv)
     }
     else
     {
-        brokers.push_back(csi::kafka::broker_address("192.168.0.102", 9092));
-        brokers.push_back(csi::kafka::broker_address("10.1.3.238", 9092));
+        brokers.push_back(csi::kafka::broker_address("192.168.0.108", port));
+        brokers.push_back(csi::kafka::broker_address("192.168.0.109", port));
+        brokers.push_back(csi::kafka::broker_address("192.168.0.110", port));
     }
 
     boost::asio::io_service io_service;
     std::auto_ptr<boost::asio::io_service::work> work(new boost::asio::io_service::work(io_service));
     boost::thread bt(boost::bind(&boost::asio::io_service::run, &io_service));
 
-    csi::kafka::highlevel_consumer consumer(io_service, "perf-8-new", 20000);
+    csi::kafka::highlevel_consumer consumer(io_service, "collectd.graphite", 500, 1000000);
       
     consumer.connect(brokers);
     //std::vector<int64_t> result = consumer.get_offsets();
@@ -59,7 +60,7 @@ int main(int argc, char** argv)
     {
         if (ec1 || ec2)
         {
-            std::cerr << " decode error: ec1:" << ec1 << " ec2" << csi::kafka::to_string(ec2) << std::endl;
+            std::cerr << "  fetch next failed ec1::" << ec1 << " ec2" << csi::kafka::to_string(ec2) << std::endl;
             return;
         }
         std::cerr << "+";

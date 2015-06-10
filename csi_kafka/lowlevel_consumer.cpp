@@ -1,6 +1,8 @@
-#include "lowlevel_consumer.h"
+#include <boost/log/core.hpp>
+#include <boost/log/trivial.hpp>
 #include <boost/thread.hpp>
 #include <boost/bind.hpp>
+#include "lowlevel_consumer.h"
 
 namespace csi
 {
@@ -14,11 +16,12 @@ namespace csi
             _next_offset(kafka::latest_offsets),
             _rx_timeout(rx_timeout),
             _rx_in_progress(false),
+            _transient_failure(false),
             _metrics_rx_kb_sec(boost::accumulators::tag::rolling_window::window_size = 50),
             _metrics_rx_msg_sec(boost::accumulators::tag::rolling_window::window_size = 50),
             _metrics_rx_roundtrip(boost::accumulators::tag::rolling_window::window_size = 10),
             _metrics_timer(io_service),
-            _metrics_timeout(boost::posix_time::milliseconds(100)),
+            _metrics_timeout(boost::posix_time::milliseconds(1000)),
             _metrics_total_rx_kb(0),
             _metrics_total_rx_msg(0),
             __metrics_last_total_rx_kb(0),
@@ -39,8 +42,9 @@ namespace csi
             if (ec)
                 return;
 
-            uint64_t kb_sec = 10 * (_metrics_total_rx_kb - __metrics_last_total_rx_kb) / 1024;
-            uint64_t msg_sec = 10 * (_metrics_total_rx_msg - __metrics_last_total_rx_msg);
+            // todo meassure the actual time  - do not assume 1000
+            uint64_t kb_sec =  (_metrics_total_rx_kb - __metrics_last_total_rx_kb) / 1024;
+            uint64_t msg_sec =  (_metrics_total_rx_msg - __metrics_last_total_rx_msg);
             _metrics_rx_kb_sec((double)kb_sec);
             _metrics_rx_msg_sec((double)msg_sec);
             __metrics_last_total_rx_kb = _metrics_total_rx_kb;
@@ -48,6 +52,14 @@ namespace csi
             _metrics_timer.expires_from_now(_metrics_timeout);
             _metrics_timer.async_wait([this](const boost::system::error_code& ec){ handle_metrics_timer(ec); });
             
+            if (_transient_failure)
+            {
+                _transient_failure = false;
+                //_client.get-address() << 
+                BOOST_LOG_TRIVIAL(info) << "LLC " << _topic << ":" << _partition << " retrying fetch";
+                //LOG restartring fetch
+            }
+
             _ios.post([this](){_try_fetch(); }); // this will result in a delay of <5 sec connect before actuallt streaming restarts - harmless or we have to catch conmnect callback and retry from there
         }
 
@@ -125,7 +137,7 @@ namespace csi
 
         void lowlevel_consumer::_try_fetch()
         {
-            if (_rx_in_progress || !_client.is_connected() || _next_offset<0 || !_cb)
+            if (_rx_in_progress || !_client.is_connected() || _next_offset<0 || !_cb || _transient_failure)
                 return;
 
             _rx_in_progress = true;
@@ -141,6 +153,8 @@ namespace csi
 
                 if (response)
                 {
+                    BOOST_LOG_TRIVIAL(info) << "LLC " << _topic << ":" << _partition << " fetch error: " << to_string(response.ec);
+                    _transient_failure = true;
                     _cb(response.ec.ec1, response.ec.ec2, csi::kafka::fetch_response::topic_data::partition_data());
                 }
                 else
