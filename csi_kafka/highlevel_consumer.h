@@ -63,6 +63,7 @@ namespace csi
             // CLUSTER METADATA
             csi::kafka::async_metadata_client                                        _meta_client;
             csi::kafka::spinlock                                                     _spinlock; // protects the metadata below
+            std::vector<int>                                                         _partitions_mask;
             std::map<int, broker_data>                                               _broker2brokers;
             std::map<int, csi::kafka::metadata_response::topic_data::partition_data> _partition2partitions; // partition->partition_dat
 

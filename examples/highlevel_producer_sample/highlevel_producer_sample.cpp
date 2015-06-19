@@ -44,8 +44,9 @@ int main(int argc, char** argv)
     }
     else
     {
-        brokers.push_back(csi::kafka::broker_address("192.168.0.102", port));
-        brokers.push_back(csi::kafka::broker_address("10.1.3.238", port));
+        brokers.push_back(csi::kafka::broker_address("192.168.0.108", port));
+        brokers.push_back(csi::kafka::broker_address("192.168.0.109", port));
+        brokers.push_back(csi::kafka::broker_address("192.168.0.110", port));
     }
 
     producer.connect_forever(brokers);
