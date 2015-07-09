@@ -63,7 +63,7 @@ namespace csi
                     //encode key
                     {
                         auto ostr = avro::memoryOutputStream();
-                        avro_binary_encode_with_schema(i->first, *ostr);
+                        avro_binary_encode_with_fingerprint(i->first, *ostr);
                         size_t sz = ostr->byteCount();
 
                         auto in = avro::memoryInputStream(*ostr);
@@ -77,7 +77,7 @@ namespace csi
                     //encode value
                     {
                         auto ostr = avro::memoryOutputStream();
-                        avro_binary_encode_with_schema(i->second, *ostr);
+                        avro_binary_encode_with_fingerprint(i->second, *ostr);
                         size_t sz = ostr->byteCount();
 
                         auto in = avro::memoryInputStream(*ostr);
