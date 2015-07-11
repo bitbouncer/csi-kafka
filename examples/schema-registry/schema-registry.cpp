@@ -45,23 +45,23 @@ public:
         _producer.connect(brokers);
         _consumer.connect(brokers);
         _consumer.set_offset(csi::kafka::earliest_available_offset);
-        _consumer.stream_async([this](const boost::system::error_code& ec1, csi::kafka::error_codes ec2, const csi::kafka::fetch_response::topic_data::partition_data& data)
+        _consumer.stream_async([this](const boost::system::error_code& ec1, csi::kafka::error_codes ec2, std::shared_ptr<csi::kafka::fetch_response::topic_data::partition_data> data)
         {
             if (ec1 || ec2)
             {
                 BOOST_LOG_TRIVIAL(error) << " decode error: ec1:" << ec1.message() << " ec2" << csi::kafka::to_string(ec2) << std::endl;
                 return;
             }
-            for (std::vector<csi::kafka::basic_message>::const_iterator i = data.messages.begin(); i != data.messages.end(); ++i)
+            for (std::vector<std::shared_ptr<csi::kafka::basic_message>>::const_iterator i = data->messages.begin(); i != data->messages.end(); ++i)
             {
                 boost::uuids::uuid uuid;
 
                 try
                 {
-                    std::string key((const char*) &i->key[0], i->key.size());
+                    std::string key((const char*) &(*i)->key[0], (*i)->key.size());
                     uuid = boost::uuids::string_generator()(key);
-                    std::shared_ptr<std::string> handle = std::make_shared<std::string>((const char*) &i->value[0], i->value.size());
-                    BOOST_LOG_TRIVIAL(info) << "offset: " << i->offset << ", loaded: " << to_string(uuid) << " -> " << *handle;
+                    std::shared_ptr<std::string> handle = std::make_shared<std::string>((const char*) &(*i)->value[0], (*i)->value.size());
+                    BOOST_LOG_TRIVIAL(info) << "offset: " << (*i)->offset << ", loaded: " << to_string(uuid) << " -> " << *handle;
                     _store.put(uuid, handle);
                 }
                 catch (std::exception& e)

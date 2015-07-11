@@ -148,13 +148,13 @@ namespace csi
                 struct partition_data
                 {
                     partition_data() : partition_id(-1), error_code(-1), highwater_mark_offset(-1) {}
-                    int32_t                    partition_id;
-                    int16_t                    error_code;
-                    int64_t                    highwater_mark_offset;
-                    std::vector<basic_message> messages;
+                    int32_t                                     partition_id;
+                    int16_t                                     error_code;
+                    int64_t                                     highwater_mark_offset;
+                    std::vector<std::shared_ptr<basic_message>> messages;
                 };
                 std::string                 topic_name;
-                std::vector<partition_data> partitions;
+                std::vector<std::shared_ptr<partition_data>> partitions;
             };
             int32_t                 correlation_id;
             std::vector<topic_data> topics;

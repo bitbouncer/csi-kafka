@@ -18,7 +18,7 @@ namespace csi
             typedef boost::function <void(const boost::system::error_code& ec1, csi::kafka::error_codes ec2, int32_t partition, std::shared_ptr<V> value)> avro_callback;
             avro_value_decoder(avro_callback cb) : _cb(cb) {}
 
-            void operator()(const boost::system::error_code& ec1, csi::kafka::error_codes ec2, const csi::kafka::fetch_response::topic_data::partition_data& data)
+            void operator()(const boost::system::error_code& ec1, csi::kafka::error_codes ec2, std::shared_ptr<csi::kafka::fetch_response::topic_data::partition_data> data)
             {
                 if (ec1 || ec2)
                 {
@@ -26,7 +26,7 @@ namespace csi
                     return;
                 }
 
-                for (std::vector<csi::kafka::basic_message>::const_iterator i = data.messages.begin(); i != data.messages.end(); ++i)
+                for (std::vector<csi::kafka::basic_message>::const_iterator i = data->messages.begin(); i != data->messages.end(); ++i)
                 {
                     if (!i->value.is_null())
                     {
@@ -56,43 +56,43 @@ namespace csi
 
             avro_key_value_decoder(avro_callback cb) : _cb(cb) {}
 
-            void operator()(const boost::system::error_code& ec1, csi::kafka::error_codes ec2, const csi::kafka::fetch_response::topic_data::partition_data& data)
+            void operator()(const boost::system::error_code& ec1, csi::kafka::error_codes ec2, std::shared_ptr<csi::kafka::fetch_response::topic_data::partition_data> data)
             {
                 if (ec1 || ec2)
                 {
-                    _cb(ec1, ec2, std::shared_ptr<K>(), std::shared_ptr<V>(), data.partition_id, -1);
+                    _cb(ec1, ec2, std::shared_ptr<K>(), std::shared_ptr<V>(), data->partition_id, -1);
                     return;
                 }
 
-                for (std::vector<csi::kafka::basic_message>::const_iterator i = data.messages.begin(); i != data.messages.end(); ++i)
+                for (std::vector<std::shared_ptr<csi::kafka::basic_message>>::const_iterator i = data->messages.begin(); i != data->messages.end(); ++i)
                 {
                     std::shared_ptr<K> key;
                     std::shared_ptr<V> value;
 
                     // decode key                            
-                    if (!i->key.is_null())
+                    if (!(*i)->key.is_null())
                     {
                         key = std::shared_ptr<K>(new K());
-                        std::auto_ptr<avro::InputStream> src = avro::memoryInputStream(&i->key[0], i->key.size()); // lets always reserve 128 bits for md5 hash of avro schema so it's possible to dynamically decode things
+                        std::auto_ptr<avro::InputStream> src = avro::memoryInputStream(&(*i)->key[0], (*i)->key.size()); // lets always reserve 128 bits for md5 hash of avro schema so it's possible to dynamically decode things
                         if (!avro_binary_decode_with_fingerprint(*src, *key))
                         {
-                            _cb(ec1, csi::kafka::InvalidMessage, std::shared_ptr<K>(NULL), std::shared_ptr<V>(NULL), data.partition_id, i->offset);
+                            _cb(ec1, csi::kafka::InvalidMessage, std::shared_ptr<K>(NULL), std::shared_ptr<V>(NULL), data->partition_id, (*i)->offset);
                             return;
                         }
                     }
 
                     //decode value
-                    if (!i->value.is_null())
+                    if (!(*i)->value.is_null())
                     {
                         value = std::shared_ptr<V>(new V());
-                        std::auto_ptr<avro::InputStream> src = avro::memoryInputStream(&i->value[0], i->value.size()); // lets always reserve 128 bits for md5 hash of avro schema so it's possible to dynamically decode things
+                        std::auto_ptr<avro::InputStream> src = avro::memoryInputStream(&(*i)->value[0], (*i)->value.size()); // lets always reserve 128 bits for md5 hash of avro schema so it's possible to dynamically decode things
                         if (!avro_binary_decode_with_fingerprint(*src, *value))
                         {
-                            _cb(ec1, csi::kafka::InvalidMessage, key, std::shared_ptr<V>(NULL), data.partition_id, i->offset);
+                            _cb(ec1, csi::kafka::InvalidMessage, key, std::shared_ptr<V>(NULL), data->partition_id, (*i)->offset);
                             return;
                         }
                     }
-                    _cb(ec1, ec2, key, value, data.partition_id, i->offset);
+                    _cb(ec1, ec2, key, value, data->partition_id, (*i)->offset);
                 }
             }
 

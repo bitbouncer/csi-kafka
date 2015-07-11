@@ -25,7 +25,7 @@ int main(int argc, char** argv)
 
     auto ec2 = consumer.set_offset(csi::kafka::earliest_available_offset);
 
-    consumer.stream_async([](const boost::system::error_code& ec1, csi::kafka::error_codes ec2, const csi::kafka::fetch_response::topic_data::partition_data& data)
+    consumer.stream_async([](const boost::system::error_code& ec1, csi::kafka::error_codes ec2, std::shared_ptr<csi::kafka::fetch_response::topic_data::partition_data> data)
     {
         if (ec1 || ec2)
         {
@@ -33,19 +33,19 @@ int main(int argc, char** argv)
             return;
         }
 
-        if (data.error_code == 0)
+        if (data->error_code == 0)
         {
-            for (std::vector<csi::kafka::basic_message>::const_iterator i = data.messages.begin(); i != data.messages.end(); ++i)
+            for (std::vector<std::shared_ptr<csi::kafka::basic_message>>::const_iterator i = data->messages.begin(); i != data->messages.end(); ++i)
             {
-                if (i->key.is_null())
+                if ((*i)->key.is_null())
                     std::cerr << "NULL \t";
                 else
-                    std::cerr << (i->key.size() ? std::string((const char*)&i->key[0], i->key.size()) : "<empty>") << "\t";
+                    std::cerr << ((*i)->key.size() ? std::string((const char*)&(*i)->key[0], (*i)->key.size()) : "<empty>") << "\t";
 
-                if (i->value.is_null())
+                if ((*i)->value.is_null())
                     std::cerr << "NULL" << std::endl;
                 else
-                    std::cerr << (i->value.size() ? std::string((const char*)&i->value[0], i->value.size()) : "<empty>") << std::endl;
+                    std::cerr << ((*i)->value.size() ? std::string((const char*)&(*i)->value[0], (*i)->value.size()) : "<empty>") << std::endl;
             }
         }
     });

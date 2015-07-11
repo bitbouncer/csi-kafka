@@ -153,14 +153,14 @@ namespace csi
             return response;
         }
 
-        void parse_message_set(const char* buffer, size_t len, std::vector<basic_message>* v)
+        static void parse_message_set(const char* buffer, size_t len, std::vector<std::shared_ptr<basic_message>>& v)
         {
             boost::iostreams::stream<boost::iostreams::array_source> str(buffer, len);
 
             while (!str.eof())
             {
-                basic_message item;
-                internal::decode_i64(str, item.offset);
+                std::shared_ptr<basic_message> item = std::make_shared<basic_message>();
+                internal::decode_i64(str, item->offset);
 
                 int32_t message_size;
                 internal::decode_i32(str, message_size);
@@ -187,13 +187,13 @@ namespace csi
                 str.read((char*)&magic_byte, 1);
                 str.read((char*)&attributes, 1);
 
-                internal::decode_arr(str, item.key);
-                internal::decode_arr(str, item.value);
+                internal::decode_arr(str, item->key);
+                internal::decode_arr(str, item->value);
 
                 //uncompressed? then this is an actual value
                 if (attributes == 0)
                 {
-                    v->push_back(item);
+                    v.push_back(item);
                 }
                 else
                 {
@@ -232,12 +232,12 @@ namespace csi
                 topic_item.partitions.reserve(nr_of_partitions);
                 for (int j = 0; j != nr_of_partitions; ++j)
                 {
-                    fetch_response::topic_data::partition_data partition_data;
-                    internal::decode_i32(str, partition_data.partition_id);
-                    internal::decode_i16(str, partition_data.error_code);
-                    if (partition_data.error_code)
-                        resulting_error_code = partition_data.error_code;
-                    internal::decode_i64(str, partition_data.highwater_mark_offset);  // ska vi läsa detta om error code är !=0 TBD
+                    std::shared_ptr<fetch_response::topic_data::partition_data> partition_data = std::make_shared<fetch_response::topic_data::partition_data>();
+                    internal::decode_i32(str, partition_data->partition_id);
+                    internal::decode_i16(str, partition_data->error_code);
+                    if (partition_data->error_code)
+                        resulting_error_code = partition_data->error_code;
+                    internal::decode_i64(str, partition_data->highwater_mark_offset);  // ska vi läsa detta om error code är !=0 TBD
                     int32_t  message_set_size = 0;
                     internal::decode_i32(str, message_set_size); // ska vi läsa detta om error code är !=0 TBD
 
@@ -245,7 +245,7 @@ namespace csi
                     size_t bytes_to_parse = std::min<size_t>(message_set_size, len - str.tellg());
                     if (!str.good())
                         break;
-                    parse_message_set(buffer + str.tellg(), bytes_to_parse, &partition_data.messages);
+                    parse_message_set(buffer + str.tellg(), bytes_to_parse, partition_data->messages);
                     str.ignore(bytes_to_parse); // we must skip this block
                     topic_item.partitions.push_back(partition_data);
                 }

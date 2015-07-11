@@ -136,6 +136,44 @@ namespace csi
             return f.get();
         }
 
+        void lowlevel_consumer::fetch(fetch_callback cb)
+        {
+            const std::vector<partition_cursor> cursors = { { _partition, _next_offset } };
+            _client.get_data_async(_topic, cursors, _rx_timeout, 10, 0, [this, cb](rpc_result<fetch_response> response)
+            {
+                if (response)
+                {
+                    boost::system::error_code ignored;
+                    BOOST_LOG_TRIVIAL(warning) << "lowlevel_consumer::fetch " << _client.remote_endpoint(ignored).address().to_string() << " " << _topic << ":" << _partition << " failed: " << to_string(response.ec);
+                    close();
+                    cb(response.ec.ec1, response.ec.ec2, NULL);
+                }
+                else
+                {
+                    for (std::vector<csi::kafka::fetch_response::topic_data>::const_iterator i = response->topics.begin(); i != response->topics.end(); ++i)
+                    {
+                        // this should always be true.
+                        if (i->topic_name == _topic)
+                        {
+                            for (std::vector<std::shared_ptr<csi::kafka::fetch_response::topic_data::partition_data>>::const_iterator j = i->partitions.begin(); j != i->partitions.end(); ++j)
+                            {
+                                if ((*j)->partition_id == _partition)  // a partition that have been closed will not exist here so it will not be added again in the next read loop  TBD handle error here....
+                                {
+                                    // there might be a better way of doing this on lower level since we know the socket rx size.... TBD
+                                    for (std::vector<std::shared_ptr<basic_message>>::const_iterator k = (*j)->messages.begin(); k != (*j)->messages.end(); ++k)
+                                        _metrics_total_rx_kb += ((*k)->key.size() + (*k)->value.size());
+                                    _metrics_total_rx_msg += (*j)->messages.size();
+                                    if ((*j)->messages.size())
+                                        _next_offset = (*j)->messages[(*j)->messages.size() - 1]->offset + 1;
+                                    cb(response.ec.ec1, ((csi::kafka::error_codes) (*j)->error_code), *j);
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
         void lowlevel_consumer::_try_fetch()
         {
             if (_rx_in_progress || !_client.is_connected() || _next_offset<0 || !_cb || _transient_failure)
@@ -155,10 +193,10 @@ namespace csi
                 if (response)
                 {
                     boost::system::error_code ignored;
-                    BOOST_LOG_TRIVIAL(info) << "LLC " << _client.remote_endpoint(ignored).address().to_string() << " " << _topic << ":" << _partition << " fetch error: " << to_string(response.ec);
+                    BOOST_LOG_TRIVIAL(info) << "lowlevel_consumer::fetch " << _client.remote_endpoint(ignored).address().to_string() << " " << _topic << ":" << _partition << " fetch error: " << to_string(response.ec);
                     //_transient_failure = true;
                     close();
-                    _cb(response.ec.ec1, response.ec.ec2, csi::kafka::fetch_response::topic_data::partition_data());
+                    _cb(response.ec.ec1, response.ec.ec2, NULL);
                 }
                 else
                 {
@@ -167,17 +205,17 @@ namespace csi
                         // this should always be true.
                         if (i->topic_name == _topic)
                         {
-                            for (std::vector<csi::kafka::fetch_response::topic_data::partition_data>::const_iterator j = i->partitions.begin(); j != i->partitions.end(); ++j)
+                            for (std::vector<std::shared_ptr<csi::kafka::fetch_response::topic_data::partition_data>>::const_iterator j = i->partitions.begin(); j != i->partitions.end(); ++j)
                             {
-                                if (j->partition_id == _partition)  // a partition that have been closed will not exist here so it will not be added again in the next read loop  TBD handle error here....
+                                if ((*j)->partition_id == _partition)  // a partition that have been closed will not exist here so it will not be added again in the next read loop  TBD handle error here....
                                 {
                                     // there might be a better way of doiung this on lower leverl since we know the socket rx size.... TBD
-                                    for (std::vector<basic_message>::const_iterator k = j->messages.begin(); k != j->messages.end(); ++k)
-                                        _metrics_total_rx_kb += (k->key.size() + k->value.size());
-                                    _metrics_total_rx_msg += j->messages.size();
-                                    if (j->messages.size())
-                                        _next_offset = j->messages[j->messages.size() - 1].offset + 1;
-                                    _cb(response.ec.ec1, ((csi::kafka::error_codes) j->error_code), *j);
+                                    for (std::vector<std::shared_ptr<basic_message>>::const_iterator k = (*j)->messages.begin(); k != (*j)->messages.end(); ++k)
+                                        _metrics_total_rx_kb += ((*k)->key.size() + (*k)->value.size());
+                                    _metrics_total_rx_msg += (*j)->messages.size();
+                                    if ((*j)->messages.size())
+                                        _next_offset = (*j)->messages[(*j)->messages.size() - 1]->offset + 1;
+                                    _cb(response.ec.ec1, ((csi::kafka::error_codes) (*j)->error_code), *j);
                                 }
                             }
                         }
