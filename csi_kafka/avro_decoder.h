@@ -26,21 +26,21 @@ namespace csi
                     return;
                 }
 
-                for (std::vector<std::shared_ptr<csi::kafka::basic_message>>::const_iterator i = (*data)->messages.begin(); i != (*data)->messages.end(); ++i)
+                for (std::vector<std::shared_ptr<csi::kafka::basic_message>>::const_iterator i = data->messages.begin(); i != data->messages.end(); ++i)
                 {
-                    if (!i->value.is_null())
+                    if (!(*i)->value.is_null())
                     {
                         // decode avro in value...
                         std::shared_ptr<V> value = std::shared_ptr<V>(new V());
-                        std::auto_ptr<avro::InputStream> src = avro::memoryInputStream(&i->value[0], i->value.size()); // lets always reserve 128 bits for md5 hash of avro schema so it's possible to dynamically decode things
+                        std::auto_ptr<avro::InputStream> src = avro::memoryInputStream(&(*i)->value[0], (*i)->value.size()); // lets always reserve 128 bits for md5 hash of avro schema so it's possible to dynamically decode things
                         if (avro_binary_decode_with_schema(src, *value))
-                            _cb(ec1, ec2, data.partition_id, value); // offset, highwatermark as well???
+                            _cb(ec1, ec2, data->partition_id, value); // offset, highwatermark as well???
                         else
-                            _cb(ec1, csi::kafka::InvalidMessage, data.partition_id, std::shared_ptr<V>(NULL));
+                            _cb(ec1, csi::kafka::InvalidMessage, data->partition_id, std::shared_ptr<V>(NULL));
                     }
                     else
                     {
-                        _cb(ec1, ec2, data.partition_id, std::shared_ptr<V>(NULL)); // can this happen???  // offset, highwatermark as well???
+                        _cb(ec1, ec2, data->partition_id, std::shared_ptr<V>(NULL)); // can this happen???  // offset, highwatermark as well???
                     }
                 }
             }
