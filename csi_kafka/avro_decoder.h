@@ -26,7 +26,7 @@ namespace csi
                     return;
                 }
 
-                for (<std::vector<std::shared_ptr<csi::kafka::basic_message>>::const_iterator i = (*data)->messages.begin(); i != (*data)->messages.end(); ++i)
+                for (std::vector<std::shared_ptr<csi::kafka::basic_message>>::const_iterator i = (*data)->messages.begin(); i != (*data)->messages.end(); ++i)
                 {
                     if (!i->value.is_null())
                     {
