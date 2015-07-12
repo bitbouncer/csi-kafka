@@ -232,6 +232,18 @@ namespace csi
             }
         }
 
+        std::vector<highlevel_consumer::fetch_response> highlevel_consumer::fetch()
+        {
+            std::promise<std::vector<fetch_response>> p;
+            std::future<std::vector<fetch_response>>  f = p.get_future();
+            fetch([&p](std::vector<fetch_response>& v)
+            {
+                p.set_value(v);
+            });
+            f.wait();
+            return f.get();
+        }
+
         /*
         std::vector<int64_t> highlevel_consumer::get_offsets()
         {

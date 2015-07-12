@@ -53,8 +53,9 @@ namespace csi
             void                        stream_async(datastream_callback cb);
 
             void                        fetch(fetch_callback cb);
+            std::vector<fetch_response> fetch();
 
-            std::vector<metrics> get_metrics() const;
+            std::vector<metrics>        get_metrics() const;
 
         private:
             void handle_response(rpc_result<metadata_response> result);
