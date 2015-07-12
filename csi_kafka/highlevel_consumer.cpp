@@ -215,6 +215,23 @@ namespace csi
             }
         }
 
+        void highlevel_consumer::fetch(fetch_callback cb)
+        {
+            auto final_cb = std::make_shared<csi::async::destructor_callback<std::vector<fetch_response>>>(cb);
+            size_t partitions = _partition2consumers.size();
+            for (int i = 0; i != partitions; ++i)
+            {
+                _partition2consumers[i]->fetch([final_cb](const boost::system::error_code& ec1, csi::kafka::error_codes ec2, std::shared_ptr<csi::kafka::fetch_response::topic_data::partition_data> data)
+                {
+                    fetch_response r;
+                    r.ec1 = ec1;
+                    r.ec2 = ec2;
+                    r.data = data;
+                    final_cb->value().push_back(r);
+                });
+            }
+        }
+
         /*
         std::vector<int64_t> highlevel_consumer::get_offsets()
         {

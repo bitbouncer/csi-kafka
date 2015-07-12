@@ -269,14 +269,15 @@ namespace csi
             for (std::vector<std::shared_ptr<basic_message>>::const_iterator i = messages.begin(); i != messages.end(); ++i)
                 send_async(*i);
             size_t partitions = _partition2producers.size();
-            std::shared_ptr<csi::async::destructor_callback> final_cb(new csi::async::destructor_callback(cb));
+            auto final_cb = std::make_shared<csi::async::destructor_callback<uint32_t>>(cb);
+            final_cb->value() = 0;  // initialize ec....
             for (int i = 0; i != partitions; ++i)
             {
                 _partition2producers[i]->send_async(NULL, [i, final_cb](int32_t ec)
                 {
                     if (ec)
                     {
-                        final_cb->set_ec(ec);
+                        final_cb->value() = ec;
                     }
                 });
             }

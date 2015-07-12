@@ -23,8 +23,18 @@ namespace csi
                 double      rx_roundtrip;
             };
 
+            struct fetch_response
+            {
+                boost::system::error_code ec1;
+                csi::kafka::error_codes   ec2; 
+                std::shared_ptr<csi::kafka::fetch_response::topic_data::partition_data> data;
+            };
+
             typedef boost::function <void(const boost::system::error_code&)> connect_callback;
             typedef boost::function <void(const boost::system::error_code& ec1, csi::kafka::error_codes ec2, std::shared_ptr<csi::kafka::fetch_response::topic_data::partition_data>)> datastream_callback;
+            
+            typedef boost::function <void(std::vector<fetch_response>&)> fetch_callback;
+
             highlevel_consumer(boost::asio::io_service& io_service, const std::string& topic, int32_t rx_timeout, int32_t max_packet_size = -1);
             ~highlevel_consumer(); 
 
@@ -41,6 +51,8 @@ namespace csi
 
             void                        close();
             void                        stream_async(datastream_callback cb);
+
+            void                        fetch(fetch_callback cb);
 
             std::vector<metrics> get_metrics() const;
 

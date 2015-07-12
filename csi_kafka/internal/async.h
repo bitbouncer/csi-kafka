@@ -8,15 +8,17 @@ namespace csi
 {
     namespace async
     {
+        template <typename Value>
         class destructor_callback
         {
         public:
-            destructor_callback(boost::function <void(int32_t ec)>  callback) : _cb(callback), _ec(0) {}
-            ~destructor_callback() { _cb(_ec); }
-            void set_ec(int32_t ec) { _ec = ec; }
+            destructor_callback(boost::function <void(Value& val)>  callback) : _cb(callback) {}
+            ~destructor_callback()               { _cb(_val); }
+            Value& value()             { return _val; }
+            const Value& value() const { return _val; }
         private:
-            boost::function <void(int32_t ec)> _cb;
-            int32_t _ec;
+            boost::function <void(Value& ec)> _cb;
+            Value _val;
         };
 
         typedef boost::function <void(std::vector<boost::system::error_code>)>  async_vcallback;
