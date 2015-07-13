@@ -205,7 +205,6 @@ namespace csi
             }
         }
 
-
         void  highlevel_consumer::stream_async(datastream_callback cb)
         {
             size_t partitions = _partition2consumers.size();
