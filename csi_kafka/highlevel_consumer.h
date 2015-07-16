@@ -32,10 +32,11 @@ namespace csi
 
             typedef boost::function <void(const boost::system::error_code&)> connect_callback;
             typedef boost::function <void(const boost::system::error_code& ec1, csi::kafka::error_codes ec2, std::shared_ptr<csi::kafka::fetch_response::topic_data::partition_data>)> datastream_callback;
-            
             typedef boost::function <void(std::vector<fetch_response>&)> fetch_callback;
 
-            highlevel_consumer(boost::asio::io_service& io_service, const std::string& topic, int32_t rx_timeout, int32_t max_packet_size = -1);
+            enum { MAX_FETCH_SIZE = basic_call_context::MAX_BUFFER_SIZE };
+
+            highlevel_consumer(boost::asio::io_service& io_service, const std::string& topic, int32_t rx_timeout, size_t max_packet_size = MAX_FETCH_SIZE);
             ~highlevel_consumer(); 
 
             void                        connect_forever(const std::vector<broker_address>& brokers); // , connect_callback cb);  // stream of connection events??
@@ -69,7 +70,7 @@ namespace csi
 
             std::string                          _topic;
             int32_t                              _rx_timeout;
-            int32_t                              _max_packet_size;
+            size_t                               _max_packet_size;
             std::map<int, lowlevel_consumer*>    _partition2consumers;
 
             // CLUSTER METADATA

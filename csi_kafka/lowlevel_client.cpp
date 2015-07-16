@@ -31,10 +31,10 @@ namespace csi
             return handle;
         }
 
-        basic_call_context::handle create_multi_fetch_request(const std::string& topic, const std::vector<partition_cursor>& cursors, uint32_t max_wait_time, size_t min_bytes, int32_t correlation_id)
+        basic_call_context::handle create_multi_fetch_request(const std::string& topic, const std::vector<partition_cursor>& cursors, uint32_t max_wait_time, size_t min_bytes, size_t max_bytes, int32_t correlation_id)
         {
             basic_call_context::handle handle(new basic_call_context());
-            handle->_tx_size = encode_multi_fetch_request(topic, cursors, max_wait_time, min_bytes, correlation_id, (char*)&handle->_tx_buffer[0], basic_call_context::MAX_BUFFER_SIZE);
+            handle->_tx_size = encode_multi_fetch_request(topic, cursors, max_wait_time, min_bytes, correlation_id, (char*)&handle->_tx_buffer[0], std::min<size_t>(max_bytes, basic_call_context::MAX_BUFFER_SIZE));
             return handle;
         }
 
@@ -280,10 +280,10 @@ namespace csi
             return f.get();
         }
 
-        void lowlevel_client::get_data_async(const std::string& topic, const std::vector<partition_cursor>& partitions, uint32_t max_wait_time, size_t min_bytes, int32_t correlation_id, get_data_callback cb)
+        void lowlevel_client::fetch_async(const std::string& topic, const std::vector<partition_cursor>& partitions, uint32_t max_wait_time, size_t min_bytes, size_t max_bytes, int32_t correlation_id, fetch_callback cb)
         {
             assert(cb); // no point of not having callback
-            perform_async(create_multi_fetch_request(topic, partitions, max_wait_time, min_bytes, correlation_id), [cb](const boost::system::error_code& ec, basic_call_context::handle handle)
+            perform_async(create_multi_fetch_request(topic, partitions, max_wait_time, min_bytes, max_bytes, correlation_id), [cb](const boost::system::error_code& ec, basic_call_context::handle handle)
             {
                 if (ec)
                     cb(rpc_result<fetch_response>(ec));
@@ -292,11 +292,11 @@ namespace csi
             });
         }
 
-        rpc_result<fetch_response> lowlevel_client::get_data(const std::string& topic, const std::vector<partition_cursor>& partitions, uint32_t max_wait_time, size_t min_bytes, int32_t correlation_id)
+        rpc_result<fetch_response> lowlevel_client::fetch(const std::string& topic, const std::vector<partition_cursor>& partitions, uint32_t max_wait_time, size_t min_bytes, size_t max_bytes, int32_t correlation_id)
         {
             std::promise<rpc_result<fetch_response>> p;
             std::future<rpc_result<fetch_response>>  f = p.get_future();
-            get_data_async(topic, partitions, max_wait_time, min_bytes, correlation_id, [&p](rpc_result<fetch_response> response)
+            fetch_async(topic, partitions, max_wait_time, min_bytes, max_bytes, correlation_id, [&p](rpc_result<fetch_response> response)
             {
                 p.set_value(response);
             });

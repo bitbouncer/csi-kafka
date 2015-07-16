@@ -8,11 +8,12 @@ namespace csi
 {
     namespace kafka
     {
-        lowlevel_consumer::lowlevel_consumer(boost::asio::io_service& io_service, const std::string& topic, int32_t partition, int32_t rx_timeout) :
+        lowlevel_consumer::lowlevel_consumer(boost::asio::io_service& io_service, const std::string& topic, int32_t partition, int32_t rx_timeout, size_t max_packet_size) :
             _ios(io_service),
             _client(io_service),
             _topic(topic),
             _partition(partition),
+            _max_packet_size(max_packet_size),
             _next_offset(kafka::latest_offsets),
             _rx_timeout(rx_timeout),
             _rx_in_progress(false),
@@ -139,7 +140,7 @@ namespace csi
         void lowlevel_consumer::fetch(fetch_callback cb)
         {
             const std::vector<partition_cursor> cursors = { { _partition, _next_offset } };
-            _client.get_data_async(_topic, cursors, _rx_timeout, 10, 0, [this, cb](rpc_result<fetch_response> response)
+            _client.fetch_async(_topic, cursors, _rx_timeout, 10, _max_packet_size, 0, [this, cb](rpc_result<fetch_response> response)
             {
                 if (response)
                 {
@@ -182,7 +183,7 @@ namespace csi
             _rx_in_progress = true;
 
             const std::vector<partition_cursor> cursors = { { _partition, _next_offset } };
-            _client.get_data_async(_topic, cursors, _rx_timeout, 10, 0, [this](rpc_result<fetch_response> response)
+            _client.fetch_async(_topic, cursors, _rx_timeout, 10, _max_packet_size, 0, [this](rpc_result<fetch_response> response)
             {
                 if (!_cb)
                 {

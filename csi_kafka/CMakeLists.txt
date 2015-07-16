@@ -17,8 +17,6 @@ SET(LIB_SRCS
 	protocol_decoder.cpp
 	lowlevel_consumer.cpp
 	lowlevel_consumer.h
-	lowlevel_producer.cpp
-	lowlevel_producer.h
     highlevel_consumer.h
     highlevel_consumer.cpp
     highlevel_producer.h

@@ -4,7 +4,7 @@
 #include <boost/log/trivial.hpp>
 #include <boost/log/expressions.hpp>
 #include <csi_kafka/lowlevel_consumer.h>
-#include <csi_kafka/lowlevel_producer.h>
+#include <csi_kafka/async_lowlevel_producer.h>
 
 int main(int argc, char** argv)
 {
@@ -19,7 +19,7 @@ int main(int argc, char** argv)
     boost::thread bt(boost::bind(&boost::asio::io_service::run, &io_service));
 
 
-    csi::kafka::lowlevel_consumer consumer(io_service, "saka.test.sample2", 0, 1000);
+    csi::kafka::lowlevel_consumer consumer(io_service, "saka.test.sample2", 0, 1000, 100000);
    
     consumer.connect(addr, 1000);
 
@@ -51,7 +51,7 @@ int main(int argc, char** argv)
     });
 
 
-    csi::kafka::lowlevel_producer producer(io_service, "saka.test.sample2", 0);
+    csi::kafka::async_lowlevel_producer producer(io_service, "saka.test.sample2", 0, -1, 1000, 100000);
 
     boost::system::error_code ec3 = producer.connect(addr, 1000);
 
@@ -64,13 +64,24 @@ int main(int argc, char** argv)
 
     for (int i = 0; i != 100; ++i)
     {
-        producer.send_async(1, 1000, x, 0, [](csi::kafka::rpc_result<csi::kafka::produce_response> response)
+        for (std::vector<std::shared_ptr<csi::kafka::basic_message>>::const_iterator j = x.begin(); j != x.end(); ++j)
         {
-            if (response)
-                std::cerr << csi::kafka::to_string(response.ec) << std::endl;
+            if (j != (x.end() - 1))
+            {
+                producer.send_async(*j, NULL);
+            }
             else
-                std::cerr << "+";
-        });
+            {
+                producer.send_async(*j, [](int32_t ec)
+                {
+
+                    if (ec)
+                        std::cerr << csi::kafka::to_string((csi::kafka::error_codes) ec) << std::endl;
+                    else
+                        std::cerr << "+";
+                });
+            }
+        }
     }
 
     boost::this_thread::sleep(boost::posix_time::seconds(1000));

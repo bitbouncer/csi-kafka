@@ -18,7 +18,9 @@ namespace csi
             typedef boost::function <void(const boost::system::error_code& ec1, csi::kafka::error_codes ec2, std::shared_ptr<csi::kafka::fetch_response::topic_data::partition_data>)> datastream_callback;
             typedef boost::function <void(const boost::system::error_code& ec1, csi::kafka::error_codes ec2, std::shared_ptr<csi::kafka::fetch_response::topic_data::partition_data>)> fetch_callback;
 
-            lowlevel_consumer(boost::asio::io_service& io_service, const std::string& topic, int32_t partition, int32_t rx_timeout);
+            enum { MAX_FETCH_SIZE = basic_call_context::MAX_BUFFER_SIZE };
+
+            lowlevel_consumer(boost::asio::io_service& io_service, const std::string& topic, int32_t partition, int32_t rx_timeout, size_t max_packet_size = MAX_FETCH_SIZE);
             ~lowlevel_consumer();
 
             void                              connect_async(const broker_address& address, int32_t timeout, connect_callback);
@@ -57,6 +59,7 @@ namespace csi
             const int32_t                   _partition;
             int64_t                         _next_offset;
             bool                            _transient_failure;
+            size_t                          _max_packet_size;
 
             //METRICS
             typedef boost::accumulators::accumulator_set<double, boost::accumulators::stats<boost::accumulators::tag::rolling_mean> >   metrics_accumulator_t;

@@ -33,7 +33,7 @@ class schema_registry
 {
 public:
     schema_registry(boost::asio::io_service& ios, const std::string& topic_name) :
-        _consumer(ios, topic_name, 20000),
+        _consumer(ios, topic_name, 1000, 20000),
         _producer(ios, topic_name, -1, 500, 20000)
     {
     }

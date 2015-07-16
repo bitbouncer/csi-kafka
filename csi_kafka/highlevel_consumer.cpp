@@ -8,7 +8,7 @@ namespace csi
 {
     namespace kafka
     {
-        highlevel_consumer::highlevel_consumer(boost::asio::io_service& io_service, const std::string& topic, int32_t rx_timeout, int32_t max_packet_size) :
+        highlevel_consumer::highlevel_consumer(boost::asio::io_service& io_service, const std::string& topic, int32_t rx_timeout, size_t max_packet_size) :
             _ios(io_service),
             _timer(io_service),
             _timeout(boost::posix_time::milliseconds(5000)),
@@ -183,7 +183,7 @@ namespace csi
                             }
                             for (std::vector<csi::kafka::metadata_response::topic_data::partition_data>::const_iterator j = i->partitions.begin(); j != i->partitions.end(); ++j)
                             {
-                                _partition2consumers.insert(std::make_pair(j->partition_id, new lowlevel_consumer(_ios, _topic, j->partition_id, _rx_timeout)));
+                                _partition2consumers.insert(std::make_pair(j->partition_id, new lowlevel_consumer(_ios, _topic, j->partition_id, _rx_timeout, _max_packet_size)));
                             }
                         };
                     }

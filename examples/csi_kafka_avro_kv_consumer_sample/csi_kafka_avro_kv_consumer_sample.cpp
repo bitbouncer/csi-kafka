@@ -39,7 +39,7 @@ int main(int argc, char** argv)
     boost::asio::io_service io_service;
     std::auto_ptr<boost::asio::io_service::work> work(new boost::asio::io_service::work(io_service));
     boost::thread bt(boost::bind(&boost::asio::io_service::run, &io_service));
-    csi::kafka::lowlevel_consumer consumer(io_service, "saka.test.avro_key_value", 0, 1000);
+    csi::kafka::lowlevel_consumer consumer(io_service, "saka.test.avro_key_value", 0, 1000, 10000);
     int64_t message_total = 0;
 
     boost::system::error_code ec1 = consumer.connect(addr, 1000);

@@ -86,7 +86,7 @@ int main(int argc, char** argv)
     //LOWLEVEL CONSUMER
 
     //HIGHLEVEL CONSUMER
-    csi::kafka::highlevel_consumer consumer(io_service, TOPIC_NAME, 20000);
+    csi::kafka::highlevel_consumer consumer(io_service, TOPIC_NAME, 1000, 10000);
     consumer.connect( { broker } );
     //std::vector<int64_t> result = consumer.get_offsets();
     consumer.connect_forever({ broker } );

@@ -2,7 +2,7 @@
 #include <avro/Encoder.hh>
 #include <avro/Decoder.hh>
 #include <csi_avro/encoding.h>
-#include <csi_kafka/lowlevel_producer.h>
+#include <csi_kafka/async_lowlevel_producer.h>
 
 #pragma once
 
@@ -11,17 +11,16 @@ namespace csi
     namespace kafka
     {
         template<class T>
-        class avro_value_producer : public csi::kafka::lowlevel_producer
+        class avro_value_producer : public csi::kafka::async_lowlevel_producer
         {
         public:
-            avro_value_producer(boost::asio::io_service& io_service, const std::string& topic, int32_t partition) :
-                lowlevel_producer(io_service, topic, partition)
+            avro_value_producer(boost::asio::io_service& io_service, const std::string& topic, int32_t partition, int32_t required_acks, int32_t timeout, int32_t max_packet_size) :
+                async_lowlevel_producer(io_service, topic, partition, required_acks, timeout, max_packet_size)
             {
             }
 
-            void send_async(int32_t required_acks, int32_t timeout, const std::vector<T>& src, int32_t correlation_id, send_callback cb)
+            void send_async(const std::vector<T>& src, int32_t correlation_id, tx_ack_callback cb)
             {
-                std::vector<std::shared_ptr<csi::kafka::basic_message>> src2;
                 for (typename std::vector<T>::const_iterator i = src.begin(); i != src.end(); ++i)
                 {
                     auto ostr = avro::memoryOutputStream();
@@ -38,24 +37,26 @@ namespace csi
                     //msg->value.insert(msg.value.end(), 0, 16);
                     for (int j = 0; j != sz; ++j)
                         msg->value.push_back(stream_reader.read());
-                    src2.push_back(msg);
+                    
+                    if (i != (src.end()-1))
+                        csi::kafka::async_lowlevel_producer::send_async(msg, correlation_id, NULL);
+                    else
+                        csi::kafka::async_lowlevel_producer::send_async(msg, correlation_id, cb);
                 }
-                csi::kafka::lowlevel_producer::send_async(required_acks, timeout, src2, correlation_id, cb);
             }
         };
 
         template<class K, class V>
-        class avro_key_value_producer : public csi::kafka::lowlevel_producer
+        class avro_key_value_producer : public csi::kafka::async_lowlevel_producer
         {
         public:
-            avro_key_value_producer(boost::asio::io_service& io_service, const std::string& topic, int32_t partition) :
-                lowlevel_producer(io_service, topic, partition)
+            avro_key_value_producer(boost::asio::io_service& io_service, const std::string& topic, int32_t partition, int32_t required_acks, int32_t timeout, int32_t max_packet_size) :
+                async_lowlevel_producer(io_service, topic, partition, required_acks, timeout, max_packet_size)
             {
             }
 
-            void send_async(int32_t required_acks, int32_t timeout, const std::vector<std::pair<K, V>>& src, int32_t correlation_id, send_callback cb)
+            void send_async(const std::vector<std::pair<K, V>>& src, int32_t correlation_id, tx_ack_callback cb)
             {
-                std::vector<std::shared_ptr<csi::kafka::basic_message>> src2;
                 for (typename std::vector<std::pair<K, V>>::const_iterator i = src.begin(); i != src.end(); ++i)
                 {
                     std::shared_ptr<csi::kafka::basic_message> msg(new csi::kafka::basic_message());
@@ -87,9 +88,11 @@ namespace csi
                         for (int j = 0; j != sz; ++j)
                             msg->value.push_back(stream_reader.read());
                     }
-                    src2.push_back(msg);
+                    if (i != (src.end() - 1))
+                        csi::kafka::async_lowlevel_producer::send_async(msg, NULL);
+                    else
+                        csi::kafka::async_lowlevel_producer::send_async(msg, cb);
                 }
-                csi::kafka::lowlevel_producer::send_async(required_acks, timeout, src2, correlation_id, cb);
             }
         };
     }
