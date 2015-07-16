@@ -2,7 +2,7 @@
 #include <avro/Encoder.hh>
 #include <avro/Decoder.hh>
 #include <csi_avro/encoding.h>
-#include <csi_kafka/async_lowlevel_producer.h>
+#include <csi_kafka/lowlevel_producer.h>
 
 #pragma once
 
@@ -11,11 +11,11 @@ namespace csi
     namespace kafka
     {
         template<class T>
-        class avro_value_producer : public csi::kafka::async_lowlevel_producer
+        class avro_value_producer : public csi::kafka::lowlevel_producer
         {
         public:
             avro_value_producer(boost::asio::io_service& io_service, const std::string& topic, int32_t partition, int32_t required_acks, int32_t timeout, int32_t max_packet_size) :
-                async_lowlevel_producer(io_service, topic, partition, required_acks, timeout, max_packet_size)
+                lowlevel_producer(io_service, topic, partition, required_acks, timeout, max_packet_size)
             {
             }
 
@@ -39,19 +39,19 @@ namespace csi
                         msg->value.push_back(stream_reader.read());
                     
                     if (i != (src.end()-1))
-                        csi::kafka::async_lowlevel_producer::send_async(msg, correlation_id, NULL);
+                        csi::kafka::lowlevel_producer::send_async(msg, correlation_id, NULL);
                     else
-                        csi::kafka::async_lowlevel_producer::send_async(msg, correlation_id, cb);
+                        csi::kafka::lowlevel_producer::send_async(msg, correlation_id, cb);
                 }
             }
         };
 
         template<class K, class V>
-        class avro_key_value_producer : public csi::kafka::async_lowlevel_producer
+        class avro_key_value_producer : public csi::kafka::lowlevel_producer
         {
         public:
             avro_key_value_producer(boost::asio::io_service& io_service, const std::string& topic, int32_t partition, int32_t required_acks, int32_t timeout, int32_t max_packet_size) :
-                async_lowlevel_producer(io_service, topic, partition, required_acks, timeout, max_packet_size)
+                lowlevel_producer(io_service, topic, partition, required_acks, timeout, max_packet_size)
             {
             }
 
@@ -89,9 +89,9 @@ namespace csi
                             msg->value.push_back(stream_reader.read());
                     }
                     if (i != (src.end() - 1))
-                        csi::kafka::async_lowlevel_producer::send_async(msg, NULL);
+                        csi::kafka::lowlevel_producer::send_async(msg, NULL);
                     else
-                        csi::kafka::async_lowlevel_producer::send_async(msg, cb);
+                        csi::kafka::lowlevel_producer::send_async(msg, cb);
                 }
             }
         };

@@ -24,6 +24,7 @@ namespace csi
         highlevel_producer::~highlevel_producer()
         {
             _timer.cancel();
+            //TBD we lead lowlevelproducers here .... shared_ptr ??
         }
 
         void highlevel_producer::handle_timer(const boost::system::error_code& ec)
@@ -36,7 +37,7 @@ namespace csi
         {
             _timer.cancel();
             _meta_client.close();
-            for (std::map<int, async_lowlevel_producer*>::iterator i = _partition2producers.begin(); i != _partition2producers.end(); ++i)
+            for (std::map<int, lowlevel_producer*>::iterator i = _partition2producers.begin(); i != _partition2producers.end(); ++i)
             {
                 i->second->close();
             }
@@ -70,7 +71,7 @@ namespace csi
 
                             std::shared_ptr<std::vector<csi::async::async_function>> work(new std::vector<csi::async::async_function>());
 
-                            for (std::map<int, async_lowlevel_producer*>::iterator i = _partition2producers.begin(); i != _partition2producers.end(); ++i)
+                            for (std::map<int, lowlevel_producer*>::iterator i = _partition2producers.begin(); i != _partition2producers.end(); ++i)
                             {
                                 work->push_back([this, i](csi::async::async_callback cb)
                                 {
@@ -147,7 +148,7 @@ namespace csi
             {
                 handle_response(result);
 
-                for (std::map<int, async_lowlevel_producer*>::iterator i = _partition2producers.begin(); i != _partition2producers.end(); ++i)
+                for (std::map<int, lowlevel_producer*>::iterator i = _partition2producers.begin(); i != _partition2producers.end(); ++i)
                 {
                     if (!i->second->is_connected() && !i->second->is_connection_in_progress())
                     {
@@ -197,7 +198,7 @@ namespace csi
                                 BOOST_LOG_TRIVIAL(warning) << _topic << ", HLP get_metadata failed: " << to_string((error_codes)i->error_code);
                             }
                             for (std::vector<csi::kafka::metadata_response::topic_data::partition_data>::const_iterator j = i->partitions.begin(); j != i->partitions.end(); ++j)
-                                _partition2producers.insert(std::make_pair(j->partition_id, new async_lowlevel_producer(_ios, _topic, j->partition_id, _required_acks, _tx_timeout, _max_packet_size)));
+                                _partition2producers.insert(std::make_pair(j->partition_id, new lowlevel_producer(_ios, _topic, j->partition_id, _required_acks, _tx_timeout, _max_packet_size)));
                         }
 
                         //lets send all things that were collected before connecting
@@ -286,7 +287,7 @@ namespace csi
         std::vector<highlevel_producer::metrics>  highlevel_producer::get_metrics() const
         {
             std::vector<metrics> metrics;
-            for (std::map<int, async_lowlevel_producer*>::const_iterator i = _partition2producers.begin(); i != _partition2producers.end(); ++i)
+            for (std::map<int, lowlevel_producer*>::const_iterator i = _partition2producers.begin(); i != _partition2producers.end(); ++i)
             {
                 highlevel_producer::metrics item;
                 item.partition = (*i).second->partition();

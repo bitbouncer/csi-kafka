@@ -1,4 +1,4 @@
-#include <csi_kafka/async_lowlevel_producer.h>
+#include <csi_kafka/lowlevel_producer.h>
 #include <csi_kafka/internal/async_metadata_client.h>
 
 #pragma once
@@ -69,7 +69,7 @@ namespace csi
             std::map<int, broker_data>                                               _broker2brokers;
             std::map<int, csi::kafka::metadata_response::topic_data::partition_data> _partition2partitions;
             std::deque<tx_item>                                                      _tx_queue; // used when waiting for cluster
-            std::map<int, async_lowlevel_producer*>                                  _partition2producers;
+            std::map<int, lowlevel_producer*>                                        _partition2producers;
         };
     };
 };

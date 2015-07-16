@@ -2,13 +2,13 @@
 #include <boost/bind.hpp>
 #include <boost/log/core.hpp>
 #include <boost/log/trivial.hpp>
-#include "async_lowlevel_producer.h"
+#include "lowlevel_producer.h"
 
 namespace csi
 {
     namespace kafka
     {
-        async_lowlevel_producer::async_lowlevel_producer(boost::asio::io_service& io_service, const std::string& topic, int32_t partition, int32_t required_acks, int32_t timeout, int32_t max_packet_size) :
+        lowlevel_producer::lowlevel_producer(boost::asio::io_service& io_service, const std::string& topic, int32_t partition, int32_t required_acks, int32_t timeout, int32_t max_packet_size) :
             _ios(io_service),
             _client(io_service),
             _topic(topic),
@@ -37,18 +37,18 @@ namespace csi
             _metrics_timer.async_wait([this](const boost::system::error_code& ec){ handle_metrics_timer(ec); });
         }
 
-        async_lowlevel_producer::~async_lowlevel_producer()
+        lowlevel_producer::~lowlevel_producer()
         {
             _metrics_timer.cancel();
             _client.close();
         }
 
-        void  async_lowlevel_producer::close()
+        void  lowlevel_producer::close()
         {
             _client.close();
         }
 
-        void async_lowlevel_producer::handle_metrics_timer(const boost::system::error_code& ec)
+        void lowlevel_producer::handle_metrics_timer(const boost::system::error_code& ec)
         {
             if (ec)
                 return;
@@ -65,28 +65,28 @@ namespace csi
             _try_send();
         }
 
-        void async_lowlevel_producer::connect_async(const broker_address& address, int32_t timeout, connect_callback cb)
+        void lowlevel_producer::connect_async(const broker_address& address, int32_t timeout, connect_callback cb)
         {
             _client.connect_async(address, timeout, cb);
         }
 
-        boost::system::error_code async_lowlevel_producer::connect(const broker_address& address, int32_t timeout)
+        boost::system::error_code lowlevel_producer::connect(const broker_address& address, int32_t timeout)
         {
             return _client.connect(address, timeout);
         }
 
 
-        void async_lowlevel_producer::connect_async(const boost::asio::ip::tcp::resolver::query& query, int32_t timeout, connect_callback cb)
+        void lowlevel_producer::connect_async(const boost::asio::ip::tcp::resolver::query& query, int32_t timeout, connect_callback cb)
         {
             _client.connect_async(query, 1000, cb);
         }
 
-        boost::system::error_code async_lowlevel_producer::connect(const boost::asio::ip::tcp::resolver::query& query, int32_t timeout)
+        boost::system::error_code lowlevel_producer::connect(const boost::asio::ip::tcp::resolver::query& query, int32_t timeout)
         {
             return _client.connect(query, 1000);
         }
 
-        void async_lowlevel_producer::send_async(std::shared_ptr<basic_message> message, tx_ack_callback cb)
+        void lowlevel_producer::send_async(std::shared_ptr<basic_message> message, tx_ack_callback cb)
         {
             {
                 csi::kafka::spinlock::scoped_lock xxx(_spinlock);
@@ -100,7 +100,7 @@ namespace csi
             _ios.post([this](){_try_send(); });
         }
 
-        void async_lowlevel_producer::_try_send()
+        void lowlevel_producer::_try_send()
         {
             if (_tx_in_progress || !_client.is_connected())
                 return;

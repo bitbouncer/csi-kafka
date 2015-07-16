@@ -19,10 +19,10 @@ SET(LIB_SRCS
 	lowlevel_consumer.h
     highlevel_consumer.h
     highlevel_consumer.cpp
+    lowlevel_producer.h
+    lowlevel_producer.cpp
     highlevel_producer.h
     highlevel_producer.cpp
-    async_lowlevel_producer.h
-    async_lowlevel_producer.cpp
 	kafka.h
 	kafka.cpp
     kafka_error_code.h

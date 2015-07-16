@@ -4,7 +4,7 @@
 #include <boost/log/trivial.hpp>
 #include <boost/log/expressions.hpp>
 #include <csi_kafka/lowlevel_consumer.h>
-#include <csi_kafka/async_lowlevel_producer.h>
+#include <csi_kafka/lowlevel_producer.h>
 
 int main(int argc, char** argv)
 {
@@ -51,7 +51,7 @@ int main(int argc, char** argv)
     });
 
 
-    csi::kafka::async_lowlevel_producer producer(io_service, "saka.test.sample2", 0, -1, 1000, 100000);
+    csi::kafka::lowlevel_producer producer(io_service, "saka.test.sample2", 0, -1, 1000, 100000);
 
     boost::system::error_code ec3 = producer.connect(addr, 1000);
 
