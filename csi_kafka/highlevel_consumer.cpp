@@ -18,6 +18,8 @@ namespace csi
             _rx_timeout(rx_timeout),
             _max_packet_size(max_packet_size)
         {
+			// this is an absurd small max size
+			assert(max_packet_size > 4); 
         }
 
         highlevel_consumer::~highlevel_consumer()
