@@ -27,6 +27,7 @@ namespace csi
             boost::system::error_code         connect(const boost::asio::ip::tcp::resolver::query& query, int32_t timeout);
             void                              close();
             void                              send_async(std::shared_ptr<basic_message> message, tx_ack_callback = NULL);
+			int32_t                           send_sync(std::shared_ptr<basic_message> message);
 
             //void wait_lowwater_async(int max_messages, lowwater_callback);
             //void close_async();
@@ -66,6 +67,7 @@ namespace csi
             std::deque<tx_item>                        _tx_queue;
             size_t                                     _tx_queue_byte_size;
             bool                                       _tx_in_progress;
+			bool                                       _try_send_posted;
             int32_t                                    _required_acks;
             int32_t                                    _tx_timeout;
             int32_t                                    _max_packet_size;

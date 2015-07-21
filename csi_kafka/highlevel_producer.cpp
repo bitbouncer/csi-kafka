@@ -284,6 +284,31 @@ namespace csi
             }
         }
 
+
+		int32_t highlevel_producer::send_sync(std::shared_ptr<csi::kafka::basic_message> message)
+		{
+			std::promise<int32_t> p;
+			std::future<int32_t>  f = p.get_future();
+			send_async(message, [&p](int32_t result)
+			{
+				p.set_value(result);
+			});
+			f.wait();
+			return f.get();
+		}
+
+		int32_t highlevel_producer::send_sync(std::vector<std::shared_ptr<csi::kafka::basic_message>>& messages)
+		{
+			std::promise<int32_t> p;
+			std::future<int32_t>  f = p.get_future();
+			send_async(messages, [&p](int32_t result)
+			{
+				p.set_value(result);
+			});
+			f.wait();
+			return f.get();
+		}
+
         std::vector<highlevel_producer::metrics>  highlevel_producer::get_metrics() const
         {
             std::vector<metrics> metrics;

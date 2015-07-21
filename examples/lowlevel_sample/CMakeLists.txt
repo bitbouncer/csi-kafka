@@ -1,8 +1,8 @@
-project(consumer_offset_sample)
+project(lowlevel_sample)
 
 SET(SRCS
-consumer_offset_sample.cpp
+lowlevel_sample.cpp
 )
 
-add_executable(consumer_offset_sample ${SRCS})
-target_link_libraries(consumer_offset_sample ${EXT_LIBS})
+add_executable(lowlevel_sample ${SRCS})
+target_link_libraries(lowlevel_sample ${EXT_LIBS})

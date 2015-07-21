@@ -1,8 +1,8 @@
-project(csi_kafka_sample2)
+project(lowlevel_producer_sample)
 
 SET(SRCS
-csi_kafka_sample2.cpp
+lowlevel_producer_sample.cpp
 )
 
-add_executable(csi_kafka_sample2 ${SRCS})
-target_link_libraries(csi_kafka_sample2 ${EXT_LIBS})
+add_executable(lowlevel_producer_sample ${SRCS})
+target_link_libraries(lowlevel_producer_sample ${EXT_LIBS})

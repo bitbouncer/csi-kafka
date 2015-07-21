@@ -1,0 +1,8 @@
+project(avro_generic_schema_highlevel_consumer_sample)
+
+SET(SRCS
+avro_generic_schema_highlevel_consumer_sample.cpp
+)
+
+add_executable(avro_generic_schema_highlevel_consumer_sample ${SRCS})
+target_link_libraries(avro_generic_schema_highlevel_consumer_sample ${CSI_KAFKA_LIBS})

@@ -37,9 +37,8 @@ namespace csi
                         auto in = avro::memoryInputStream(*ostr);
                         avro::StreamReader stream_reader(*in);
                         msg->key.set_null(false);
-                        msg->key.reserve(sz);
-                        for (int j = 0; j != sz; ++j)
-                            msg->key.push_back(stream_reader.read());
+						msg->key.resize(sz);
+						stream_reader.readBytes(msg->key.data(), sz);
                     }
 
                     //encode value
@@ -51,10 +50,9 @@ namespace csi
                         auto in = avro::memoryInputStream(*ostr);
                         avro::StreamReader stream_reader(*in);
                         msg->value.set_null(false);
-                        msg->value.reserve(sz);
-                        for (int j = 0; j != sz; ++j)
-                            msg->value.push_back(stream_reader.read());
-                    }
+						msg->value.resize(sz);
+						stream_reader.readBytes(msg->value.data(), sz);
+					}
                     src2.push_back(msg);
                 }
                 csi::kafka::highlevel_producer::send_async(src2, cb);

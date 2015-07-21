@@ -22,9 +22,10 @@
 
 
 #include <sstream>
-#include "boost/any.hpp"
+#include <boost/any.hpp>
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/string_generator.hpp>
+#include <boost/make_shared.hpp>
 #include "avro/Specific.hh"
 #include "avro/Encoder.hh"
 #include "avro/Decoder.hh"
@@ -37,9 +38,9 @@ struct contact_info_key {
         md5(std::string())
         { }
 //  avro extension
-    static inline const boost::uuids::uuid schema_hash()      { static const boost::uuids::uuid _hash(boost::uuids::string_generator()("e38e149b-1ade-778e-60fb-04a0f4ec3d75")); return _hash; }
-    static inline const char*              schema_as_string() { return "{\"type\":\"record\",\"name\":\"contact_info_key\",\"fields\":[{\"name\":\"md5\",\"type\":\"string\"}]}"; } 
-    static const avro::ValidSchema         valid_schema()     { static const avro::ValidSchema _validSchema(avro::compileJsonSchemaFromString(schema_as_string())); return _validSchema; }
+    static inline const boost::uuids::uuid      schema_hash()      { static const boost::uuids::uuid _hash(boost::uuids::string_generator()("ffa97111-073e-6fee-49e6-b5b07dd8b901")); return _hash; }
+    static inline const char*                   schema_as_string() { return "{\"type\":\"record\",\"name\":\"contact_info_key\",\"fields\":[{\"name\":\"md5\",\"type\":\"string\"}]}"; } 
+    static boost::shared_ptr<avro::ValidSchema> valid_schema()     { static const boost::shared_ptr<avro::ValidSchema> _validSchema(boost::make_shared<avro::ValidSchema>(avro::compileJsonSchemaFromString(schema_as_string()))); return _validSchema; }
 };
 
 }

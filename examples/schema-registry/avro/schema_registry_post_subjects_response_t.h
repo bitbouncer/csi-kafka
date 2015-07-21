@@ -22,9 +22,10 @@
 
 
 #include <sstream>
-#include "boost/any.hpp"
+#include <boost/any.hpp>
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/string_generator.hpp>
+#include <boost/make_shared.hpp>
 #include "avro/Specific.hh"
 #include "avro/Encoder.hh"
 #include "avro/Decoder.hh"
@@ -36,9 +37,9 @@ struct schema_registry_post_subjects_response_t {
         uuid(std::string())
         { }
 //  avro extension
-    static inline const boost::uuids::uuid schema_hash()      { static const boost::uuids::uuid _hash(boost::uuids::string_generator()("ea2b64b3-655d-2a42-8058-7bde941f96a5")); return _hash; }
-    static inline const char*              schema_as_string() { return "{\"type\":\"record\",\"name\":\"schema_registry_post_subjects_response_t\",\"fields\":[{\"name\":\"uuid\",\"type\":\"string\"}]}"; } 
-    static const avro::ValidSchema         valid_schema()     { static const avro::ValidSchema _validSchema(avro::compileJsonSchemaFromString(schema_as_string())); return _validSchema; }
+    static inline const boost::uuids::uuid      schema_hash()      { static const boost::uuids::uuid _hash(boost::uuids::string_generator()("51d77ed8-eca5-4975-a7cf-3c6a937ea570")); return _hash; }
+    static inline const char*                   schema_as_string() { return "{\"type\":\"record\",\"name\":\"schema_registry_post_subjects_response_t\",\"fields\":[{\"name\":\"uuid\",\"type\":\"string\"}]}"; } 
+    static boost::shared_ptr<avro::ValidSchema> valid_schema()     { static const boost::shared_ptr<avro::ValidSchema> _validSchema(boost::make_shared<avro::ValidSchema>(avro::compileJsonSchemaFromString(schema_as_string()))); return _validSchema; }
 };
 
 namespace avro {

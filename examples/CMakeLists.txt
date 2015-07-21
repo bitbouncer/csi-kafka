@@ -1,11 +1,11 @@
-add_subdirectory(csi_kafka_sample2)
-add_subdirectory(csi_kafka_avro_kv_producer_sample)
-add_subdirectory(csi_kafka_avro_kv_consumer_sample)
+add_subdirectory(lowlevel_sample)
+
+add_subdirectory(lowlevel_producer_sample)
 add_subdirectory(highlevel_producer_sample)
 add_subdirectory(highlevel_consumer_sample)
-add_subdirectory(consumer_offset_sample)
 
 add_subdirectory(schema-registry)
 
-
-
+add_subdirectory(avro_fixed_schema_highlevel_producer_sample)
+add_subdirectory(avro_fixed_schema_highlevel_consumer_sample)
+add_subdirectory(avro_generic_schema_highlevel_consumer_sample)

@@ -22,9 +22,10 @@
 
 
 #include <sstream>
-#include "boost/any.hpp"
+#include <boost/any.hpp>
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/string_generator.hpp>
+#include <boost/make_shared.hpp>
 #include "avro/Specific.hh"
 #include "avro/Encoder.hh"
 #include "avro/Decoder.hh"
@@ -245,9 +246,9 @@ struct contact_info {
         country(country_t())
         { }
 //  avro extension
-    static inline const boost::uuids::uuid schema_hash()      { static const boost::uuids::uuid _hash(boost::uuids::string_generator()("f1934b69-f795-1baa-2460-1497003e3f8f")); return _hash; }
-    static inline const char*              schema_as_string() { return "{\"type\":\"record\",\"name\":\"contact_info\",\"fields\":[{\"name\":\"email\",\"type\":[\"string\",\"null\"]},{\"name\":\"nin\",\"type\":[\"string\",\"null\"]},{\"name\":\"given_name\",\"type\":[\"string\",\"null\"]},{\"name\":\"family_name\",\"type\":[\"string\",\"null\"]},{\"name\":\"date_of_birth\",\"type\":[\"string\",\"null\"]},{\"name\":\"care_of\",\"type\":[\"string\",\"null\"]},{\"name\":\"street_address\",\"type\":[\"string\",\"null\"]},{\"name\":\"postal_code\",\"type\":[\"string\",\"null\"]},{\"name\":\"city\",\"type\":[\"string\",\"null\"]},{\"name\":\"country\",\"type\":[\"string\",\"null\"]}]}"; } 
-    static const avro::ValidSchema         valid_schema()     { static const avro::ValidSchema _validSchema(avro::compileJsonSchemaFromString(schema_as_string())); return _validSchema; }
+    static inline const boost::uuids::uuid      schema_hash()      { static const boost::uuids::uuid _hash(boost::uuids::string_generator()("1bae42ab-4c5d-cdc7-b19c-b9b443817f49")); return _hash; }
+    static inline const char*                   schema_as_string() { return "{\"type\":\"record\",\"name\":\"contact_info\",\"fields\":[{\"name\":\"email\",\"type\":[\"string\",\"null\"]},{\"name\":\"nin\",\"type\":[\"string\",\"null\"]},{\"name\":\"given_name\",\"type\":[\"string\",\"null\"]},{\"name\":\"family_name\",\"type\":[\"string\",\"null\"]},{\"name\":\"date_of_birth\",\"type\":[\"string\",\"null\"]},{\"name\":\"care_of\",\"type\":[\"string\",\"null\"]},{\"name\":\"street_address\",\"type\":[\"string\",\"null\"]},{\"name\":\"postal_code\",\"type\":[\"string\",\"null\"]},{\"name\":\"city\",\"type\":[\"string\",\"null\"]},{\"name\":\"country\",\"type\":[\"string\",\"null\"]}]}"; } 
+    static boost::shared_ptr<avro::ValidSchema> valid_schema()     { static const boost::shared_ptr<avro::ValidSchema> _validSchema(boost::make_shared<avro::ValidSchema>(avro::compileJsonSchemaFromString(schema_as_string()))); return _validSchema; }
 };
 
 inline
