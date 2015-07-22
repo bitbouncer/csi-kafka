@@ -125,20 +125,6 @@ int main(int argc, char** argv)
 	std::cerr << "connected to kafka" << std::endl;
 	producer.connect_forever(brokers);
 
-    //print out statistics
-    /*boost::thread do_log([&total]
-    {
-        boost::accumulators::accumulator_set<double, boost::accumulators::stats<boost::accumulators::tag::rolling_mean> > acc(boost::accumulators::tag::rolling_window::window_size = 10);
-        while (true)
-        {
-            uint64_t last_total = total;
-            boost::this_thread::sleep(boost::posix_time::seconds(1));
-            acc((double)total - last_total);
-            std::cerr << boost::accumulators::rolling_mean(acc) << " (ms)/s " << total << std::endl;
-        }
-    });
-*/
-
 	boost::thread do_log([&producer]
 	{
 		while (true)

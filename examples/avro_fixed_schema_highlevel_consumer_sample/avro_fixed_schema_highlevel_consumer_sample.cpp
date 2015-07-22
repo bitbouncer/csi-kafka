@@ -96,27 +96,6 @@ int main(int argc, char** argv)
 		}
 	});
 
-
-   /* csi::kafka::avro_key_value_decoder<sample::contact_info_key, sample::contact_info> decoder([&datastore, &message_total](
-        const boost::system::error_code& ec1, 
-        csi::kafka::error_codes ec2, 
-        std::shared_ptr<sample::contact_info_key> key, 
-        std::shared_ptr<sample::contact_info> value,
-        int partition,
-        int64_t offset)
-    {
-        if (ec1 || ec2)
-        {
-            std::cerr << "ec1 = " << ec1 << " ec2 " << ec2 << std::endl;
-            return;
-        }
-        if (key)
-            datastore.put(*key, value);
-        message_total++;
-    });
-
-    consumer.stream_async(decoder);*/
-
 	int32_t key_id = key_res.second;
 	int32_t val_id = val_res.second;
 	
@@ -173,17 +152,6 @@ int main(int argc, char** argv)
 			} // has data
 		} // per connection
 	}
-
-	/*
-	consumer.stream_async([](const boost::system::error_code& ec1, csi::kafka::error_codes ec2, std::shared_ptr<csi::kafka::fetch_response::topic_data::partition_data> response)
-	{
-		if (ec1 || ec2)
-		{
-			BOOST_LOG_TRIVIAL(error) << "stream failed ec1::" << ec1 << " ec2" << csi::kafka::to_string(ec2);
-			return;
-		}
-	});
-	*/
 
 	while (true)
 	{
