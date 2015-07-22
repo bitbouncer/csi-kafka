@@ -17,7 +17,7 @@ namespace csi
             typedef typename std::map<key_type, std::shared_ptr<value_type>, key_compare>::iterator	       iterator;
             typedef typename std::map<key_type, std::shared_ptr<value_type>, key_compare>::const_iterator  const_iterator;
 
-            void put(const key_type& key, std::shared_ptr<value_type>& v)
+            void put(const key_type& key, std::shared_ptr<value_type> v)
             {
                 csi::kafka::spinlock::scoped_lock xx(_spinlock);
                 _data[key] = v;
