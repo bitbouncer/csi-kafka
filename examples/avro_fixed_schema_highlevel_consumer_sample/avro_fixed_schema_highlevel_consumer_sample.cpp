@@ -166,7 +166,7 @@ int main(int argc, char** argv)
 						}
 						else
 						{
-							datastore.put(*key, std::shared_ptr<sample::contact_info>(NULL));
+							datastore.put(*key, std::shared_ptr<sample::contact_info>());
 						}
 					}
 				} // message
