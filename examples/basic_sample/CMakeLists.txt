@@ -1,8 +1,8 @@
-project(lowlevel_sample)
+project(basic_sample)
 
 SET(SRCS
-lowlevel_sample.cpp
+basic_sample.cpp
 )
 
-add_executable(lowlevel_sample ${SRCS})
-target_link_libraries(lowlevel_sample ${EXT_LIBS})
+add_executable(basic_sample ${SRCS})
+target_link_libraries(basic_sample ${EXT_LIBS})

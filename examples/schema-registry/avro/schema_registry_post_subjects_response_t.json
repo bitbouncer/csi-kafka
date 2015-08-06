@@ -1,7 +1,0 @@
-{
-  "name": "schema_registry_post_subjects_response_t", "type": "record", "fields": 
-  [ 
-    { "name": "uuid",   "type": "string"}
-  ],
-  "doc:" : "A schema for schema_registry_insert response"
-}

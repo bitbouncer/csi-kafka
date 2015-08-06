@@ -11,7 +11,9 @@ endif()
 
 
 add_subdirectory(csi_kafka)
+
+if(__BUILD_EXAMPLES__)
 add_subdirectory(examples)
-add_subdirectory(tests)
+endif()
 
 
