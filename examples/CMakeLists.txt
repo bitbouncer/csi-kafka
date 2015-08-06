@@ -3,7 +3,3 @@ add_subdirectory(basic_sample)
 add_subdirectory(lowlevel_producer_sample)
 add_subdirectory(highlevel_producer_sample)
 add_subdirectory(highlevel_consumer_sample)
-
-add_subdirectory(avro_fixed_schema_highlevel_producer_sample)
-add_subdirectory(avro_fixed_schema_highlevel_consumer_sample)
-add_subdirectory(avro_generic_schema_highlevel_consumer_sample)
