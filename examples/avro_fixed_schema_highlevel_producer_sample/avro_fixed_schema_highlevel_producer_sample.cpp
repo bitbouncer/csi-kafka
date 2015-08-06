@@ -15,6 +15,8 @@
 #include "contact_info.h"
 #include "contact_info_key.h"
 
+#include <csi_avro_utils/avro_schema_id_encoding.h>
+
 void create_message(std::vector<std::pair<sample::contact_info_key, sample::contact_info>>& v, int32_t& cursor)
 {
     v.clear();
@@ -39,7 +41,6 @@ void create_message(std::vector<std::pair<sample::contact_info_key, sample::cont
         v.push_back(std::pair<sample::contact_info_key, sample::contact_info>(key, value));
     }
 }
-
 
 void encode_messages(const std::vector<std::pair<sample::contact_info_key, sample::contact_info>>& src, int32_t key_id, int32_t value_id, std::vector<std::shared_ptr<csi::kafka::basic_message>>& dst)
 {

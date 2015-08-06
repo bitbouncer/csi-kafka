@@ -15,12 +15,11 @@
 #include <boost/thread/recursive_mutex.hpp>
 #include <boost/bind.hpp>
 #include <boost/uuid/uuid.hpp>
+#include <avro/Compiler.hh>
 #include <csi_http/server/http_server.h>
 #include <csi_http/csi_http.h>
-
-#include <csi_avro/encoding.h>
-#include <csi_avro/utils.h>
-#include <avro/Compiler.hh>
+#include <csi_http/encoding/avro_json_encoding.h>
+#include <csi_avro_utils//utils.h>
 
 #include <csi_kafka/highlevel_consumer.h>
 #include <csi_kafka/highlevel_producer.h>
