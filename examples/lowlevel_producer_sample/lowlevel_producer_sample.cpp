@@ -9,7 +9,7 @@
 int main(int argc, char** argv)
 {
     boost::log::core::get()->set_filter(boost::log::trivial::severity >= boost::log::trivial::info);
-    csi::kafka::broker_address addr("192.168.0.102", 9092);
+    csi::kafka::broker_address addr("192.168.0.108", 9092);
     int32_t port = (argc >= 3) ? atoi(argv[2]) : 9092;
     if (argc >= 2)
         addr = csi::kafka::broker_address(argv[1], port);
