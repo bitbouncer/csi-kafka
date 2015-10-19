@@ -13,8 +13,8 @@ cd win_build64
 
 
 cmake -G "Visual Studio 12 Win64" ..
-msbuild ALL_BUILD.vcxproj /p:Configuration=Debug /p:Platform=x64
-msbuild ALL_BUILD.vcxproj /p:Configuration=Release /p:Platform=x64
+msbuild ALL_BUILD.vcxproj /p:Configuration=Debug /p:Platform=x64 /maxcpucount:12
+msbuild ALL_BUILD.vcxproj /p:Configuration=Release /p:Platform=x64 /maxcpucount:12
 cd ..
 
 
