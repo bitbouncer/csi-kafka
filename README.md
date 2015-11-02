@@ -27,28 +27,24 @@ see
 https://github.com/bitbouncer/csi-build-scripts
 
 
-If you only wan't kafka on ubuntu14 you can also do (probably broken since I've updated the dependencies to boost 1.59)
+If you only wan't kafka on ubuntu14 you can also do
 
 ## Ubuntu 14 x64:
 
 Install build tools
 ```
-sudo apt-get install -y automake autogen shtool libtool git wget cmake unzip build-essential g++ python-dev autotools-dev libicu-dev zlib1g-dev openssl libssl-dev libcurl4-openssl-dev libbz2-dev libcurl3 libboost-all-dev libpq-dev
+sudo apt-get install -y automake autogen shtool libtool git wget cmake unzip build-essential g++ python-dev autotools-dev libicu-dev zlib1g-dev openssl libssl-dev libcurl4-openssl-dev libbz2-dev libcurl3 libpq-dev
 
 ```
 Build
 ```
-#until boost 1.58? when this is supposed to be included
-git clone https://github.com/boostorg/endian.git
-#back some things out of trunk to compile under boost 1.54 
-sed -i "s:<boost/predef/detail/endian_compat.h>:<boost/detail/endian.hpp>:" endian/include/boost/endian/arithmetic.hpp
-sed -i "s:<boost/predef/detail/endian_compat.h>:<boost/detail/endian.hpp>:" endian/include/boost/endian/conversion.hpp
-sed -i "s:<boost/predef/detail/endian_compat.h>:<boost/detail/endian.hpp>:" endian/include/boost/endian/buffers.hpp
+wget http://sourceforge.net/projects/boost/files/boost/1.59.0/boost_1_59_0.tar.gz/download -Oboost_1_59_0.tar.gz
+tar xf boost_1_59_0.tar.gz
 
-sed -i "s:<boost/core/scoped_enum.hpp>:<boost/detail/scoped_enum_emulation.hpp>:" endian/include/boost/endian/arithmetic.hpp
-sed -i "s:<boost/core/scoped_enum.hpp>:<boost/detail/scoped_enum_emulation.hpp>:" endian/include/boost/endian/conversion.hpp
-sed -i "s:<boost/core/scoped_enum.hpp>:<boost/detail/scoped_enum_emulation.hpp>:" endian/include/boost/endian/buffers.hpp
-
+cd boost_1_59_0
+./bootstrap.sh
+./b2 -j 8
+cd ..
 
 git clone https://github.com/bitbouncer/csi-build-scripts.git
 git clone https://github.com/bitbouncer/csi-kafka.git
