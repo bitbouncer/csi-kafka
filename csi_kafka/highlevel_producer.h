@@ -41,6 +41,8 @@ namespace csi
 		
 			void close(); 
 
+            size_t items_in_queue() const;
+
             std::vector<metrics> get_metrics() const;
 
         private:

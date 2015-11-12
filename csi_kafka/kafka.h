@@ -98,19 +98,19 @@ namespace csi
 
                 inline uint8_t& operator[] (const size_t index)           { return _value[index]; }
                 inline const uint8_t& operator[] (const size_t index) const { return _value[index]; }
-
             private:
                 std::vector<uint8_t> _value;
                 bool                 _is_null;
             };
 
-            basic_message() : offset(0) {}
+            basic_message() : offset(0), partition(-1) {}
             basic_message(const std::string& akey, const std::string& aval) : offset(0), key(akey.data(), akey.size()), value(aval.data(), aval.size()) {}
             size_t size() const { return key.size() + value.size() + 26; } // estimated size for streaming TODO check if this is correct
 
             int64_t                 offset;
             payload_type            key;
             payload_type            value;
+            int32_t                 partition;
         };
 
         struct partition_cursor

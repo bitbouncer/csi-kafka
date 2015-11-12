@@ -154,7 +154,20 @@ namespace csi
             // return value??? TBD what to do if this fails and if # partitions changes???
             for (std::map<int, lowlevel_consumer*>::iterator i = _partition2consumers.begin(); i != _partition2consumers.end(); ++i)
             {
-                i->second->set_offset(start_time);
+                i->second->set_offset_time(start_time);
+            }
+        }
+
+        // we should probably have a good return value here.. a map of partiones to ec ?
+        void highlevel_consumer::set_offset(const std::map<int, int64_t>& offsets)
+        {
+            for (std::map<int, int64_t>::const_iterator i = offsets.begin(); i != offsets.end(); ++i)
+            {
+                std::map<int, lowlevel_consumer*>::iterator item = _partition2consumers.find(i->first);
+                if (item != _partition2consumers.end())
+                {
+                    item->second->set_next_offset(i->second);
+                }
             }
         }
 

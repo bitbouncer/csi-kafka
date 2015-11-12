@@ -91,7 +91,7 @@ namespace csi
             _client.close();
         }
 
-        void lowlevel_consumer::set_offset_async(int64_t start_time, set_offset_callback cb)
+        void lowlevel_consumer::set_offset_time_async(int64_t start_time, set_offset_callback cb)
         {
             _client.get_offset_async(_topic, _partition, start_time, 10, 0, [this, cb](rpc_result<offset_response> response)
             {
@@ -113,7 +113,7 @@ namespace csi
                             {
                                 if (j->offsets.size())
                                 {
-                                    _next_offset = j->offsets[0];
+                                    set_next_offset(j->offsets[0]); 
                                 }
                                 cb(rpc_result<void>(rpc_error_code(response.ec.ec1, (csi::kafka::error_codes) j->error_code)));
                                 return;
@@ -125,16 +125,21 @@ namespace csi
             });
         }
 
-        rpc_result<void> lowlevel_consumer::set_offset(int64_t start_time)
+        rpc_result<void> lowlevel_consumer::set_offset_time(int64_t start_time)
         {
             std::promise<rpc_result<void>> p;
             std::future<rpc_result<void>>  f = p.get_future();
-            set_offset_async(start_time, [&p](rpc_result<void> result)
+            set_offset_time_async(start_time, [&p](rpc_result<void> result)
             {
                 p.set_value(result);
             });
             f.wait();
             return f.get();
+        }
+
+        void  lowlevel_consumer::set_next_offset(int64_t offset)
+        {
+            _next_offset = offset;
         }
 
         void lowlevel_consumer::fetch(fetch_callback cb)

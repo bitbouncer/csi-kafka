@@ -43,7 +43,7 @@ namespace csi
             void                        connect_async(const std::vector<broker_address>& brokers, connect_callback cb);
             boost::system::error_code   connect(const std::vector<broker_address>& brokers);
             void                        set_offset(int64_t start_time);
-            void                        set_offsets(const std::vector<int64_t>&);
+            void                        set_offset(const std::map<int, int64_t>&);
             
             //bad name
             std::vector<int64_t>        get_offsets();

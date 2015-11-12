@@ -231,22 +231,29 @@ namespace csi
             }
         }
 
+        // if you give a partition id in message it will end up there - otherwise calc a crc32 on key and place it in hash % nr_of_partitions
         void highlevel_producer::send_async(std::shared_ptr<basic_message> message, tx_ack_callback cb)
         {
-            // calc a hash to get partition
-            //for now use crc32 hardcoded 
-
             uint32_t hash = 0;
-            if (!message->key.is_null())
+            if (message->partition < 0)
             {
-                boost::crc_32_type result;
-                uint32_t keysize = (uint32_t)message->key.size();
-                result.process_bytes(&message->key[0], message->key.size());
-                hash = result.checksum();
+                if (!message->key.is_null())
+                {
+                    // calc a hash to get partition
+                    boost::crc_32_type result;
+                    uint32_t keysize = (uint32_t)message->key.size();
+                    result.process_bytes(&message->key[0], message->key.size());
+                    hash = result.checksum();
+                }
+                else
+                {
+                    BOOST_LOG_TRIVIAL(error) << "HLP no key -> enque in parition 0 FIXME";
+                }
             }
             else
             {
-                BOOST_LOG_TRIVIAL(error) << "HLP no key -> enque in parition 0 FIXME";
+                // a bit ugly - we use the partiton id as hash which should map to the same thing we get the producers.
+                hash = message->partition;
             }
 
             // enqueu in partition queue or store if we don't have a connection the cluster.
@@ -308,6 +315,16 @@ namespace csi
 			f.wait();
 			return f.get();
 		}
+
+        size_t highlevel_producer::items_in_queue() const
+        {
+            size_t items =0;
+            items += _tx_queue.size();
+            csi::kafka::spinlock xx;
+            for (std::map<int, lowlevel_producer*>::const_iterator i = _partition2producers.begin(); i != _partition2producers.end(); ++i)
+                items += i->second->items_in_queue();
+            return items;
+        };
 
         std::vector<highlevel_producer::metrics>  highlevel_producer::get_metrics() const
         {

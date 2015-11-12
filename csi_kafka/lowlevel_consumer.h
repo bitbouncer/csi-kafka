@@ -30,8 +30,11 @@ namespace csi
             boost::system::error_code         connect(const boost::asio::ip::tcp::resolver::query& query, int32_t timeout);
             void                              close();
 
-            void                              set_offset_async(int64_t start_time, set_offset_callback cb);
-            rpc_result<void>                  set_offset(int64_t start_time);
+            void                              set_offset_time_async(int64_t start_time, set_offset_callback cb);
+            rpc_result<void>                  set_offset_time(int64_t start_time);
+
+            void                              set_next_offset(int64_t offset);
+
             void                              stream_async(datastream_callback cb);
             void                              fetch(fetch_callback cb);
             void                              get_metadata_async(get_metadata_callback cb);
