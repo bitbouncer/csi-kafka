@@ -18,8 +18,23 @@ namespace csi
             _rx_timeout(rx_timeout),
             _max_packet_size(max_packet_size)
         {
-			// this is an absurd small max size
-			assert(max_packet_size > 4); 
+            // this is an absurd small max size
+            assert(max_packet_size > 4);
+        }
+
+        highlevel_consumer::highlevel_consumer(boost::asio::io_service& io_service, const std::string& topic, const std::vector<int>& partion_mask, int32_t rx_timeout, size_t max_packet_size) :
+            _ios(io_service),
+            _timer(io_service),
+            _timeout(boost::posix_time::milliseconds(5000)),
+            _meta_client(io_service),
+            _consumer_meta_client(io_service),
+            _topic(topic),
+            _rx_timeout(rx_timeout),
+            _max_packet_size(max_packet_size),
+            _partitions_mask(partion_mask)
+        {
+            // this is an absurd small max size
+            assert(max_packet_size > 4);
         }
 
         highlevel_consumer::~highlevel_consumer()
@@ -198,7 +213,14 @@ namespace csi
                             }
                             for (std::vector<csi::kafka::metadata_response::topic_data::partition_data>::const_iterator j = i->partitions.begin(); j != i->partitions.end(); ++j)
                             {
-                                _partition2consumers.insert(std::make_pair(j->partition_id, new lowlevel_consumer(_ios, _topic, j->partition_id, _rx_timeout, _max_packet_size)));
+                                if (_partitions_mask.size() == 0)
+                                {
+                                    _partition2consumers.insert(std::make_pair(j->partition_id, new lowlevel_consumer(_ios, _topic, j->partition_id, _rx_timeout, _max_packet_size)));
+                                }
+                                else if (std::find(std::begin(_partitions_mask), std::end(_partitions_mask), j->partition_id) != std::end(_partitions_mask))
+                                {
+                                    _partition2consumers.insert(std::make_pair(j->partition_id, new lowlevel_consumer(_ios, _topic, j->partition_id, _rx_timeout, _max_packet_size)));
+                                }
                             }
                         };
                     }
@@ -222,20 +244,18 @@ namespace csi
 
         void  highlevel_consumer::stream_async(datastream_callback cb)
         {
-            size_t partitions = _partition2consumers.size();
-            for (int i = 0; i != partitions; ++i)
+            for (std::map<int, lowlevel_consumer*>::const_iterator i = _partition2consumers.begin(); i != _partition2consumers.end(); ++i)
             {
-                _partition2consumers[i]->stream_async(cb);
+                i->second->stream_async(cb);
             }
         }
 
         void highlevel_consumer::fetch(fetch_callback cb)
         {
             auto final_cb = std::make_shared<csi::async::destructor_callback<std::vector<fetch_response>>>(cb);
-            size_t partitions = _partition2consumers.size();
-            for (int i = 0; i != partitions; ++i)
+            for (std::map<int, lowlevel_consumer*>::const_iterator i = _partition2consumers.begin(); i != _partition2consumers.end(); ++i)
             {
-                _partition2consumers[i]->fetch([final_cb](const boost::system::error_code& ec1, csi::kafka::error_codes ec2, std::shared_ptr<csi::kafka::fetch_response::topic_data::partition_data> data)
+                i->second->fetch([final_cb](const boost::system::error_code& ec1, csi::kafka::error_codes ec2, std::shared_ptr<csi::kafka::fetch_response::topic_data::partition_data> data)
                 {
                     fetch_response r;
                     r.ec1 = ec1;

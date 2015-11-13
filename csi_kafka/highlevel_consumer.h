@@ -37,6 +37,7 @@ namespace csi
             enum { MAX_FETCH_SIZE = basic_call_context::MAX_BUFFER_SIZE };
 
             highlevel_consumer(boost::asio::io_service& io_service, const std::string& topic, int32_t rx_timeout, size_t max_packet_size = MAX_FETCH_SIZE);
+            highlevel_consumer(boost::asio::io_service& io_service, const std::string& topic, const std::vector<int>& partion_mask, int32_t rx_timeout, size_t max_packet_size = MAX_FETCH_SIZE);
             ~highlevel_consumer(); 
 
             void                        connect_forever(const std::vector<broker_address>& brokers); // , connect_callback cb);  // stream of connection events??
