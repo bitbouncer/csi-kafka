@@ -11,7 +11,7 @@ namespace csi
 {
     namespace kafka
     {
-       class lowlevel_producer
+        class lowlevel_producer
         {
         public:
             typedef boost::function <void(const boost::system::error_code&)>         connect_callback;
@@ -27,22 +27,22 @@ namespace csi
             boost::system::error_code         connect(const boost::asio::ip::tcp::resolver::query& query, int32_t timeout);
             void                              close();
             void                              send_async(std::shared_ptr<basic_message> message, tx_ack_callback = NULL);
-			int32_t                           send_sync(std::shared_ptr<basic_message> message);
+            int32_t                           send_sync(std::shared_ptr<basic_message> message);
 
             //void wait_lowwater_async(int max_messages, lowwater_callback);
             //void close_async();
 
-            inline bool is_connected() const              { return _client.is_connected(); }
-            inline bool is_connection_in_progress() const { return _client.is_connection_in_progress(); }
-            int32_t partition() const                     { return _partition_id; }
-            const std::string& topic() const              { return _topic; }
+            inline bool is_connected() const                { return _client.is_connected(); }
+            inline bool is_connection_in_progress() const   { return _client.is_connection_in_progress(); }
+            int32_t partition() const                       { return _partition_id; }
+            const std::string& topic() const                { return _topic; }
 
-            size_t items_in_queue() const { return _tx_queue.size(); } // no lock but should not matter
-            size_t bytes_in_queue() const { return _tx_queue_byte_size; } // no lock but should not matter
+            size_t items_in_queue() const                   { return _tx_queue.size(); } // no lock but should not matter
+            size_t bytes_in_queue() const                   { return _tx_queue_byte_size; } // no lock but should not matter
 
-            uint32_t metrics_kb_sec() const { return (uint32_t) boost::accumulators::rolling_mean(_metrics_tx_kb_sec); } // lock ???
-            uint32_t metrics_msg_sec() const { return (uint32_t) boost::accumulators::rolling_mean(_metrics_tx_msg_sec); } // lock ???
-            double   metrics_tx_roundtrip() const { return boost::accumulators::rolling_mean(_metrics_tx_roundtrip); } // lock ???
+            uint32_t metrics_kb_sec() const                 { return (uint32_t)boost::accumulators::rolling_mean(_metrics_tx_kb_sec); } // lock ???
+            uint32_t metrics_msg_sec() const                { return (uint32_t)boost::accumulators::rolling_mean(_metrics_tx_msg_sec); } // lock ???
+            double   metrics_tx_roundtrip() const           { return boost::accumulators::rolling_mean(_metrics_tx_roundtrip); } // lock ???
 
         protected:
             struct tx_item
@@ -67,11 +67,11 @@ namespace csi
             std::deque<tx_item>                        _tx_queue;
             size_t                                     _tx_queue_byte_size;
             bool                                       _tx_in_progress;
-			bool                                       _try_send_posted;
+            bool                                       _try_send_posted;
             int32_t                                    _required_acks;
             int32_t                                    _tx_timeout;
             int32_t                                    _max_packet_size;
-            
+
             //METRICS
             boost::asio::deadline_timer	               _metrics_timer;
             boost::posix_time::time_duration           _metrics_timeout;

@@ -87,9 +87,9 @@ namespace csi
                 inline void set(const uint8_t* begin, size_t len)         { _value.reserve(len); _value.assign(begin, begin + len); _is_null = false; }
                 inline void set_string(const char* ch)                    { set((const uint8_t*)ch, strlen(ch)); }
                 inline void reserve(size_t len)                           { _value.reserve(len); }
-				inline void resize(size_t len)                            { _value.resize(len); }
-				inline uint8_t* data()                                    { return _value.data(); }
-				inline const uint8_t* data() const                        { return _value.data(); }
+                inline void resize(size_t len)                            { _value.resize(len); }
+                inline uint8_t* data()                                    { return _value.data(); }
+                inline const uint8_t* data() const                        { return _value.data(); }
                 inline void push_back(uint8_t ch)                         { _value.push_back(ch); _is_null = false; }
                 inline void set_null(bool val)                            { _is_null = val; }
                 inline bool is_null() const                               { return _is_null; }

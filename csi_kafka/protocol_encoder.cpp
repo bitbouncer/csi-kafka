@@ -206,8 +206,8 @@ namespace csi
                 internal::encode_i32(ostr, (int32_t)min_bytes);
                 internal::encode_i32(ostr, 1); // nr of topics
                 internal::encode_str(ostr, topic);
-                internal::encode_i32(ostr, (int32_t) cursors.size()); // nr of partitions
-                
+                internal::encode_i32(ostr, (int32_t)cursors.size()); // nr of partitions
+
                 for (std::vector<partition_cursor>::const_iterator i = cursors.begin(); i != cursors.end(); ++i)
                 {
                     internal::encode_i32(ostr, i->_partition_id);
@@ -278,15 +278,15 @@ namespace csi
         */
         //Offset Commit Request
         size_t encode_simple_offset_commit_request(
-            const std::string& ConsumerGroupId, 
-            int32_t ConsumerGroupGenerationId, 
-            const std::string& ConsumerId, 
-            const std::string& topic, 
-            int32_t partition_id, 
+            const std::string& ConsumerGroupId,
+            int32_t ConsumerGroupGenerationId,
+            const std::string& ConsumerId,
+            const std::string& topic,
+            int32_t partition_id,
             int64_t offset,
             const std::string& metadata,
-            int32_t correlation_id, 
-            char* buffer, 
+            int32_t correlation_id,
+            char* buffer,
             size_t capacity)
         {
             boost::iostreams::stream<boost::iostreams::array_sink> ostr(buffer, capacity);
@@ -309,12 +309,12 @@ namespace csi
             }
             return ostr.tellp();
         }
-        
+
 
         /*
         OffsetFetchRequest => ConsumerGroup [TopicName [Partition]]
         */
-         //Offset Fetch Request
+        //Offset Fetch Request
         size_t encode_simple_offset_fetch_request(const std::string& consumer_group, const std::string& topic, int32_t partition_id, int32_t correlation_id, char* buffer, size_t capacity)
         {
             boost::iostreams::stream<boost::iostreams::array_sink> ostr(buffer, capacity);

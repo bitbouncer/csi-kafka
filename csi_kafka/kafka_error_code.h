@@ -41,7 +41,7 @@ namespace csi
         struct rpc_error_code
         {
             inline rpc_error_code(const boost::system::error_code& e1 = make_error_code(boost::system::errc::success), csi::kafka::error_codes e2 = NoError) : ec1(e1), ec2(e2) {}
-            
+
             inline operator bool() const  BOOST_SYSTEM_NOEXCEPT // true if error
             {
                 return (ec1 || ec2 != 0);
@@ -51,11 +51,11 @@ namespace csi
             {
                 return (!ec1 && ec2 == 0);
             }
-            
+
             boost::system::error_code ec1;
             csi::kafka::error_codes   ec2;
         };
-        
+
         std::string to_string(const rpc_error_code&);
     };
 };

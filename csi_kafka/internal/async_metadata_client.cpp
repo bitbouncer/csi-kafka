@@ -118,7 +118,7 @@ namespace csi
                 bool changed = false;
 
                 changed = _metadata->brokers.size() != _known_brokers.size();
-                
+
                 if (!changed)
                 {
                     // see if we find all existing brokers in new list
@@ -147,9 +147,9 @@ namespace csi
                     _known_brokers.clear();
                     for (std::vector<csi::kafka::broker_data>::const_iterator i = _metadata->brokers.begin(); i != _metadata->brokers.end(); ++i)
                     {
-                       if (broker_list_str.size() == 0) // first
+                        if (broker_list_str.size() == 0) // first
                             broker_list_str += i->host_name + ":" + std::to_string(i->port);
-                        else 
+                        else
                             broker_list_str += ", " + i->host_name + ":" + std::to_string(i->port);
                         _known_brokers.push_back(broker_address(i->host_name, i->port));
                     }
@@ -177,6 +177,6 @@ namespace csi
         {
             return _client.get_metadata(topics, correlation_id);
         }
-        };
+    };
 
 };

@@ -12,9 +12,13 @@ namespace csi
         class lowlevel_consumer
         {
         public:
-            typedef boost::function <void(const boost::system::error_code&)>  connect_callback;
-            typedef boost::function <void(rpc_result<void>)>                  set_offset_callback;
-            typedef boost::function <void(rpc_result<metadata_response>)>     get_metadata_callback;
+            typedef boost::function <void(const boost::system::error_code&)>       connect_callback;
+            typedef boost::function <void(rpc_result<void>)>                       set_offset_callback;
+            typedef boost::function <void(rpc_result<metadata_response>)>          get_metadata_callback;
+            typedef boost::function <void(rpc_result<consumer_metadata_response>)> get_consumer_metadata_callback;
+            typedef boost::function <void(rpc_result<offset_fetch_response>)>      get_consumer_offset_callback;
+            typedef boost::function <void(rpc_result<offset_commit_response>)>     commit_offset_callback;
+
             typedef boost::function <void(const boost::system::error_code& ec1, csi::kafka::error_codes ec2, std::shared_ptr<csi::kafka::fetch_response::topic_data::partition_data>)> datastream_callback;
             typedef boost::function <void(const boost::system::error_code& ec1, csi::kafka::error_codes ec2, std::shared_ptr<csi::kafka::fetch_response::topic_data::partition_data>)> fetch_callback;
 
@@ -23,31 +27,38 @@ namespace csi
             lowlevel_consumer(boost::asio::io_service& io_service, const std::string& topic, int32_t partition, int32_t rx_timeout, size_t max_packet_size = MAX_FETCH_SIZE);
             ~lowlevel_consumer();
 
-            void                              connect_async(const broker_address& address, int32_t timeout, connect_callback);
-            boost::system::error_code         connect(const broker_address& address, int32_t timeout);
+            void                                   connect_async(const broker_address& address, int32_t timeout, connect_callback);
+            boost::system::error_code              connect(const broker_address& address, int32_t timeout);
 
-            void                              connect_async(const boost::asio::ip::tcp::resolver::query& query, int32_t timeout, connect_callback cb);
-            boost::system::error_code         connect(const boost::asio::ip::tcp::resolver::query& query, int32_t timeout);
-            void                              close();
+            void                                   connect_async(const boost::asio::ip::tcp::resolver::query& query, int32_t timeout, connect_callback cb);
+            boost::system::error_code              connect(const boost::asio::ip::tcp::resolver::query& query, int32_t timeout);
+            void                                   close();
 
-            void                              set_offset_time_async(int64_t start_time, set_offset_callback cb);
-            rpc_result<void>                  set_offset_time(int64_t start_time);
+            void                                   get_metadata_async(get_metadata_callback cb);
+            rpc_result<metadata_response>          get_metadata();
 
-            void                              set_next_offset(int64_t offset);
+            void                                   get_consumer_metadata_async(const std::string& consumer_group, int32_t correlation_id, get_consumer_metadata_callback cb);
+            rpc_result<consumer_metadata_response> get_consumer_metadata(const std::string& consumer_group, int32_t correlation_id);
+            void                                   get_consumer_offset_async(const std::string& consumer_group, int32_t correlation_id, get_consumer_offset_callback);
+            rpc_result<offset_fetch_response>      get_consumer_offset(const std::string& consumer_group, int32_t correlation_id);
+            void                                   commit_consumer_offset_async(const std::string& consumer_group, int32_t consumer_group_generation_id, const std::string& consumer_id, int64_t offset, const std::string& metadata, int32_t correlation_id, commit_offset_callback);
+            rpc_result<offset_commit_response>     commit_consumer_offset(const std::string& consumer_group, int32_t consumer_group_generation_id, const std::string& consumer_id, int64_t offset, const std::string& metadata, int32_t correlation_id);
 
-            void                              stream_async(datastream_callback cb);
-            void                              fetch(fetch_callback cb);
-            void                              get_metadata_async(get_metadata_callback cb);
+            void                                   set_offset_time_async(int64_t start_time, set_offset_callback cb);
+            rpc_result<void>                       set_offset_time(int64_t start_time);
+            void                                   set_next_offset(int64_t offset);
 
-            inline bool                       is_connected() const              { return _client.is_connected(); }
-            inline bool                       is_connection_in_progress() const { return _client.is_connection_in_progress(); }
-            int32_t                           partition() const                 { return _partition; }
-            const std::string&                topic() const                     { return _topic; }
+            void                                   stream_async(datastream_callback cb);
+            void                                   fetch(fetch_callback cb);
 
-            uint32_t                          metrics_kb_sec() const            { return (uint32_t)boost::accumulators::rolling_mean(_metrics_rx_kb_sec); } // lock ???
-            uint32_t                          metrics_msg_sec() const           { return (uint32_t)boost::accumulators::rolling_mean(_metrics_rx_msg_sec); } // lock ???
-            double                            metrics_rx_roundtrip() const      { return boost::accumulators::rolling_mean(_metrics_rx_roundtrip); } // lock ???
+            inline bool                            is_connected() const              { return _client.is_connected(); }
+            inline bool                            is_connection_in_progress() const { return _client.is_connection_in_progress(); }
+            int32_t                                partition() const                 { return _partition; }
+            const std::string&                     topic() const                     { return _topic; }
 
+            uint32_t                               metrics_kb_sec() const            { return (uint32_t)boost::accumulators::rolling_mean(_metrics_rx_kb_sec); } // lock ???
+            uint32_t                               metrics_msg_sec() const           { return (uint32_t)boost::accumulators::rolling_mean(_metrics_rx_msg_sec); } // lock ???
+            double                                 metrics_rx_roundtrip() const      { return boost::accumulators::rolling_mean(_metrics_rx_roundtrip); } // lock ???
 
         protected:
             void _try_fetch();

@@ -34,12 +34,12 @@ namespace csi
             boost::system::error_code connect(const std::vector<broker_address>& brokers);
 
             void send_async(std::shared_ptr<csi::kafka::basic_message> message, tx_ack_callback = NULL);
-			void send_async(std::vector<std::shared_ptr<csi::kafka::basic_message>>& messages, tx_ack_callback = NULL);
+            void send_async(std::vector<std::shared_ptr<csi::kafka::basic_message>>& messages, tx_ack_callback = NULL);
 
-			int32_t send_sync(std::shared_ptr<csi::kafka::basic_message> message);
-			int32_t send_sync(std::vector<std::shared_ptr<csi::kafka::basic_message>>& messages);
-		
-			void close(); 
+            int32_t send_sync(std::shared_ptr<csi::kafka::basic_message> message);
+            int32_t send_sync(std::vector<std::shared_ptr<csi::kafka::basic_message>>& messages);
+        
+            void close(); 
 
             size_t items_in_queue() const;
 
@@ -48,10 +48,10 @@ namespace csi
         private:
             struct tx_item
             {
-				tx_item(uint32_t h, std::shared_ptr<csi::kafka::basic_message> message) : hash(h), msg(message) {}
-				tx_item(uint32_t h, std::shared_ptr<csi::kafka::basic_message> message, tx_ack_callback callback) : hash(h), msg(message), cb(callback) {}
+                tx_item(uint32_t h, std::shared_ptr<csi::kafka::basic_message> message) : hash(h), msg(message) {}
+                tx_item(uint32_t h, std::shared_ptr<csi::kafka::basic_message> message, tx_ack_callback callback) : hash(h), msg(message), cb(callback) {}
                 uint32_t                                   hash;
-				std::shared_ptr<csi::kafka::basic_message> msg;
+                std::shared_ptr<csi::kafka::basic_message> msg;
                 tx_ack_callback                            cb;
             };
 

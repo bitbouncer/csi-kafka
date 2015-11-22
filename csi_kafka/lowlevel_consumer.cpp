@@ -31,7 +31,7 @@ namespace csi
             _metrics_timer.expires_from_now(_metrics_timeout);
             _metrics_timer.async_wait([this](const boost::system::error_code& ec){ handle_metrics_timer(ec); });
         }
-        
+
         lowlevel_consumer::~lowlevel_consumer()
         {
             _client.close();
@@ -44,15 +44,15 @@ namespace csi
                 return;
 
             // todo meassure the actual time  - do not assume 1000
-            uint64_t kb_sec =  (_metrics_total_rx_kb - __metrics_last_total_rx_kb) / 1024;
-            uint64_t msg_sec =  (_metrics_total_rx_msg - __metrics_last_total_rx_msg);
+            uint64_t kb_sec = (_metrics_total_rx_kb - __metrics_last_total_rx_kb) / 1024;
+            uint64_t msg_sec = (_metrics_total_rx_msg - __metrics_last_total_rx_msg);
             _metrics_rx_kb_sec((double)kb_sec);
             _metrics_rx_msg_sec((double)msg_sec);
             __metrics_last_total_rx_kb = _metrics_total_rx_kb;
             __metrics_last_total_rx_msg = _metrics_total_rx_msg;
             _metrics_timer.expires_from_now(_metrics_timeout);
             _metrics_timer.async_wait([this](const boost::system::error_code& ec){ handle_metrics_timer(ec); });
-            
+
             if (_transient_failure)
             {
                 _transient_failure = false;
@@ -113,7 +113,7 @@ namespace csi
                             {
                                 if (j->offsets.size())
                                 {
-                                    set_next_offset(j->offsets[0]); 
+                                    set_next_offset(j->offsets[0]);
                                 }
                                 cb(rpc_result<void>(rpc_error_code(response.ec.ec1, (csi::kafka::error_codes) j->error_code)));
                                 return;
@@ -182,7 +182,7 @@ namespace csi
 
         void lowlevel_consumer::_try_fetch()
         {
-            if (_rx_in_progress || !_client.is_connected() || _next_offset<0 || !_cb || _transient_failure)
+            if (_rx_in_progress || !_client.is_connected() || _next_offset < 0 || !_cb || _transient_failure)
                 return;
 
             _rx_in_progress = true;
@@ -227,7 +227,7 @@ namespace csi
                         }
                     }
                 }
-                _rx_in_progress = false; 
+                _rx_in_progress = false;
                 _try_fetch();
             });
         }
@@ -241,6 +241,60 @@ namespace csi
         void lowlevel_consumer::get_metadata_async(get_metadata_callback cb)
         {
             _client.get_metadata_async({ _topic }, 0, cb);
+        }
+
+        rpc_result<metadata_response> lowlevel_consumer::get_metadata()
+        {
+            return _client.get_metadata({ _topic }, 0);
+        }
+
+        void lowlevel_consumer::get_consumer_metadata_async(const std::string& consumer_group, int32_t correlation_id, get_consumer_metadata_callback cb)
+        {
+            _client.get_consumer_metadata_async(consumer_group, correlation_id, cb);
+        }
+
+        rpc_result<consumer_metadata_response> lowlevel_consumer::get_consumer_metadata(const std::string& consumer_group, int32_t correlation_id)
+        {
+            return _client.get_consumer_metadata(consumer_group, correlation_id);
+        }
+
+
+        void lowlevel_consumer::get_consumer_offset_async(
+            const std::string& consumer_group,
+            int32_t correlation_id,
+            get_consumer_offset_callback cb)
+        {
+            _client.get_consumer_offset_async(consumer_group, _topic, _partition, correlation_id, cb);
+        }
+
+        rpc_result<offset_fetch_response> lowlevel_consumer::get_consumer_offset(
+            const std::string& consumer_group,
+            int32_t correlation_id)
+        {
+            return _client.get_consumer_offset(consumer_group, _topic, _partition, correlation_id);
+        }
+
+        void lowlevel_consumer::commit_consumer_offset_async(
+            const std::string& consumer_group,
+            int32_t consumer_group_generation_id,
+            const std::string& consumer_id,
+            int64_t offset,
+            const std::string& metadata,
+            int32_t correlation_id,
+            commit_offset_callback cb)
+        {
+            _client.commit_consumer_offset_async(consumer_group, consumer_group_generation_id, consumer_id, _topic, _partition, offset, metadata, correlation_id, cb);
+        }
+
+        rpc_result<offset_commit_response> lowlevel_consumer::commit_consumer_offset(
+            const std::string& consumer_group,
+            int32_t consumer_group_generation_id,
+            const std::string& consumer_id,
+            int64_t offset,
+            const std::string& metadata,
+            int32_t correlation_id)
+        {
+            return _client.commit_consumer_offset(consumer_group, consumer_group_generation_id, consumer_id, _topic, _partition, offset, metadata, correlation_id);
         }
     } // kafka
 }; // csi
