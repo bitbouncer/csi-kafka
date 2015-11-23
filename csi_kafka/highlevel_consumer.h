@@ -35,10 +35,9 @@ namespace csi
             typedef boost::function <void(const boost::system::error_code& ec1, csi::kafka::error_codes ec2, std::shared_ptr<csi::kafka::fetch_response::topic_data::partition_data>)> datastream_callback;
             typedef boost::function <void(std::vector<fetch_response>&)> fetch_callback;
 
-            typedef boost::function <void(rpc_result<consumer_metadata_response>)>          get_consumer_metadata_callback;
-            typedef boost::function <void(std::vector<rpc_result<offset_fetch_response>>)>  get_consumer_offset_callback;
-            typedef boost::function <void(std::vector<rpc_result<offset_commit_response>>)> commit_offset_callback;
-
+            typedef boost::function <void(rpc_result<cluster_metadata_response>)>           get_cluster_metadata_callback;
+            //typedef boost::function <void(std::vector<rpc_result<offset_fetch_response>>)>  get_consumer_offset_callback;
+            //typedef boost::function <void(std::vector<rpc_result<offset_commit_response>>)> commit_offset_callback;
 
             enum { MAX_FETCH_SIZE = basic_call_context::MAX_BUFFER_SIZE };
 
@@ -52,14 +51,14 @@ namespace csi
             void                                            set_offset(int64_t start_time);
             void                                            set_offset(const std::map<int, int64_t>&);
 
-            void                                            get_consumer_offset_async(const std::string& consumer_group, get_consumer_offset_callback cb);
-            std::vector<rpc_result<offset_fetch_response>>  get_consumer_offset(const std::string& consumer_group);
+            //void                                            get_consumer_offset_async(const std::string& consumer_group, get_consumer_offset_callback cb);
+            //std::vector<rpc_result<offset_fetch_response>>  get_consumer_offset(const std::string& consumer_group);
 
-            void                                            commit_consumer_offset_async(const std::string& consumer_group, int32_t consumer_group_generation_id, const std::string& consumer_id, int64_t offset, const std::string& metadata, commit_offset_callback);
-            std::vector<rpc_result<offset_commit_response>> commit_consumer_offset(const std::string& consumer_group, int32_t consumer_group_generation_id, const std::string& consumer_id, int64_t offset, const std::string& metadata);
+            //void                                            commit_consumer_offset_async(const std::string& consumer_group, int32_t consumer_group_generation_id, const std::string& consumer_id, int64_t offset, const std::string& metadata, commit_offset_callback);
+            //std::vector<rpc_result<offset_commit_response>> commit_consumer_offset(const std::string& consumer_group, int32_t consumer_group_generation_id, const std::string& consumer_id, int64_t offset, const std::string& metadata);
 
-            void                                            get_consumer_metadata_async(const std::string& consumer_group, get_consumer_metadata_callback cb);
-            rpc_result<consumer_metadata_response>		    get_consumer_metadata(const std::string& consumer_group);
+            void                                            get_cluster_metadata_async(const std::string& consumer_group, get_cluster_metadata_callback cb);
+            rpc_result<cluster_metadata_response>		    get_cluster_metadata(const std::string& consumer_group);
 
             //bad name
             std::vector<int64_t>						    get_offsets();

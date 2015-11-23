@@ -24,7 +24,7 @@ namespace csi
             typedef boost::function <void(rpc_result<produce_response>)>            send_produce_callback;
             typedef boost::function <void(rpc_result<offset_response>)>             get_offset_callback;
             typedef boost::function <void(rpc_result<fetch_response>)>              fetch_callback;
-            typedef boost::function <void(rpc_result<consumer_metadata_response>)>  get_consumer_metadata_callback;
+            typedef boost::function <void(rpc_result<cluster_metadata_response>)>   get_cluster_metadata_callback;
             typedef boost::function <void(rpc_result<offset_commit_response>)>      commit_offset_callback;
             typedef boost::function <void(rpc_result<offset_fetch_response>)>       get_consumer_offset_callback;
 
@@ -58,8 +58,8 @@ namespace csi
             void                                            fetch_async(const std::string& topic, const std::vector<partition_cursor>&, uint32_t max_wait_time, size_t min_bytes, size_t max_bytes, int32_t correlation_id, fetch_callback);
             rpc_result<fetch_response>                      fetch(const std::string& topic, const std::vector<partition_cursor>&, uint32_t max_wait_time, size_t min_bytes, size_t max_bytes, int32_t correlation_id);
 
-            void                                            get_consumer_metadata_async(const std::string& consumer_group, int32_t correlation_id, get_consumer_metadata_callback);
-            rpc_result<consumer_metadata_response>          get_consumer_metadata(const std::string& consumer_group, int32_t correlation_id);
+            void                                            get_cluster_metadata_async(const std::string& consumer_group, int32_t correlation_id, get_cluster_metadata_callback);
+            rpc_result<cluster_metadata_response>           get_cluster_metadata(const std::string& consumer_group, int32_t correlation_id);
 
             void                                            commit_consumer_offset_async(const std::string& consumer_group, int32_t consumer_group_generation_id, const std::string& consumer_id, const std::string& topic, int32_t partition_id, int64_t offset, const std::string& metadata, int32_t correlation_id, commit_offset_callback);
             rpc_result<offset_commit_response>              commit_consumer_offset(const std::string& consumer_group, int32_t consumer_group_generation_id, const std::string& consumer_id, const std::string& topic, int32_t partition, int64_t offset, const std::string& metadata, int32_t correlation_id);

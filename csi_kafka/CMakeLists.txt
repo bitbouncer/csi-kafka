@@ -6,6 +6,8 @@ SET(LIB_SRCS
     internal/utility.h
 	internal/spinlock.cpp
 	internal/spinlock.h
+    consumer_coordinator.h
+    consumer_coordinator.cpp
     lowlevel_client.h
 	lowlevel_client.cpp
 	protocol_encoder.h
@@ -14,8 +16,6 @@ SET(LIB_SRCS
 	protocol_decoder.cpp
 	lowlevel_consumer.cpp
 	lowlevel_consumer.h
-    lowlevel_consumer_group_client.h
-    lowlevel_consumer_group_client.cpp
     highlevel_consumer.h
     highlevel_consumer.cpp
     lowlevel_producer.h

@@ -48,7 +48,13 @@ namespace csi
             Internal7 = 7,
             OffsetCommitRequest = 8,
             OffsetFetchRequest = 9,
-            ConsumerMetadataRequest = 10
+            GroupCoordinatorRequest = 10,
+            JoinGroupRequest = 11,
+            HeartbeatRequest = 12,
+            LeaveGroupRequest = 13,
+            SyncGroupRequest = 14,
+            DescribeGroupsRequest = 15,
+            ListGroupsRequest = 16
         };
 
         //top level types used by api
@@ -187,6 +193,8 @@ namespace csi
             std::vector<topic_data> topics;
         };
 
+        //TBD change to TopicMetadataResponse
+
         //MetadataResponse = >[Broker][TopicMetadata]
         //Broker = > NodeId Host Port
         //NodeId = > int32
@@ -267,15 +275,17 @@ namespace csi
             std::vector<topic_data>     topics;
         };
 
-        //ConsumerMetadataResponse = > ErrorCode | CoordinatorId CoordinatorHost CoordinatorPort |
-        struct consumer_metadata_response
+        //ClusterMetadataResponse = > ErrorCode | CoordinatorId  [Broker]
+        //Broker = > NodeId Host Port
+
+
+        struct cluster_metadata_response
         {
-            consumer_metadata_response() : correlation_id(-1), error_code(-1), coordinator_id(-1), port(-1) {}
+            cluster_metadata_response() : correlation_id(-1), error_code(-1), coordinator_id(-1) {}
             int32_t     correlation_id;
             int16_t     error_code;
             int32_t     coordinator_id;
-            std::string host_name;
-            int32_t     port;
+            std::vector<broker_data> brokers;
         };
 
 

@@ -248,17 +248,17 @@ namespace csi
             return _client.get_metadata({ _topic }, 0);
         }
 
-        void lowlevel_consumer::get_consumer_metadata_async(const std::string& consumer_group, int32_t correlation_id, get_consumer_metadata_callback cb)
+        void lowlevel_consumer::get_cluster_metadata_async(const std::string& consumer_group, int32_t correlation_id, get_cluster_metadata_callback cb)
         {
-            _client.get_consumer_metadata_async(consumer_group, correlation_id, cb);
+            _client.get_cluster_metadata_async(consumer_group, correlation_id, cb);
         }
 
-        rpc_result<consumer_metadata_response> lowlevel_consumer::get_consumer_metadata(const std::string& consumer_group, int32_t correlation_id)
+        rpc_result<cluster_metadata_response> lowlevel_consumer::get_cluster_metadata(const std::string& consumer_group, int32_t correlation_id)
         {
-            return _client.get_consumer_metadata(consumer_group, correlation_id);
+            return _client.get_cluster_metadata(consumer_group, correlation_id);
         }
 
-
+        /*
         void lowlevel_consumer::get_consumer_offset_async(
             const std::string& consumer_group,
             int32_t correlation_id,
@@ -296,5 +296,6 @@ namespace csi
         {
             return _client.commit_consumer_offset(consumer_group, consumer_group_generation_id, consumer_id, _topic, _partition, offset, metadata, correlation_id);
         }
+        */
     } // kafka
 }; // csi

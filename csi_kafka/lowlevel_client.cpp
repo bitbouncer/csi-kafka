@@ -45,7 +45,7 @@ namespace csi
             return handle;
         }
 
-        basic_call_context::handle create_consumer_metadata_request(const std::string& consumer_group, int32_t correlation_id)
+        basic_call_context::handle create_cluster_metadata_request(const std::string& consumer_group, int32_t correlation_id) //TBD  change name
         {
             basic_call_context::handle handle(new basic_call_context());
             handle->_tx_size = encode_consumer_metadata_request(consumer_group, correlation_id, (char*)&handle->_tx_buffer[0], basic_call_context::MAX_BUFFER_SIZE);
@@ -88,7 +88,7 @@ namespace csi
         static rpc_result<metadata_response>          parse_metadata_response(basic_call_context::handle handle)          { return csi::kafka::parse_metadata_response((const char*)&handle->_rx_buffer[0], handle->_rx_size); }
         static rpc_result<offset_commit_response>     parse_offset_commit_response(basic_call_context::handle handle)     { return csi::kafka::parse_offset_commit_response((const char*)&handle->_rx_buffer[0], handle->_rx_size); }
         static rpc_result<offset_fetch_response>      parse_offset_fetch_response(basic_call_context::handle handle)      { return csi::kafka::parse_offset_fetch_response((const char*)&handle->_rx_buffer[0], handle->_rx_size); }
-        static rpc_result<consumer_metadata_response> parse_consumer_metadata_response(basic_call_context::handle handle) { return csi::kafka::parse_consumer_metadata_response((const char*)&handle->_rx_buffer[0], handle->_rx_size); }
+        static rpc_result<cluster_metadata_response>  parse_cluster_metadata_response(basic_call_context::handle handle)  { return csi::kafka::parse_cluster_metadata_response((const char*)&handle->_rx_buffer[0], handle->_rx_size); }
 
 
         lowlevel_client::lowlevel_client(boost::asio::io_service& io_service) :
@@ -304,25 +304,23 @@ namespace csi
             return f.get();
         }
 
-
-
-        void lowlevel_client::get_consumer_metadata_async(const std::string& consumer_group, int32_t correlation_id, get_consumer_metadata_callback cb)
+        void lowlevel_client::get_cluster_metadata_async(const std::string& consumer_group, int32_t correlation_id, get_cluster_metadata_callback cb)
         {
             assert(cb); // no point of not having callback
-            perform_async(create_consumer_metadata_request(consumer_group, correlation_id), [cb](const boost::system::error_code& ec, basic_call_context::handle handle)
+            perform_async(create_cluster_metadata_request(consumer_group, correlation_id), [cb](const boost::system::error_code& ec, basic_call_context::handle handle)
             {
                 if (ec)
-                    cb(rpc_result<consumer_metadata_response>(ec));
+                    cb(rpc_result<cluster_metadata_response>(ec));
                 else
-                    cb(parse_consumer_metadata_response(handle));
+                    cb(parse_cluster_metadata_response(handle));
             });
         }
 
-        rpc_result<consumer_metadata_response> lowlevel_client::get_consumer_metadata(const std::string& consumer_group, int32_t correlation_id)
+        rpc_result<cluster_metadata_response> lowlevel_client::get_cluster_metadata(const std::string& consumer_group, int32_t correlation_id)
         {
-            std::promise<rpc_result<consumer_metadata_response> > p;
-            std::future<rpc_result<consumer_metadata_response>>  f = p.get_future();
-            get_consumer_metadata_async(consumer_group, correlation_id, [&p](rpc_result<consumer_metadata_response> response)
+            std::promise<rpc_result<cluster_metadata_response> > p;
+            std::future<rpc_result<cluster_metadata_response>>  f = p.get_future();
+            get_cluster_metadata_async(consumer_group, correlation_id, [&p](rpc_result<cluster_metadata_response> response)
             {
                 p.set_value(response);
             });

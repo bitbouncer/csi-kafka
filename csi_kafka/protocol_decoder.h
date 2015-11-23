@@ -13,6 +13,6 @@ namespace csi
         rpc_result<metadata_response>          parse_metadata_response(const char* buffer, size_t len);
         rpc_result<offset_commit_response>     parse_offset_commit_response(const char* buffer, size_t len);
         rpc_result<offset_fetch_response>      parse_offset_fetch_response(const char* buffer, size_t len);
-        rpc_result<consumer_metadata_response> parse_consumer_metadata_response(const char* buffer, size_t len);
+        rpc_result<cluster_metadata_response>  parse_cluster_metadata_response(const char* buffer, size_t len);
     }
 }

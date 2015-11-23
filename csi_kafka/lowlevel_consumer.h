@@ -15,9 +15,9 @@ namespace csi
             typedef boost::function <void(const boost::system::error_code&)>       connect_callback;
             typedef boost::function <void(rpc_result<void>)>                       set_offset_callback;
             typedef boost::function <void(rpc_result<metadata_response>)>          get_metadata_callback;
-            typedef boost::function <void(rpc_result<consumer_metadata_response>)> get_consumer_metadata_callback;
-            typedef boost::function <void(rpc_result<offset_fetch_response>)>      get_consumer_offset_callback;
-            typedef boost::function <void(rpc_result<offset_commit_response>)>     commit_offset_callback;
+            typedef boost::function <void(rpc_result<cluster_metadata_response>)>  get_cluster_metadata_callback;
+            //typedef boost::function <void(rpc_result<offset_fetch_response>)>      get_consumer_offset_callback;
+            //typedef boost::function <void(rpc_result<offset_commit_response>)>     commit_offset_callback;
 
             typedef boost::function <void(const boost::system::error_code& ec1, csi::kafka::error_codes ec2, std::shared_ptr<csi::kafka::fetch_response::topic_data::partition_data>)> datastream_callback;
             typedef boost::function <void(const boost::system::error_code& ec1, csi::kafka::error_codes ec2, std::shared_ptr<csi::kafka::fetch_response::topic_data::partition_data>)> fetch_callback;
@@ -37,12 +37,12 @@ namespace csi
             void                                   get_metadata_async(get_metadata_callback cb);
             rpc_result<metadata_response>          get_metadata();
 
-            void                                   get_consumer_metadata_async(const std::string& consumer_group, int32_t correlation_id, get_consumer_metadata_callback cb);
-            rpc_result<consumer_metadata_response> get_consumer_metadata(const std::string& consumer_group, int32_t correlation_id);
-            void                                   get_consumer_offset_async(const std::string& consumer_group, int32_t correlation_id, get_consumer_offset_callback);
-            rpc_result<offset_fetch_response>      get_consumer_offset(const std::string& consumer_group, int32_t correlation_id);
-            void                                   commit_consumer_offset_async(const std::string& consumer_group, int32_t consumer_group_generation_id, const std::string& consumer_id, int64_t offset, const std::string& metadata, int32_t correlation_id, commit_offset_callback);
-            rpc_result<offset_commit_response>     commit_consumer_offset(const std::string& consumer_group, int32_t consumer_group_generation_id, const std::string& consumer_id, int64_t offset, const std::string& metadata, int32_t correlation_id);
+            void                                   get_cluster_metadata_async(const std::string& consumer_group, int32_t correlation_id, get_cluster_metadata_callback cb);
+            rpc_result<cluster_metadata_response>  get_cluster_metadata(const std::string& consumer_group, int32_t correlation_id);
+            //void                                   get_consumer_offset_async(const std::string& consumer_group, int32_t correlation_id, get_consumer_offset_callback);
+            //rpc_result<offset_fetch_response>      get_consumer_offset(const std::string& consumer_group, int32_t correlation_id);
+            //void                                   commit_consumer_offset_async(const std::string& consumer_group, int32_t consumer_group_generation_id, const std::string& consumer_id, int64_t offset, const std::string& metadata, int32_t correlation_id, commit_offset_callback);
+            //rpc_result<offset_commit_response>     commit_consumer_offset(const std::string& consumer_group, int32_t consumer_group_generation_id, const std::string& consumer_id, int64_t offset, const std::string& metadata, int32_t correlation_id);
 
             void                                   set_offset_time_async(int64_t start_time, set_offset_callback cb);
             rpc_result<void>                       set_offset_time(int64_t start_time);

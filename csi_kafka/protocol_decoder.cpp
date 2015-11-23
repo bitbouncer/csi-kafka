@@ -424,25 +424,35 @@ namespace csi
             return response;
         }
 
-        //ConsumerMetadataResponse = > ErrorCode | CoordinatorId CoordinatorHost CoordinatorPort |
+        // bad spec!!
+        //ClusterMetadataResponse = > ErrorCode | CoordinatorId CoordinatorHost CoordinatorPort |
         //ErrorCode = > int16
         //CoordinatorId = > int32
         //CoordinatorHost = > string
         //CoordinatorPort = > int32
-        rpc_result<consumer_metadata_response> parse_consumer_metadata_response(const char* buffer, size_t len)
+        rpc_result<cluster_metadata_response> parse_cluster_metadata_response(const char* buffer, size_t len)
         {
             boost::iostreams::stream<boost::iostreams::array_source> str(buffer, len);
-            rpc_result<consumer_metadata_response> response(new consumer_metadata_response());
+            rpc_result<cluster_metadata_response> response(new cluster_metadata_response());
             internal::decode_i32(str, response->correlation_id);
             internal::decode_i16(str, response->error_code);
 
             if (response->error_code == 0)
             {
                 internal::decode_i32(str, response->coordinator_id);
-                internal::decode_string(str, response->host_name);
-                internal::decode_i32(str, response->port);
-            }
 
+                int32_t nr_of_brokers;
+                internal::decode_i32(str, nr_of_brokers);
+                response->brokers.reserve(nr_of_brokers);
+                for (int i = 0; i != nr_of_brokers; ++i)
+                {
+                    broker_data item;
+                    internal::decode_i32(str, item.node_id);
+                    internal::decode_string(str, item.host_name);
+                    internal::decode_i32(str, item.port);
+                    response->brokers.push_back(item);
+                }
+            }
             return response;
         }
     }

@@ -9,17 +9,17 @@ namespace csi
 {
     namespace kafka
     {
-        class lowlevel_consumer_group_client
+        class consumer_coordinator
         {
         public:
             typedef boost::function <void(const boost::system::error_code&)>       connect_callback;
             typedef boost::function <void(rpc_result<metadata_response>)>          get_metadata_callback;
-            typedef boost::function <void(rpc_result<consumer_metadata_response>)> get_consumer_metadata_callback;
+            typedef boost::function <void(rpc_result<cluster_metadata_response>)>  get_cluster_metadata_callback;
             typedef boost::function <void(rpc_result<offset_fetch_response>)>      get_consumer_offset_callback;
             typedef boost::function <void(rpc_result<offset_commit_response>)>     commit_offset_callback;
 
-            lowlevel_consumer_group_client(boost::asio::io_service& io_service, const std::string& topic, const std::string& consumer_group, int32_t partition, int32_t rx_timeout);
-            ~lowlevel_consumer_group_client();
+            consumer_coordinator(boost::asio::io_service& io_service, const std::string& topic, const std::string& consumer_group, int32_t partition, int32_t rx_timeout);
+            ~consumer_coordinator();
 
             void                                   connect_async(const broker_address& address, int32_t timeout, connect_callback);
             boost::system::error_code              connect(const broker_address& address, int32_t timeout);
@@ -31,8 +31,8 @@ namespace csi
             void                                   get_metadata_async(get_metadata_callback cb);
             rpc_result<metadata_response>          get_metadata();
 
-            void                                   get_consumer_metadata_async(int32_t correlation_id, get_consumer_metadata_callback cb);
-            rpc_result<consumer_metadata_response> get_consumer_metadata(int32_t correlation_id);
+            void                                   get_cluster_metadata_async(int32_t correlation_id, get_cluster_metadata_callback cb);
+            rpc_result<cluster_metadata_response>  get_cluster_metadata(int32_t correlation_id);
             void                                   get_consumer_offset_async(int32_t correlation_id, get_consumer_offset_callback);
             rpc_result<offset_fetch_response>      get_consumer_offset(int32_t correlation_id);
             void                                   commit_consumer_offset_async(int32_t consumer_group_generation_id, const std::string& consumer_id, int64_t offset, const std::string& metadata, int32_t correlation_id, commit_offset_callback);
