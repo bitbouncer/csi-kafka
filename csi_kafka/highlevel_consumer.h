@@ -35,7 +35,8 @@ namespace csi
             typedef boost::function <void(const boost::system::error_code& ec1, csi::kafka::error_codes ec2, std::shared_ptr<csi::kafka::fetch_response::topic_data::partition_data>)> datastream_callback;
             typedef boost::function <void(std::vector<fetch_response>&)> fetch_callback;
 
-            typedef boost::function <void(rpc_result<cluster_metadata_response>)>           get_cluster_metadata_callback;
+            typedef boost::function <void(std::vector<rpc_result<csi::kafka::fetch_response>>)>      mfetch_callback;
+            typedef boost::function <void(rpc_result<cluster_metadata_response>)>       get_cluster_metadata_callback;
             //typedef boost::function <void(std::vector<rpc_result<offset_fetch_response>>)>  get_consumer_offset_callback;
             //typedef boost::function <void(std::vector<rpc_result<offset_commit_response>>)> commit_offset_callback;
 
@@ -68,6 +69,9 @@ namespace csi
 
             void                                            fetch(fetch_callback cb);
             std::vector<fetch_response>                     fetch();
+
+            void                                            fetch2(mfetch_callback cb);
+            std::vector<rpc_result<csi::kafka::fetch_response>>  fetch2();
 
             std::vector<metrics>                            get_metrics() const;
 

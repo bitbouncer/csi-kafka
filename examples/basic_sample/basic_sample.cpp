@@ -4,11 +4,12 @@
 #include <boost/log/expressions.hpp>
 #include <csi_kafka/kafka.h>
 #include <csi_kafka/highlevel_consumer.h>
+#include <csi_kafka/consumer_coordinator.h>
 
 
-#define CONSUMER_GROUP "consumer_offset_sample"
-#define TOPIC_NAME     "test-text"
-#define CONSUMER_ID    "consumer_offset_sample_consumer_id"
+#define CONSUMER_GROUP "csi-kafka.basic_sample"
+#define TOPIC_NAME     "csi-kafka.test-topic"
+#define CONSUMER_ID    "csi-kafka.basic_sample_consumer_id"
 //#define DEFAULT_BROKER_ADDRESS "10.1.3.239"
 //#define DEFAULT_BROKER_ADDRESS "52.17.87.118"
 #define DEFAULT_BROKER_ADDRESS "52.0.43.130"
@@ -18,6 +19,42 @@
     2) create a path in zookeeper
     see README.txt
 */
+
+
+void handle_fetch(csi::kafka::highlevel_consumer* consumer, std::vector<csi::kafka::rpc_result<csi::kafka::fetch_response>> response)
+{
+    for (std::vector<csi::kafka::rpc_result<csi::kafka::fetch_response>>::const_iterator i = response.begin(); i != response.end(); ++i)
+    {
+        if (i->ec)
+        {
+            std::cerr << "error: " << to_string(i->ec) << std::endl;
+            consumer->close();
+            return;
+        }
+
+        for (std::vector<csi::kafka::fetch_response::topic_data>::const_iterator j = (*i)->topics.begin(); j != (*i)->topics.end(); ++j)
+        {
+            for (std::vector<std::shared_ptr<csi::kafka::fetch_response::topic_data::partition_data>>::const_iterator k = j->partitions.begin(); k != j->partitions.end(); ++k)
+            {
+                if ((*k)->error_code)
+                {
+                    std::cerr << "error: " << to_string((csi::kafka::error_codes) (*k)->error_code) << std::endl;
+                    consumer->close();
+                    continue;
+                }
+                int64_t last_index = -1;
+                for (std::vector<std::shared_ptr<csi::kafka::basic_message>>::const_iterator l = (*k)->messages.begin(); l != (*k)->messages.end(); ++l)
+                {
+
+                }
+                if ((*k)->messages.size())
+                    std::cerr << "partition: " << (*k)->partition_id << ", lag: " << (*k)->highwater_mark_offset - (*((*k)->messages.end() - 1))->offset << " msg" << std::endl;
+            }
+        }
+    }
+    consumer->fetch2(boost::bind(handle_fetch, consumer, _1));
+}
+
 
 int main(int argc, char** argv)
 {
@@ -38,18 +75,16 @@ int main(int argc, char** argv)
     std::auto_ptr<boost::asio::io_service::work> work(new boost::asio::io_service::work(io_service));
     boost::thread bt(boost::bind(&boost::asio::io_service::run, &io_service));
 
+    csi::kafka::consumer_coordinator coordinator(io_service, TOPIC_NAME, CONSUMER_GROUP, 0, 1000);
 
-    //LOWLEVEL CLIENT (INTERNALS...)
-    csi::kafka::lowlevel_client client(io_service);
-
-    auto res0 = client.connect(broker, 3000);
+    auto res0 = coordinator.connect(broker, 3000);
     if (res0)
     {
         std::cerr << res0.message() << std::endl;
         return -1;
     }
 
-    auto res1 = client.get_consumer_metadata(CONSUMER_GROUP, 44);
+    auto res1 = coordinator.get_cluster_metadata(44);
     if (res1)
     {
         std::cerr << to_string(res1.ec) << std::endl;
@@ -61,6 +96,7 @@ int main(int argc, char** argv)
         return -1;
     }
 
+    /*
     auto res2 = client.connect(csi::kafka::broker_address(res1.data->host_name, res1.data->port), 3000);
     if (res2)
     {
@@ -82,8 +118,8 @@ int main(int argc, char** argv)
         return -1;
     }
     client.close();
+    */
 
-    //LOWLEVEL CONSUMER
 
     //HIGHLEVEL CONSUMER
     csi::kafka::highlevel_consumer consumer(io_service, TOPIC_NAME, 1000, 10000);
@@ -123,6 +159,9 @@ int main(int argc, char** argv)
         }
         std::cerr << "+";
     });
+
+    consumer.fetch2(boost::bind(handle_fetch, &consumer, _1));
+
 
     while (true)
         boost::this_thread::sleep(boost::posix_time::seconds(30));

@@ -113,7 +113,7 @@ namespace csi
                             {
                                 if (j->offsets.size())
                                 {
-                                    set_next_offset(j->offsets[0]);
+                                    set_offset(j->offsets[0]);
                                 }
                                 cb(rpc_result<void>(rpc_error_code(response.ec.ec1, (csi::kafka::error_codes) j->error_code)));
                                 return;
@@ -137,7 +137,7 @@ namespace csi
             return f.get();
         }
 
-        void  lowlevel_consumer::set_next_offset(int64_t offset)
+        void  lowlevel_consumer::set_offset(int64_t offset)
         {
             _next_offset = offset;
         }
@@ -238,6 +238,59 @@ namespace csi
             _ios.post([this](){_try_fetch(); });
         }
 
+
+        void lowlevel_consumer::fetch2(fetch2_callback cb)
+        {
+            const std::vector<partition_cursor> cursors = { { _partition, _next_offset } };
+
+            _client.fetch_async(_topic, cursors, _rx_timeout, 10, _max_packet_size, 0, [this, cb](rpc_result<csi::kafka::fetch_response> response)
+            {
+                if (response)
+                {
+                    boost::system::error_code ignored;
+                    BOOST_LOG_TRIVIAL(warning) << "lowlevel_consumer::fetch " << _client.remote_endpoint(ignored).address().to_string() << " " << _topic << ":" << _partition << " failed: " << to_string(response.ec);
+                    close();
+                    cb(response);
+                }
+                for (std::vector<csi::kafka::fetch_response::topic_data>::const_iterator i = response->topics.begin(); i != response->topics.end(); ++i)
+                {
+                    // this should always be true.
+                    if (i->topic_name == _topic)
+                    {
+                        // update cursor(s)
+                        for (std::vector<std::shared_ptr<csi::kafka::fetch_response::topic_data::partition_data>>::const_iterator j = i->partitions.begin(); j != i->partitions.end(); ++j)
+                        {
+                            if ((*j)->partition_id == _partition)  // a partition that have been closed will not exist here so it will not be added again in the next read loop  TBD handle error here....
+                            {
+                                if ((*j)->messages.size())
+                                    _next_offset = (*j)->messages[(*j)->messages.size() - 1]->offset + 1;
+                            }
+                        }
+
+                        //collect metrics
+                        for (std::vector<std::shared_ptr<csi::kafka::fetch_response::topic_data::partition_data>>::const_iterator j = i->partitions.begin(); j != i->partitions.end(); ++j)
+                        {
+                            if ((*j)->partition_id == _partition)  // a partition that have been closed will not exist here so it will not be added again in the next read loop  TBD handle error here....
+                            {
+                                // there might be a better way of doing this on lower level since we know the socket rx size.... TBD
+                                for (std::vector<std::shared_ptr<basic_message>>::const_iterator k = (*j)->messages.begin(); k != (*j)->messages.end(); ++k)
+                                    _metrics_total_rx_kb += ((*k)->key.size() + (*k)->value.size());
+                                _metrics_total_rx_msg += (*j)->messages.size();
+                            }
+                        }
+                    }
+                }
+                cb(response);
+            });
+        }
+
+        /*
+        rpc_result<csi::kafka::fetch_response::topic_data> lowlevel_consumer::fetch2()
+        {
+        return _client.fetch2();
+        }
+        */
+
         void lowlevel_consumer::get_metadata_async(get_metadata_callback cb)
         {
             _client.get_metadata_async({ _topic }, 0, cb);
@@ -260,41 +313,41 @@ namespace csi
 
         /*
         void lowlevel_consumer::get_consumer_offset_async(
-            const std::string& consumer_group,
-            int32_t correlation_id,
-            get_consumer_offset_callback cb)
+        const std::string& consumer_group,
+        int32_t correlation_id,
+        get_consumer_offset_callback cb)
         {
-            _client.get_consumer_offset_async(consumer_group, _topic, _partition, correlation_id, cb);
+        _client.get_consumer_offset_async(consumer_group, _topic, _partition, correlation_id, cb);
         }
 
         rpc_result<offset_fetch_response> lowlevel_consumer::get_consumer_offset(
-            const std::string& consumer_group,
-            int32_t correlation_id)
+        const std::string& consumer_group,
+        int32_t correlation_id)
         {
-            return _client.get_consumer_offset(consumer_group, _topic, _partition, correlation_id);
+        return _client.get_consumer_offset(consumer_group, _topic, _partition, correlation_id);
         }
 
         void lowlevel_consumer::commit_consumer_offset_async(
-            const std::string& consumer_group,
-            int32_t consumer_group_generation_id,
-            const std::string& consumer_id,
-            int64_t offset,
-            const std::string& metadata,
-            int32_t correlation_id,
-            commit_offset_callback cb)
+        const std::string& consumer_group,
+        int32_t consumer_group_generation_id,
+        const std::string& consumer_id,
+        int64_t offset,
+        const std::string& metadata,
+        int32_t correlation_id,
+        commit_offset_callback cb)
         {
-            _client.commit_consumer_offset_async(consumer_group, consumer_group_generation_id, consumer_id, _topic, _partition, offset, metadata, correlation_id, cb);
+        _client.commit_consumer_offset_async(consumer_group, consumer_group_generation_id, consumer_id, _topic, _partition, offset, metadata, correlation_id, cb);
         }
 
         rpc_result<offset_commit_response> lowlevel_consumer::commit_consumer_offset(
-            const std::string& consumer_group,
-            int32_t consumer_group_generation_id,
-            const std::string& consumer_id,
-            int64_t offset,
-            const std::string& metadata,
-            int32_t correlation_id)
+        const std::string& consumer_group,
+        int32_t consumer_group_generation_id,
+        const std::string& consumer_id,
+        int64_t offset,
+        const std::string& metadata,
+        int32_t correlation_id)
         {
-            return _client.commit_consumer_offset(consumer_group, consumer_group_generation_id, consumer_id, _topic, _partition, offset, metadata, correlation_id);
+        return _client.commit_consumer_offset(consumer_group, consumer_group_generation_id, consumer_id, _topic, _partition, offset, metadata, correlation_id);
         }
         */
     } // kafka

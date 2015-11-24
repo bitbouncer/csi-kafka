@@ -22,6 +22,8 @@ namespace csi
             typedef boost::function <void(const boost::system::error_code& ec1, csi::kafka::error_codes ec2, std::shared_ptr<csi::kafka::fetch_response::topic_data::partition_data>)> datastream_callback;
             typedef boost::function <void(const boost::system::error_code& ec1, csi::kafka::error_codes ec2, std::shared_ptr<csi::kafka::fetch_response::topic_data::partition_data>)> fetch_callback;
 
+            typedef boost::function <void(rpc_result<csi::kafka::fetch_response>)>   fetch2_callback;
+
             enum { MAX_FETCH_SIZE = basic_call_context::MAX_BUFFER_SIZE };
 
             lowlevel_consumer(boost::asio::io_service& io_service, const std::string& topic, int32_t partition, int32_t rx_timeout, size_t max_packet_size = MAX_FETCH_SIZE);
@@ -46,10 +48,14 @@ namespace csi
 
             void                                   set_offset_time_async(int64_t start_time, set_offset_callback cb);
             rpc_result<void>                       set_offset_time(int64_t start_time);
-            void                                   set_next_offset(int64_t offset);
+            void                                   set_offset(int64_t offset);
 
             void                                   stream_async(datastream_callback cb);
             void                                   fetch(fetch_callback cb);
+
+            void                                   fetch2(fetch2_callback cb);
+            rpc_result<csi::kafka::fetch_response> fetch2();
+
 
             inline bool                            is_connected() const              { return _client.is_connected(); }
             inline bool                            is_connection_in_progress() const { return _client.is_connection_in_progress(); }

@@ -48,7 +48,7 @@ namespace csi
         basic_call_context::handle create_cluster_metadata_request(const std::string& consumer_group, int32_t correlation_id) //TBD  change name
         {
             basic_call_context::handle handle(new basic_call_context());
-            handle->_tx_size = encode_consumer_metadata_request(consumer_group, correlation_id, (char*)&handle->_tx_buffer[0], basic_call_context::MAX_BUFFER_SIZE);
+            handle->_tx_size = encode_cluster_metadata_request(consumer_group, correlation_id, (char*)&handle->_tx_buffer[0], basic_call_context::MAX_BUFFER_SIZE);
             return handle;
         }
 
@@ -402,8 +402,6 @@ namespace csi
             f.wait();
             return f.get();
         }
-
-
 
         void lowlevel_client::get_consumer_offset_async(const std::string& consumer_group, int32_t correlation_id, get_consumer_offset_callback cb)
         {

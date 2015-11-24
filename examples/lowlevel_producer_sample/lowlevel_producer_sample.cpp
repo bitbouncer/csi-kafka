@@ -23,7 +23,7 @@ int main(int argc, char** argv)
    
     consumer.connect(addr, 1000);
 
-    auto ec2 = consumer.set_offset(csi::kafka::earliest_available_offset);
+    consumer.set_offset(csi::kafka::earliest_available_offset);
 
     consumer.stream_async([](const boost::system::error_code& ec1, csi::kafka::error_codes ec2, std::shared_ptr<csi::kafka::fetch_response::topic_data::partition_data> data)
     {

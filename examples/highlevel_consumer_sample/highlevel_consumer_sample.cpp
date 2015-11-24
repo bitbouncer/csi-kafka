@@ -2,37 +2,89 @@
 #include <boost/log/core.hpp>
 #include <boost/log/trivial.hpp>
 #include <boost/log/expressions.hpp>
+#include <boost/program_options.hpp>
 #include <csi_kafka/kafka.h>
 #include <csi_kafka/highlevel_consumer.h>
 
 int main(int argc, char** argv)
 {
-    boost::log::core::get()->set_filter(boost::log::trivial::severity >= boost::log::trivial::info);
-    int32_t port = (argc >= 3) ? atoi(argv[2]) : 9092;
-
+    int32_t kafka_port = 9092;
+    std::string topic;
     std::vector<csi::kafka::broker_address> brokers;
-    if (argc >= 2)
+
+    boost::program_options::options_description desc("options");
+    desc.add_options()
+        ("help", "produce help message")
+        ("topic", boost::program_options::value<std::string>(), "topic")
+        ("broker", boost::program_options::value<std::string>(), "broker")
+        ;
+
+    boost::program_options::variables_map vm;
+    boost::program_options::store(boost::program_options::parse_command_line(argc, argv, desc), vm);
+    boost::program_options::notify(vm);
+
+    boost::log::core::get()->set_filter(boost::log::trivial::severity >= boost::log::trivial::info);
+
+    if (vm.count("help"))
     {
-        brokers.push_back(csi::kafka::broker_address(argv[1], port));
+        std::cout << desc << std::endl;
+        return 0;
+    }
+
+    if (vm.count("topic"))
+    {
+        topic = vm["topic"].as<std::string>();
     }
     else
     {
-        brokers.push_back(csi::kafka::broker_address("192.168.0.108", port));
-        brokers.push_back(csi::kafka::broker_address("192.168.0.109", port));
-        brokers.push_back(csi::kafka::broker_address("192.168.0.110", port));
+        std::cout << "--topic must be specified" << std::endl;
+        return 0;
     }
+
+    if (vm.count("broker"))
+    {
+        std::string s = vm["broker"].as<std::string>();
+        size_t last_colon = s.find_last_of(':');
+        if (last_colon != std::string::npos)
+            kafka_port = atoi(s.substr(last_colon + 1).c_str());
+        s = s.substr(0, last_colon);
+
+        // now find the brokers...
+        size_t last_separator = s.find_last_of(',');
+        while (last_separator != std::string::npos)
+        {
+            std::string host = s.substr(last_separator + 1);
+            brokers.push_back(csi::kafka::broker_address(host, kafka_port));
+            s = s.substr(0, last_separator);
+            last_separator = s.find_last_of(',');
+        }
+        brokers.push_back(csi::kafka::broker_address(s, kafka_port));
+    }
+    else
+    {
+        std::cout << "--broker must be specified" << std::endl;
+        return 0;
+    }
+
+    std::cout << "broker(s)      : ";
+    for (std::vector<csi::kafka::broker_address>::const_iterator i = brokers.begin(); i != brokers.end(); ++i)
+    {
+        std::cout << i->host_name << ":" << i->port;
+        if (i != brokers.end() - 1)
+            std::cout << ", ";
+    }
+    std::cout << std::endl;
+    std::cout << "topic          : " << topic << std::endl;
+
 
     boost::asio::io_service io_service;
     std::auto_ptr<boost::asio::io_service::work> work(new boost::asio::io_service::work(io_service));
     boost::thread bt(boost::bind(&boost::asio::io_service::run, &io_service));
 
-    csi::kafka::highlevel_consumer consumer(io_service, "collectd.graphite", 500, 1000000);
+    csi::kafka::highlevel_consumer consumer(io_service, topic, 500, 1000000);
       
     consumer.connect(brokers);
-    //std::vector<int64_t> result = consumer.get_offsets();
-
     consumer.connect_forever(brokers);
-
     consumer.set_offset(csi::kafka::earliest_available_offset);
 
     boost::thread do_log([&consumer]

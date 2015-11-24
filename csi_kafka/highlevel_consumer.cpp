@@ -181,7 +181,7 @@ namespace csi
                 std::map<int, lowlevel_consumer*>::iterator item = _partition2consumers.find(i->first);
                 if (item != _partition2consumers.end())
                 {
-                    item->second->set_next_offset(i->second);
+                    item->second->set_offset(i->second);
                 }
             }
         }
@@ -278,6 +278,30 @@ namespace csi
             return f.get();
         }
 
+        void highlevel_consumer::fetch2(mfetch_callback cb)
+        {
+            auto final_cb = std::make_shared<csi::async::destructor_callback<std::vector<rpc_result<csi::kafka::fetch_response>>>>(cb);
+            for (std::map<int, lowlevel_consumer*>::const_iterator i = _partition2consumers.begin(); i != _partition2consumers.end(); ++i)
+            {
+                i->second->fetch2([final_cb](rpc_result<csi::kafka::fetch_response> response)
+                {
+                    final_cb->value().push_back(response);
+                });
+            }
+        }
+
+        std::vector<rpc_result<csi::kafka::fetch_response>> highlevel_consumer::fetch2()
+        {
+            std::promise<std::vector<rpc_result<csi::kafka::fetch_response>>> p;
+            std::future<std::vector<rpc_result<csi::kafka::fetch_response>>>  f = p.get_future();
+            fetch2([&p](std::vector<rpc_result<csi::kafka::fetch_response>> res)
+            {
+                p.set_value(res);
+            });
+            f.wait();
+            return f.get();
+        }
+
         // it's enought to get all data from one breker so we only use the last lowlevelconsumer - this could be done better...
         void highlevel_consumer::get_cluster_metadata_async(const std::string& consumer_group, get_cluster_metadata_callback cb)
         {
@@ -307,63 +331,63 @@ namespace csi
         /*
         void highlevel_consumer::get_consumer_offset_async(const std::string& consumer_group, get_consumer_offset_callback cb)
         {
-            auto final_cb = std::make_shared<csi::async::destructor_callback<std::vector<rpc_result<offset_fetch_response>>>>(cb);
-            for (std::map<int, lowlevel_consumer*>::const_iterator i = _partition2consumers.begin(); i != _partition2consumers.end(); ++i)
-            {
-                i->second->get_consumer_offset_async(consumer_group, 42, [final_cb](rpc_result<offset_fetch_response> response)
-                {
-                    final_cb->value().push_back(response);
-                });
-            }
+        auto final_cb = std::make_shared<csi::async::destructor_callback<std::vector<rpc_result<offset_fetch_response>>>>(cb);
+        for (std::map<int, lowlevel_consumer*>::const_iterator i = _partition2consumers.begin(); i != _partition2consumers.end(); ++i)
+        {
+        i->second->get_consumer_offset_async(consumer_group, 42, [final_cb](rpc_result<offset_fetch_response> response)
+        {
+        final_cb->value().push_back(response);
+        });
+        }
         }
 
         std::vector<rpc_result<offset_fetch_response>> highlevel_consumer::get_consumer_offset(const std::string& consumer_group)
         {
-            std::promise<std::vector<rpc_result<offset_fetch_response>>> p;
-            std::future<std::vector<rpc_result<offset_fetch_response>>>  f = p.get_future();
-            get_consumer_offset_async(consumer_group, [&p](std::vector<rpc_result<offset_fetch_response>> res)
-            {
-                p.set_value(res);
-            });
-            f.wait();
-            return f.get();
+        std::promise<std::vector<rpc_result<offset_fetch_response>>> p;
+        std::future<std::vector<rpc_result<offset_fetch_response>>>  f = p.get_future();
+        get_consumer_offset_async(consumer_group, [&p](std::vector<rpc_result<offset_fetch_response>> res)
+        {
+        p.set_value(res);
+        });
+        f.wait();
+        return f.get();
         }
         */
 
         /*
         void highlevel_consumer::commit_consumer_offset_async(
-            const std::string& consumer_group,
-            int32_t consumer_group_generation_id,
-            const std::string& consumer_id,
-            int64_t offset,
-            const std::string& metadata,
-            commit_offset_callback cb)
+        const std::string& consumer_group,
+        int32_t consumer_group_generation_id,
+        const std::string& consumer_id,
+        int64_t offset,
+        const std::string& metadata,
+        commit_offset_callback cb)
         {
-            auto final_cb = std::make_shared<csi::async::destructor_callback<std::vector<rpc_result<offset_commit_response>>>>(cb);
-            for (std::map<int, lowlevel_consumer*>::const_iterator i = _partition2consumers.begin(); i != _partition2consumers.end(); ++i)
-            {
-                i->second->commit_consumer_offset_async(consumer_group, consumer_group_generation_id, consumer_id, offset, metadata, 99, [final_cb](rpc_result<offset_commit_response> response)
-                {
-                    final_cb->value().push_back(response);
-                });
-            }
+        auto final_cb = std::make_shared<csi::async::destructor_callback<std::vector<rpc_result<offset_commit_response>>>>(cb);
+        for (std::map<int, lowlevel_consumer*>::const_iterator i = _partition2consumers.begin(); i != _partition2consumers.end(); ++i)
+        {
+        i->second->commit_consumer_offset_async(consumer_group, consumer_group_generation_id, consumer_id, offset, metadata, 99, [final_cb](rpc_result<offset_commit_response> response)
+        {
+        final_cb->value().push_back(response);
+        });
         }
-        
+        }
+
         std::vector<rpc_result<offset_commit_response>> highlevel_consumer::commit_consumer_offset(
-            const std::string& consumer_group,
-            int32_t consumer_group_generation_id,
-            const std::string& consumer_id,
-            int64_t offset,
-            const std::string& metadata)
+        const std::string& consumer_group,
+        int32_t consumer_group_generation_id,
+        const std::string& consumer_id,
+        int64_t offset,
+        const std::string& metadata)
         {
-            std::promise<std::vector<rpc_result<offset_commit_response>>> p;
-            std::future<std::vector<rpc_result<offset_commit_response>>>  f = p.get_future();
-            commit_consumer_offset_async(consumer_group, consumer_group_generation_id, consumer_id, offset, metadata, [&p](std::vector<rpc_result<offset_commit_response>> res)
-            {
-                p.set_value(res);
-            });
-            f.wait();
-            return f.get();
+        std::promise<std::vector<rpc_result<offset_commit_response>>> p;
+        std::future<std::vector<rpc_result<offset_commit_response>>>  f = p.get_future();
+        commit_consumer_offset_async(consumer_group, consumer_group_generation_id, consumer_id, offset, metadata, [&p](std::vector<rpc_result<offset_commit_response>> res)
+        {
+        p.set_value(res);
+        });
+        f.wait();
+        return f.get();
         }
         */
 
