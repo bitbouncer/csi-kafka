@@ -45,6 +45,8 @@ namespace csi
 
             std::vector<metrics> get_metrics() const;
 
+            inline const std::string& topic() const { return _topic; }
+
         private:
             struct tx_item
             {
@@ -61,7 +63,7 @@ namespace csi
             void handle_response(rpc_result<metadata_response> result);
             void _try_connect_brokers();
             boost::asio::io_service&                                                 _ios;
-            std::string                                                              _topic;
+            const std::string                                                        _topic;
             int32_t                                                                  _required_acks;
             int32_t                                                                  _tx_timeout;
             int32_t                                                                  _max_packet_size;

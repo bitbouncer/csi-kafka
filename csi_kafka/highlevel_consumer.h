@@ -74,6 +74,7 @@ namespace csi
             std::vector<rpc_result<csi::kafka::fetch_response>>  fetch2();
 
             std::vector<metrics>                            get_metrics() const;
+            inline const std::string&                       topic() const { return _topic; }
 
         private:
             void handle_response(rpc_result<metadata_response> result);
@@ -83,7 +84,7 @@ namespace csi
             boost::asio::io_service&                                                    _ios;
             boost::asio::deadline_timer			                                        _timer;
             boost::posix_time::time_duration	                                        _timeout;
-            std::string                                                                 _topic;
+            const std::string                                                           _topic;
             int32_t                                                                     _rx_timeout;
             size_t                                                                      _max_packet_size;
             std::map<int, lowlevel_consumer*>                                           _partition2consumers;
