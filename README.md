@@ -27,7 +27,7 @@ see
 https://github.com/bitbouncer/csi-build-scripts
 
 
-If you only wan't kafka on ubuntu14 you can also do
+If you only need kafka on ubuntu14 you can also do
 
 ## Ubuntu 14 x64:
 
