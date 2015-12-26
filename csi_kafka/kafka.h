@@ -86,31 +86,56 @@ namespace csi
             class payload_type
             {
             public:
-                payload_type() : _is_null(true) {}
-                payload_type(const uint8_t* begin, const uint8_t* end) : _value(begin, end), _is_null(false) {}
-                payload_type(const char* buf, size_t len) : _value(buf, buf + len), _is_null(false) {}
-                inline void set(const uint8_t* begin, const uint8_t* end) { _value.reserve(end - begin); _value.assign(begin, end); _is_null = false; }
-                inline void set(const uint8_t* begin, size_t len)         { _value.reserve(len); _value.assign(begin, begin + len); _is_null = false; }
-                inline void set_string(const char* ch)                    { set((const uint8_t*)ch, strlen(ch)); }
-                inline void reserve(size_t len)                           { _value.reserve(len); }
-                inline void resize(size_t len)                            { _value.resize(len); }
-                inline uint8_t* data()                                    { return _value.data(); }
-                inline const uint8_t* data() const                        { return _value.data(); }
-                inline void push_back(uint8_t ch)                         { _value.push_back(ch); _is_null = false; }
-                inline void set_null(bool val)                            { _is_null = val; }
-                inline bool is_null() const                               { return _is_null; }
-                inline const std::vector<uint8_t>& value() const          { return _value; }
-                inline size_t size() const                                { return _value.size(); }
+                payload_type() : 
+                    _is_null(true) 
+                {}
 
-                inline uint8_t& operator[] (const size_t index)           { return _value[index]; }
+                payload_type(const uint8_t* begin, const uint8_t* end) : 
+                    _value(begin, end), 
+                    _is_null(end - begin ? false : true) 
+                {}
+
+                payload_type(const char* buf, size_t len) : 
+                    _value(buf, buf + len), 
+                    _is_null( len ? false : true) 
+                {}
+
+                inline void set(const uint8_t* begin, const uint8_t* end)   { _value.reserve(end - begin); _value.assign(begin, end); _is_null = end - begin ? false : true; }
+                inline void set(const uint8_t* begin, size_t len)           { _value.reserve(len); _value.assign(begin, begin + len); _is_null = len ? false : true; }
+                inline void set_string(const char* ch)                      { set((const uint8_t*)ch, strlen(ch)); }
+                inline void reserve(size_t len)                             { _value.reserve(len); }
+                inline void resize(size_t len)                              { _value.resize(len); }
+                inline uint8_t* data()                                      { return _value.data(); }
+                inline const uint8_t* data() const                          { return _value.data(); }
+                inline void push_back(uint8_t ch)                           { _value.push_back(ch); _is_null = false; }
+                inline void set_null(bool val)                              { _is_null = val; }
+                inline bool is_null() const                                 { return _is_null; }
+                inline const std::vector<uint8_t>& value() const            { return _value; }
+                inline size_t size() const                                  { return _value.size(); }
+                inline uint8_t& operator[] (const size_t index)             { return _value[index]; }
                 inline const uint8_t& operator[] (const size_t index) const { return _value[index]; }
             private:
                 std::vector<uint8_t> _value;
                 bool                 _is_null;
             };
 
-            basic_message() : offset(0), partition(-1) {}
-            basic_message(const std::string& akey, const std::string& aval) : offset(0), key(akey.data(), akey.size()), value(aval.data(), aval.size()) {}
+            basic_message() : 
+                offset(0), 
+                partition(-1) 
+            {}
+
+            basic_message(const std::string& akey, const std::string& aval) : 
+                offset(0), 
+                key(akey.data(), akey.size()), 
+                value(aval.data(), aval.size()) 
+            {}
+
+            basic_message(const payload_type& akey, const payload_type& aval) : 
+                offset(0), 
+                key(akey.data(), akey.data() + akey.size()), 
+                value(aval.data(), aval.data() + aval.size()) 
+            {}
+
             size_t size() const { return key.size() + value.size() + 26; } // estimated size for streaming TODO check if this is correct
 
             int64_t                 offset;
