@@ -156,6 +156,15 @@ namespace csi
                     auto now = boost::posix_time::microsec_clock::local_time();
                     boost::posix_time::time_duration diff = now - tick;
                     _metrics_tx_roundtrip((double)diff.total_milliseconds());
+                                     
+                    if (result)
+                    {
+                        BOOST_LOG_TRIVIAL(error) << "lowlevel_producer::_try_send send_produce_async failed " << csi::kafka::to_string(result.ec);
+                        _tx_in_progress = false;
+                        _client.close();
+                        //_try_send();
+                        return;
+                    }
 
                     //TODO PARSE THE RESULT DEEP - WE MIGHT HAVE GOTTEN AN ERROR INSIDE
                     //IF SO WE SHOULD PROBASBLY CLOSE THE CONNECTION
@@ -164,16 +173,6 @@ namespace csi
                         for (std::vector<produce_response::topic_data::partition_data>::const_iterator j = i->partitions.begin(); j != i->partitions.end(); ++j)
                         {
                         }
-                    }
-
-
-                    if (result)
-                    {
-                        BOOST_LOG_TRIVIAL(error) << " _client.send_produce_async failed " << csi::kafka::to_string(result.ec);
-                        _tx_in_progress = false;
-                        _client.close();
-                        //_try_send();
-                        return;
                     }
 
                     std::vector<tx_ack_callback> callbacks; // we cant run the callbacks when the spinlock is locked so copy those and run them after
