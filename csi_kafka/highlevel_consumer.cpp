@@ -250,7 +250,7 @@ namespace csi
             }
         }
 
-        void highlevel_consumer::fetch(fetch_callback cb)
+       /* void highlevel_consumer::fetch(fetch_callback cb)
         {
             auto final_cb = std::make_shared<csi::async::destructor_callback<std::vector<fetch_response>>>(cb);
             for (std::map<int, lowlevel_consumer*>::const_iterator i = _partition2consumers.begin(); i != _partition2consumers.end(); ++i)
@@ -276,9 +276,9 @@ namespace csi
             });
             f.wait();
             return f.get();
-        }
+        }*/
 
-        void highlevel_consumer::fetch2(mfetch_callback cb)
+        void highlevel_consumer::fetch(fetch_callback cb)
         {
             auto final_cb = std::make_shared<csi::async::destructor_callback<std::vector<rpc_result<csi::kafka::fetch_response>>>>(cb);
             for (std::map<int, lowlevel_consumer*>::const_iterator i = _partition2consumers.begin(); i != _partition2consumers.end(); ++i)
@@ -290,11 +290,11 @@ namespace csi
             }
         }
 
-        std::vector<rpc_result<csi::kafka::fetch_response>> highlevel_consumer::fetch2()
+        std::vector<rpc_result<csi::kafka::fetch_response>> highlevel_consumer::fetch()
         {
             std::promise<std::vector<rpc_result<csi::kafka::fetch_response>>> p;
             std::future<std::vector<rpc_result<csi::kafka::fetch_response>>>  f = p.get_future();
-            fetch2([&p](std::vector<rpc_result<csi::kafka::fetch_response>> res)
+            fetch([&p](std::vector<rpc_result<csi::kafka::fetch_response>> res)
             {
                 p.set_value(res);
             });

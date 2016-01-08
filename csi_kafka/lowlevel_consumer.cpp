@@ -150,7 +150,7 @@ namespace csi
                 if (response)
                 {
                     boost::system::error_code ignored;
-                    BOOST_LOG_TRIVIAL(warning) << "lowlevel_consumer::fetch " << _client.remote_endpoint(ignored).address().to_string() << " " << _topic << ":" << _partition << " failed: " << to_string(response.ec);
+                    BOOST_LOG_TRIVIAL(error) << "lowlevel_consumer::fetch " << _client.remote_endpoint(ignored).address().to_string() << " " << _topic << ":" << _partition << " failed: " << to_string(response.ec);
                     close();
                     cb(response.ec.ec1, response.ec.ec2, NULL);
                 }
@@ -199,7 +199,7 @@ namespace csi
                 if (response)
                 {
                     boost::system::error_code ignored;
-                    BOOST_LOG_TRIVIAL(info) << "lowlevel_consumer::fetch " << _client.remote_endpoint(ignored).address().to_string() << " " << _topic << ":" << _partition << " fetch error: " << to_string(response.ec);
+                    BOOST_LOG_TRIVIAL(error) << "lowlevel_consumer::fetch " << _client.remote_endpoint(ignored).address().to_string() << " " << _topic << ":" << _partition << " fetch error: " << to_string(response.ec);
                     //_transient_failure = true;
                     close();
                     _cb(response.ec.ec1, response.ec.ec2, NULL);
