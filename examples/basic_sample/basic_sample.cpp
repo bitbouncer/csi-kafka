@@ -52,7 +52,7 @@ void handle_fetch(csi::kafka::highlevel_consumer* consumer, std::vector<csi::kaf
             }
         }
     }
-    consumer->fetch2(boost::bind(handle_fetch, consumer, _1));
+    consumer->fetch(boost::bind(handle_fetch, consumer, _1));
 }
 
 
@@ -160,7 +160,7 @@ int main(int argc, char** argv)
         std::cerr << "+";
     });
 
-    consumer.fetch2(boost::bind(handle_fetch, &consumer, _1));
+    consumer.fetch(boost::bind(handle_fetch, &consumer, _1));
 
 
     while (true)
