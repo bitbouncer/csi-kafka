@@ -24,7 +24,7 @@ Platforms: Windows / Linux
 
 Building
 see
-https://github.com/bitbouncer/csi-build-scripts
+https://github.com/bitbouncer/build-scripts
 
 
 If you only need kafka on ubuntu14 you can also do
@@ -46,7 +46,7 @@ cd boost_1_59_0
 ./b2 -j 8
 cd ..
 
-git clone https://github.com/bitbouncer/csi-build-scripts.git
+git clone https://github.com/bitbouncer/build-scripts.git
 git clone https://github.com/bitbouncer/csi-kafka.git
 
 cd csi-kafka
