@@ -38,6 +38,7 @@ sudo apt-get install -y automake autogen shtool libtool git wget cmake unzip bui
 ```
 Build
 ```
+mkdir source && cd source
 wget http://sourceforge.net/projects/boost/files/boost/1.59.0/boost_1_59_0.tar.gz/download -Oboost_1_59_0.tar.gz
 tar xf boost_1_59_0.tar.gz
 
