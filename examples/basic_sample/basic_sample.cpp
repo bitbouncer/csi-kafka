@@ -75,7 +75,7 @@ int main(int argc, char** argv)
     std::auto_ptr<boost::asio::io_service::work> work(new boost::asio::io_service::work(io_service));
     boost::thread bt(boost::bind(&boost::asio::io_service::run, &io_service));
 
-    csi::kafka::consumer_coordinator coordinator(io_service, TOPIC_NAME, CONSUMER_GROUP, 0, 1000);
+    csi::kafka::consumer_coordinator coordinator(io_service, TOPIC_NAME, CONSUMER_GROUP, 1000);
 
     auto res0 = coordinator.connect(broker, 3000);
     if (res0)
@@ -84,7 +84,7 @@ int main(int argc, char** argv)
         return -1;
     }
 
-    auto res1 = coordinator.get_cluster_metadata(44);
+    auto res1 = coordinator.get_group_coordinator();
     if (res1)
     {
         std::cerr << to_string(res1.ec) << std::endl;

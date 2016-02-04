@@ -31,12 +31,11 @@ namespace csi
 {
     namespace kafka
     {
-        consumer_coordinator::consumer_coordinator(boost::asio::io_service& io_service, const std::string& topic, const std::string& consumer_group, int32_t partition, int32_t rx_timeout) :
+        consumer_coordinator::consumer_coordinator(boost::asio::io_service& io_service, const std::string& topic, const std::string& consumer_group, int32_t rx_timeout) :
             _ios(io_service),
             _client(io_service),
             _topic(topic),
             _consumer_group(consumer_group),
-            _partition(partition),
             _rx_timeout(rx_timeout),
             _rx_in_progress(false),
             _transient_failure(false)
@@ -76,54 +75,54 @@ namespace csi
 
         void consumer_coordinator::get_metadata_async(get_metadata_callback cb)
         {
-            _client.get_metadata_async({ _topic }, 0, cb);
+            _client.get_metadata_async({ _topic }, cb);
         }
 
         rpc_result<metadata_response> consumer_coordinator::get_metadata()
         {
-            return _client.get_metadata({ _topic }, 0);
+            return _client.get_metadata({ _topic });
         }
 
-        void consumer_coordinator::get_cluster_metadata_async(int32_t correlation_id, get_cluster_metadata_callback cb)
+        void consumer_coordinator::get_group_coordinator_async(get_group_coordinator_callback cb)
         {
-            _client.get_cluster_metadata_async(_consumer_group, correlation_id, cb);
+            _client.get_group_coordinator_async(_consumer_group, cb);
         }
 
-        rpc_result<cluster_metadata_response> consumer_coordinator::get_cluster_metadata(int32_t correlation_id)
+        rpc_result<group_coordinator_response> consumer_coordinator::get_group_coordinator()
         {
-            return _client.get_cluster_metadata(_consumer_group, correlation_id);
+            return _client.get_group_coordinator(_consumer_group);
         }
 
 
-        void consumer_coordinator::get_consumer_offset_async(int32_t correlation_id, get_consumer_offset_callback cb)
+        void consumer_coordinator::get_consumer_offset_async(int32_t partition, get_consumer_offset_callback cb)
         {
-            _client.get_consumer_offset_async(_consumer_group, _topic, _partition, correlation_id, cb);
+            _client.get_consumer_offset_async(_consumer_group, _topic, partition, cb);
         }
 
-        rpc_result<offset_fetch_response> consumer_coordinator::get_consumer_offset(int32_t correlation_id)
+        rpc_result<offset_fetch_response> consumer_coordinator::get_consumer_offset(int32_t partition)
         {
-            return _client.get_consumer_offset(_consumer_group, _topic, _partition, correlation_id);
+            return _client.get_consumer_offset(_consumer_group, _topic, partition);
         }
 
         void consumer_coordinator::commit_consumer_offset_async(
             int32_t consumer_group_generation_id,
             const std::string& consumer_id,
+            int32_t partition,
             int64_t offset,
             const std::string& metadata,
-            int32_t correlation_id,
             commit_offset_callback cb)
         {
-            _client.commit_consumer_offset_async(_consumer_group, consumer_group_generation_id, consumer_id, _topic, _partition, offset, metadata, correlation_id, cb);
+            _client.commit_consumer_offset_async(_consumer_group, consumer_group_generation_id, consumer_id, _topic, partition, offset, metadata, cb);
         }
 
         rpc_result<offset_commit_response> consumer_coordinator::commit_consumer_offset(
             int32_t consumer_group_generation_id,
             const std::string& consumer_id,
+            int32_t partition,
             int64_t offset,
-            const std::string& metadata,
-            int32_t correlation_id)
+            const std::string& metadata)
         {
-            return _client.commit_consumer_offset(_consumer_group, consumer_group_generation_id, consumer_id, _topic, _partition, offset, metadata, correlation_id);
+            return _client.commit_consumer_offset(_consumer_group, consumer_group_generation_id, consumer_id, _topic, partition, offset, metadata);
         }
     } // kafka
 }; // csi

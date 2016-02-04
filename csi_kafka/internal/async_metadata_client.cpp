@@ -72,7 +72,7 @@ namespace csi
                 }
                 else
                 {
-                    _client.get_metadata_async({ "dummy_topic" }, 99, boost::bind(&async_metadata_client::handle_get_metadata, this, _1));
+                    _client.get_metadata_async({ "dummy_topic" }, boost::bind(&async_metadata_client::handle_get_metadata, this, _1));
                 }
             });
         }
@@ -93,7 +93,7 @@ namespace csi
         void async_metadata_client::handle_get_metadata_timer(const boost::system::error_code& ec)
         {
             if (!ec)
-                _client.get_metadata_async({ "dummy_topic" }, 99, boost::bind(&async_metadata_client::handle_get_metadata, this, _1));
+                _client.get_metadata_async({ "dummy_topic" }, boost::bind(&async_metadata_client::handle_get_metadata, this, _1));
         }
 
         void async_metadata_client::handle_get_metadata(rpc_result<metadata_response> response)
@@ -168,14 +168,14 @@ namespace csi
             }
         }
 
-        void async_metadata_client::get_metadata_async(const std::vector<std::string>& topics, int32_t correlation_id, get_metadata_callback cb)
+        void async_metadata_client::get_metadata_async(const std::vector<std::string>& topics, get_metadata_callback cb)
         {
-            _client.get_metadata_async(topics, correlation_id, cb);
+            _client.get_metadata_async(topics, cb);
         }
 
-        rpc_result<metadata_response> async_metadata_client::get_metadata(const std::vector<std::string>& topics, int32_t correlation_id)
+        rpc_result<metadata_response> async_metadata_client::get_metadata(const std::vector<std::string>& topics)
         {
-            return _client.get_metadata(topics, correlation_id);
+            return _client.get_metadata(topics);
         }
     };
 

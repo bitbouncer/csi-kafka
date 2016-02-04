@@ -60,7 +60,7 @@ namespace csi
                 if (!ec)
                 {
                     BOOST_LOG_TRIVIAL(trace) << "HLP _meta_client.get_metadata_async() STARTING";
-                    _meta_client.get_metadata_async({ _topic }, 0, [this, cb](rpc_result<metadata_response> result)
+                    _meta_client.get_metadata_async({ _topic }, [this, cb](rpc_result<metadata_response> result)
                     {
                         BOOST_LOG_TRIVIAL(trace) << "HLP _meta_client.get_metadata_async() CALLBACK ENTERED...";
                         handle_response(result);
@@ -144,7 +144,7 @@ namespace csi
         void highlevel_producer::_try_connect_brokers()
         {
             // the number of partitions is constant but the serving hosts might differ
-            _meta_client.get_metadata_async({ _topic }, 0, [this](rpc_result<metadata_response> result)
+            _meta_client.get_metadata_async({ _topic }, [this](rpc_result<metadata_response> result)
             {
                 handle_response(result);
 

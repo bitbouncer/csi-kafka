@@ -24,7 +24,7 @@ namespace csi
             typedef boost::function <void(rpc_result<produce_response>)>            send_produce_callback;
             typedef boost::function <void(rpc_result<offset_response>)>             get_offset_callback;
             typedef boost::function <void(rpc_result<fetch_response>)>              fetch_callback;
-            typedef boost::function <void(rpc_result<cluster_metadata_response>)>   get_cluster_metadata_callback;
+            typedef boost::function <void(rpc_result<group_coordinator_response>)>  get_group_coordinator_callback;
             typedef boost::function <void(rpc_result<offset_commit_response>)>      commit_offset_callback;
             typedef boost::function <void(rpc_result<offset_fetch_response>)>       get_consumer_offset_callback;
 
@@ -46,29 +46,29 @@ namespace csi
             bool                                           is_connected() const;
             bool                                           is_connection_in_progress() const;
 
-            void                                            get_metadata_async(const std::vector<std::string>& topics, int32_t correlation_id, get_metadata_callback);
-            rpc_result<metadata_response>                   get_metadata(const std::vector<std::string>& topics, int32_t correlation_id);
+            void                                            get_metadata_async(const std::vector<std::string>& topics, get_metadata_callback);
+            rpc_result<metadata_response>                   get_metadata(const std::vector<std::string>& topics);
 
-            void                                            send_produce_async(const std::string& topic, int32_t partition_id, int required_acks, int timeout, const std::vector<std::shared_ptr<basic_message>>& v, int32_t correlation_id, send_produce_callback);
-            rpc_result<produce_response>                    send_produce(const std::string& topic, int32_t partition_id, int required_acks, int timeout, const std::vector<std::shared_ptr<basic_message>>& v, int32_t correlation_id);
+            void                                            send_produce_async(const std::string& topic, int32_t partition_id, int required_acks, int timeout, const std::vector<std::shared_ptr<basic_message>>& v, send_produce_callback);
+            rpc_result<produce_response>                    send_produce(const std::string& topic, int32_t partition_id, int required_acks, int timeout, const std::vector<std::shared_ptr<basic_message>>& v);
 
-            void                                            get_offset_async(const std::string& topic, int32_t partition, int64_t start_time, int32_t max_number_of_offsets, int32_t correlation_id, get_offset_callback);
-            rpc_result<offset_response>                     get_offset(const std::string& topic, int32_t partition, int64_t start_time, int32_t max_number_of_offsets, int32_t correlation_id);
+            void                                            get_offset_async(const std::string& topic, int32_t partition, int64_t start_time, int32_t max_number_of_offsets, get_offset_callback);
+            rpc_result<offset_response>                     get_offset(const std::string& topic, int32_t partition, int64_t start_time, int32_t max_number_of_offsets);
 
-            void                                            fetch_async(const std::string& topic, const std::vector<partition_cursor>&, uint32_t max_wait_time, size_t min_bytes, size_t max_bytes, int32_t correlation_id, fetch_callback);
-            rpc_result<fetch_response>                      fetch(const std::string& topic, const std::vector<partition_cursor>&, uint32_t max_wait_time, size_t min_bytes, size_t max_bytes, int32_t correlation_id);
+            void                                            fetch_async(const std::string& topic, const std::vector<partition_cursor>&, uint32_t max_wait_time, size_t min_bytes, size_t max_bytes, fetch_callback);
+            rpc_result<fetch_response>                      fetch(const std::string& topic, const std::vector<partition_cursor>&, uint32_t max_wait_time, size_t min_bytes, size_t max_bytes);
 
-            void                                            get_cluster_metadata_async(const std::string& consumer_group, int32_t correlation_id, get_cluster_metadata_callback);
-            rpc_result<cluster_metadata_response>           get_cluster_metadata(const std::string& consumer_group, int32_t correlation_id);
+            void                                            get_group_coordinator_async(const std::string& consumer_group, get_group_coordinator_callback);
+            rpc_result<group_coordinator_response>          get_group_coordinator(const std::string& consumer_group);
 
-            void                                            commit_consumer_offset_async(const std::string& consumer_group, int32_t consumer_group_generation_id, const std::string& consumer_id, const std::string& topic, int32_t partition_id, int64_t offset, const std::string& metadata, int32_t correlation_id, commit_offset_callback);
-            rpc_result<offset_commit_response>              commit_consumer_offset(const std::string& consumer_group, int32_t consumer_group_generation_id, const std::string& consumer_id, const std::string& topic, int32_t partition, int64_t offset, const std::string& metadata, int32_t correlation_id);
+            void                                            commit_consumer_offset_async(const std::string& consumer_group, int32_t consumer_group_generation_id, const std::string& consumer_id, const std::string& topic, int32_t partition_id, int64_t offset, const std::string& metadata, commit_offset_callback);
+            rpc_result<offset_commit_response>              commit_consumer_offset(const std::string& consumer_group, int32_t consumer_group_generation_id, const std::string& consumer_id, const std::string& topic, int32_t partition, int64_t offset, const std::string& metadata);
 
-            void                                            get_consumer_offset_async(const std::string& consumer_group, const std::string& topic, int32_t partition_id, int32_t correlation_id, get_consumer_offset_callback);
-            rpc_result<offset_fetch_response>               get_consumer_offset(const std::string& consumer_group, const std::string& topic, int32_t partition_id, int32_t correlation_id);
+            void                                            get_consumer_offset_async(const std::string& consumer_group, const std::string& topic, int32_t partition_id, get_consumer_offset_callback);
+            rpc_result<offset_fetch_response>               get_consumer_offset(const std::string& consumer_group, const std::string& topic, int32_t partition_id);
 
-            void                                            get_consumer_offset_async(const std::string& consumer_group, int32_t correlation_id, get_consumer_offset_callback);
-            rpc_result<offset_fetch_response>               get_consumer_offset(const std::string& consumer_group, int32_t correlation_id);
+            void                                            get_consumer_offset_async(const std::string& consumer_group, get_consumer_offset_callback);
+            rpc_result<offset_fetch_response>               get_consumer_offset(const std::string& consumer_group);
 
             boost::asio::ip::tcp::endpoint                  remote_endpoint(); // error ignored - not thrown...
             boost::asio::ip::tcp::endpoint                  remote_endpoint(boost::system::error_code ec);
@@ -104,6 +104,7 @@ namespace csi
             bool                                      _connection_in_progress;
             bool                                      _tx_in_progress;
             bool                                      _rx_in_progress;
+            int32_t                                   _next_correlation_id;
         };
     } // kafka
 } // csi

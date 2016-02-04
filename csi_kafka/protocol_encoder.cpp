@@ -240,14 +240,14 @@ namespace csi
             return ostr.tellp();
         }
 
-        //Cluster Metadata Request
-        size_t encode_cluster_metadata_request(const std::string& consumer_group, int32_t correlation_id, char* buffer, size_t capacity)
+        //Group Coordinator Request (aka Cluster Metadata Request)
+        size_t encode_group_coordinator_request(const std::string& consumer_group, int32_t correlation_id, char* buffer, size_t capacity)
         {
             boost::iostreams::stream<boost::iostreams::array_sink> ostr(buffer, capacity);
             {
                 internal::delayed_size message_size(ostr);
                 internal::encode_i16(ostr, csi::kafka::GroupCoordinatorRequest);
-                internal::encode_i16(ostr, csi::kafka::ApiVersionV2);
+                internal::encode_i16(ostr, csi::kafka::ApiVersionV0);
                 internal::encode_i32(ostr, correlation_id);
                 internal::encode_str(ostr, client_id);
                 internal::encode_str(ostr, consumer_group);

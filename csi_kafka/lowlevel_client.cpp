@@ -45,10 +45,10 @@ namespace csi
             return handle;
         }
 
-        basic_call_context::handle create_cluster_metadata_request(const std::string& consumer_group, int32_t correlation_id) //TBD  change name
+        basic_call_context::handle create_group_coordinator_request(const std::string& consumer_group, int32_t correlation_id) //TBD  change name
         {
             basic_call_context::handle handle(new basic_call_context());
-            handle->_tx_size = encode_cluster_metadata_request(consumer_group, correlation_id, (char*)&handle->_tx_buffer[0], basic_call_context::MAX_BUFFER_SIZE);
+            handle->_tx_size = encode_group_coordinator_request(consumer_group, correlation_id, (char*)&handle->_tx_buffer[0], basic_call_context::MAX_BUFFER_SIZE);
             return handle;
         }
 
@@ -88,7 +88,7 @@ namespace csi
         static rpc_result<metadata_response>          parse_metadata_response(basic_call_context::handle handle)          { return csi::kafka::parse_metadata_response((const char*)&handle->_rx_buffer[0], handle->_rx_size); }
         static rpc_result<offset_commit_response>     parse_offset_commit_response(basic_call_context::handle handle)     { return csi::kafka::parse_offset_commit_response((const char*)&handle->_rx_buffer[0], handle->_rx_size); }
         static rpc_result<offset_fetch_response>      parse_offset_fetch_response(basic_call_context::handle handle)      { return csi::kafka::parse_offset_fetch_response((const char*)&handle->_rx_buffer[0], handle->_rx_size); }
-        static rpc_result<cluster_metadata_response>  parse_cluster_metadata_response(basic_call_context::handle handle)  { return csi::kafka::parse_cluster_metadata_response((const char*)&handle->_rx_buffer[0], handle->_rx_size); }
+        static rpc_result<group_coordinator_response> parse_group_coordinator_response(basic_call_context::handle handle)  { return csi::kafka::parse_group_coordinator_response((const char*)&handle->_rx_buffer[0], handle->_rx_size); }
 
 
         lowlevel_client::lowlevel_client(boost::asio::io_service& io_service) :
@@ -102,7 +102,8 @@ namespace csi
             _resolve_in_progress(false),
             _tx_in_progress(false),
             _rx_in_progress(false),
-            _timeout(boost::posix_time::milliseconds(1000))
+            _timeout(boost::posix_time::milliseconds(1000)),
+            _next_correlation_id(1)
         {
             _timer.expires_from_now(_timeout);
             _timer.async_wait(boost::bind(&lowlevel_client::handle_timer, this, boost::asio::placeholders::error));
@@ -231,9 +232,9 @@ namespace csi
             return _connection_in_progress;
         }
 
-        void lowlevel_client::get_metadata_async(const std::vector<std::string>& topics, int32_t correlation_id, get_metadata_callback cb)
+        void lowlevel_client::get_metadata_async(const std::vector<std::string>& topics, get_metadata_callback cb)
         {
-            perform_async(create_metadata_request(topics, correlation_id), [cb](const boost::system::error_code& ec, basic_call_context::handle handle)
+            perform_async(create_metadata_request(topics, _next_correlation_id++), [cb](const boost::system::error_code& ec, basic_call_context::handle handle)
             {
                 if (ec)
                     cb(rpc_result<metadata_response>(ec));
@@ -242,11 +243,11 @@ namespace csi
             });
         }
 
-        rpc_result<metadata_response> lowlevel_client::get_metadata(const std::vector<std::string>& topics, int32_t correlation_id)
+        rpc_result<metadata_response> lowlevel_client::get_metadata(const std::vector<std::string>& topics)
         {
             std::promise<rpc_result<metadata_response>> p;
             std::future<rpc_result<metadata_response>>  f = p.get_future();
-            get_metadata_async(topics, correlation_id, [&p](rpc_result<metadata_response> response)
+            get_metadata_async(topics, [&p](rpc_result<metadata_response> response)
             {
                 p.set_value(response);
             });
@@ -254,9 +255,9 @@ namespace csi
             return f.get();
         }
 
-        void lowlevel_client::send_produce_async(const std::string& topic, int32_t partition_id, int required_acks, int timeout, const std::vector<std::shared_ptr<basic_message>>& v, int32_t correlation_id, send_produce_callback cb)
+        void lowlevel_client::send_produce_async(const std::string& topic, int32_t partition_id, int required_acks, int timeout, const std::vector<std::shared_ptr<basic_message>>& v, send_produce_callback cb)
         {
-            perform_async(create_produce_request(topic, partition_id, required_acks, timeout, v, correlation_id), [cb](const boost::system::error_code& ec, basic_call_context::handle handle)
+            perform_async(create_produce_request(topic, partition_id, required_acks, timeout, v, _next_correlation_id++), [cb](const boost::system::error_code& ec, basic_call_context::handle handle)
             {
                 if (cb) // ok to the handle callback
                 {
@@ -268,11 +269,11 @@ namespace csi
             });
         }
 
-        rpc_result<produce_response> lowlevel_client::send_produce(const std::string& topic, int32_t partition_id, int required_acks, int timeout, const std::vector<std::shared_ptr<basic_message>>& v, int32_t correlation_id)
+        rpc_result<produce_response> lowlevel_client::send_produce(const std::string& topic, int32_t partition_id, int required_acks, int timeout, const std::vector<std::shared_ptr<basic_message>>& v)
         {
             std::promise<rpc_result<produce_response>> p;
             std::future<rpc_result<produce_response>>  f = p.get_future();
-            send_produce_async(topic, partition_id, required_acks, timeout, v, correlation_id, [&p](rpc_result<produce_response> response)
+            send_produce_async(topic, partition_id, required_acks, timeout, v, [&p](rpc_result<produce_response> response)
             {
                 p.set_value(response);
             });
@@ -280,10 +281,10 @@ namespace csi
             return f.get();
         }
 
-        void lowlevel_client::fetch_async(const std::string& topic, const std::vector<partition_cursor>& partitions, uint32_t max_wait_time, size_t min_bytes, size_t max_bytes, int32_t correlation_id, fetch_callback cb)
+        void lowlevel_client::fetch_async(const std::string& topic, const std::vector<partition_cursor>& partitions, uint32_t max_wait_time, size_t min_bytes, size_t max_bytes, fetch_callback cb)
         {
             assert(cb); // no point of not having callback
-            perform_async(create_multi_fetch_request(topic, partitions, max_wait_time, min_bytes, max_bytes, correlation_id), [cb](const boost::system::error_code& ec, basic_call_context::handle handle)
+            perform_async(create_multi_fetch_request(topic, partitions, max_wait_time, min_bytes, max_bytes, _next_correlation_id++), [cb](const boost::system::error_code& ec, basic_call_context::handle handle)
             {
                 if (ec)
                     cb(rpc_result<fetch_response>(ec));
@@ -292,11 +293,11 @@ namespace csi
             });
         }
 
-        rpc_result<fetch_response> lowlevel_client::fetch(const std::string& topic, const std::vector<partition_cursor>& partitions, uint32_t max_wait_time, size_t min_bytes, size_t max_bytes, int32_t correlation_id)
+        rpc_result<fetch_response> lowlevel_client::fetch(const std::string& topic, const std::vector<partition_cursor>& partitions, uint32_t max_wait_time, size_t min_bytes, size_t max_bytes)
         {
             std::promise<rpc_result<fetch_response>> p;
             std::future<rpc_result<fetch_response>>  f = p.get_future();
-            fetch_async(topic, partitions, max_wait_time, min_bytes, max_bytes, correlation_id, [&p](rpc_result<fetch_response> response)
+            fetch_async(topic, partitions, max_wait_time, min_bytes, max_bytes, [&p](rpc_result<fetch_response> response)
             {
                 p.set_value(response);
             });
@@ -304,23 +305,23 @@ namespace csi
             return f.get();
         }
 
-        void lowlevel_client::get_cluster_metadata_async(const std::string& consumer_group, int32_t correlation_id, get_cluster_metadata_callback cb)
+        void lowlevel_client::get_group_coordinator_async(const std::string& consumer_group, get_group_coordinator_callback cb)
         {
             assert(cb); // no point of not having callback
-            perform_async(create_cluster_metadata_request(consumer_group, correlation_id), [cb](const boost::system::error_code& ec, basic_call_context::handle handle)
+            perform_async(create_group_coordinator_request(consumer_group, _next_correlation_id++), [cb](const boost::system::error_code& ec, basic_call_context::handle handle)
             {
                 if (ec)
-                    cb(rpc_result<cluster_metadata_response>(ec));
+                    cb(rpc_result<group_coordinator_response>(ec));
                 else
-                    cb(parse_cluster_metadata_response(handle));
+                    cb(parse_group_coordinator_response(handle));
             });
         }
 
-        rpc_result<cluster_metadata_response> lowlevel_client::get_cluster_metadata(const std::string& consumer_group, int32_t correlation_id)
+        rpc_result<group_coordinator_response> lowlevel_client::get_group_coordinator(const std::string& consumer_group)
         {
-            std::promise<rpc_result<cluster_metadata_response> > p;
-            std::future<rpc_result<cluster_metadata_response>>  f = p.get_future();
-            get_cluster_metadata_async(consumer_group, correlation_id, [&p](rpc_result<cluster_metadata_response> response)
+            std::promise<rpc_result<group_coordinator_response> > p;
+            std::future<rpc_result<group_coordinator_response>>  f = p.get_future();
+            get_group_coordinator_async(consumer_group, [&p](rpc_result<group_coordinator_response> response)
             {
                 p.set_value(response);
             });
@@ -328,10 +329,10 @@ namespace csi
             return f.get();
         }
 
-        void lowlevel_client::get_offset_async(const std::string& topic, int32_t partition, int64_t start_time, int32_t max_number_of_offsets, int32_t correlation_id, get_offset_callback cb)
+        void lowlevel_client::get_offset_async(const std::string& topic, int32_t partition, int64_t start_time, int32_t max_number_of_offsets, get_offset_callback cb)
         {
             assert(cb); // no point of not having callback
-            perform_async(create_simple_offset_request(topic, partition, start_time, max_number_of_offsets, correlation_id), [this, cb](const boost::system::error_code& ec, basic_call_context::handle handle)
+            perform_async(create_simple_offset_request(topic, partition, start_time, max_number_of_offsets, _next_correlation_id++), [this, cb](const boost::system::error_code& ec, basic_call_context::handle handle)
             {
                 if (ec)
                     cb(rpc_result<offset_response>(ec));
@@ -340,11 +341,11 @@ namespace csi
             });
         }
 
-        rpc_result<offset_response> lowlevel_client::get_offset(const std::string& topic, int32_t partition, int64_t start_time, int32_t max_number_of_offsets, int32_t correlation_id)
+        rpc_result<offset_response> lowlevel_client::get_offset(const std::string& topic, int32_t partition, int64_t start_time, int32_t max_number_of_offsets)
         {
             std::promise<rpc_result<offset_response> > p;
             std::future<rpc_result<offset_response>>  f = p.get_future();
-            get_offset_async(topic, partition, start_time, max_number_of_offsets, correlation_id, [&p](rpc_result<offset_response> response)
+            get_offset_async(topic, partition, start_time, max_number_of_offsets, [&p](rpc_result<offset_response> response)
             {
                 p.set_value(response);
             });
@@ -353,9 +354,9 @@ namespace csi
         }
 
 
-        void lowlevel_client::commit_consumer_offset_async(const std::string& consumer_group, int32_t consumer_group_generation_id, const std::string& consumer_id, const std::string& topic, int32_t partition, int64_t offset, const std::string& metadata, int32_t correlation_id, commit_offset_callback cb)
+        void lowlevel_client::commit_consumer_offset_async(const std::string& consumer_group, int32_t consumer_group_generation_id, const std::string& consumer_id, const std::string& topic, int32_t partition, int64_t offset, const std::string& metadata, commit_offset_callback cb)
         {
-            perform_async(create_simple_offset_commit_request(consumer_group, consumer_group_generation_id, consumer_id, topic, partition, offset, metadata, correlation_id), [this, cb](const boost::system::error_code& ec, basic_call_context::handle handle)
+            perform_async(create_simple_offset_commit_request(consumer_group, consumer_group_generation_id, consumer_id, topic, partition, offset, metadata, _next_correlation_id++), [this, cb](const boost::system::error_code& ec, basic_call_context::handle handle)
             {
                 if (cb) // ok not to have callback
                 {
@@ -367,11 +368,11 @@ namespace csi
             });
         }
 
-        rpc_result<offset_commit_response> lowlevel_client::commit_consumer_offset(const std::string& consumer_group, int32_t consumer_group_generation_id, const std::string& consumer_id, const std::string& topic, int32_t partition, int64_t offset, const std::string& metadata, int32_t correlation_id)
+        rpc_result<offset_commit_response> lowlevel_client::commit_consumer_offset(const std::string& consumer_group, int32_t consumer_group_generation_id, const std::string& consumer_id, const std::string& topic, int32_t partition, int64_t offset, const std::string& metadata)
         {
             std::promise<rpc_result<offset_commit_response> > p;
             std::future<rpc_result<offset_commit_response>>  f = p.get_future();
-            commit_consumer_offset_async(consumer_group, consumer_group_generation_id, consumer_id, topic, partition, offset, metadata, correlation_id, [&p](rpc_result<offset_commit_response> response)
+            commit_consumer_offset_async(consumer_group, consumer_group_generation_id, consumer_id, topic, partition, offset, metadata, [&p](rpc_result<offset_commit_response> response)
             {
                 p.set_value(response);
             });
@@ -379,10 +380,10 @@ namespace csi
             return f.get();
         }
 
-        void lowlevel_client::get_consumer_offset_async(const std::string& consumer_group, const std::string& topic, int32_t partition, int32_t correlation_id, get_consumer_offset_callback cb)
+        void lowlevel_client::get_consumer_offset_async(const std::string& consumer_group, const std::string& topic, int32_t partition, get_consumer_offset_callback cb)
         {
             assert(cb); // no point of not having callback
-            perform_async(create_simple_offset_fetch_request(consumer_group, topic, partition, correlation_id), [this, cb](const boost::system::error_code& ec, basic_call_context::handle handle)
+            perform_async(create_simple_offset_fetch_request(consumer_group, topic, partition, _next_correlation_id++), [this, cb](const boost::system::error_code& ec, basic_call_context::handle handle)
             {
                 if (ec)
                     cb(rpc_result<offset_fetch_response>(ec));
@@ -391,11 +392,11 @@ namespace csi
             });
         }
 
-        rpc_result<offset_fetch_response> lowlevel_client::get_consumer_offset(const std::string& consumer_group, const std::string& topic, int32_t partition, int32_t correlation_id)
+        rpc_result<offset_fetch_response> lowlevel_client::get_consumer_offset(const std::string& consumer_group, const std::string& topic, int32_t partition)
         {
             std::promise<rpc_result<offset_fetch_response> > p;
             std::future<rpc_result<offset_fetch_response>>  f = p.get_future();
-            get_consumer_offset_async(consumer_group, topic, partition, correlation_id, [&p](rpc_result<offset_fetch_response> response)
+            get_consumer_offset_async(consumer_group, topic, partition, [&p](rpc_result<offset_fetch_response> response)
             {
                 p.set_value(response);
             });
@@ -403,10 +404,10 @@ namespace csi
             return f.get();
         }
 
-        void lowlevel_client::get_consumer_offset_async(const std::string& consumer_group, int32_t correlation_id, get_consumer_offset_callback cb)
+        void lowlevel_client::get_consumer_offset_async(const std::string& consumer_group, get_consumer_offset_callback cb)
         {
             assert(cb); // no point of not having callback
-            perform_async(create_simple_offset_fetch_request(consumer_group, correlation_id), [this, cb](const boost::system::error_code& ec, basic_call_context::handle handle)
+            perform_async(create_simple_offset_fetch_request(consumer_group, _next_correlation_id++), [this, cb](const boost::system::error_code& ec, basic_call_context::handle handle)
             {
                 if (ec)
                     cb(rpc_result<offset_fetch_response>(ec));
@@ -415,11 +416,11 @@ namespace csi
             });
         }
 
-        rpc_result<offset_fetch_response> lowlevel_client::get_consumer_offset(const std::string& consumer_group, int32_t correlation_id)
+        rpc_result<offset_fetch_response> lowlevel_client::get_consumer_offset(const std::string& consumer_group)
         {
             std::promise<rpc_result<offset_fetch_response> > p;
             std::future<rpc_result<offset_fetch_response>>  f = p.get_future();
-            get_consumer_offset_async(consumer_group, correlation_id, [&p](rpc_result<offset_fetch_response> response)
+            get_consumer_offset_async(consumer_group, [&p](rpc_result<offset_fetch_response> response)
             {
                 p.set_value(response);
             });

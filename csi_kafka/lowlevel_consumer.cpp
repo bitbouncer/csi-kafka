@@ -93,7 +93,7 @@ namespace csi
 
         void lowlevel_consumer::set_offset_time_async(int64_t start_time, set_offset_callback cb)
         {
-            _client.get_offset_async(_topic, _partition, start_time, 10, 0, [this, cb](rpc_result<offset_response> response)
+            _client.get_offset_async(_topic, _partition, start_time, 10, [this, cb](rpc_result<offset_response> response)
             {
                 if (response)
                     return cb(rpc_result<void>(response.ec));
@@ -145,7 +145,7 @@ namespace csi
         void lowlevel_consumer::fetch(fetch_callback cb)
         {
             const std::vector<partition_cursor> cursors = { { _partition, _next_offset } };
-            _client.fetch_async(_topic, cursors, _rx_timeout, 10, _max_packet_size, 0, [this, cb](rpc_result<fetch_response> response)
+            _client.fetch_async(_topic, cursors, _rx_timeout, 10, _max_packet_size, [this, cb](rpc_result<fetch_response> response)
             {
                 if (response)
                 {
@@ -188,7 +188,7 @@ namespace csi
             _rx_in_progress = true;
 
             const std::vector<partition_cursor> cursors = { { _partition, _next_offset } };
-            _client.fetch_async(_topic, cursors, _rx_timeout, 10, _max_packet_size, 0, [this](rpc_result<fetch_response> response)
+            _client.fetch_async(_topic, cursors, _rx_timeout, 10, _max_packet_size, [this](rpc_result<fetch_response> response)
             {
                 if (!_cb)
                 {
@@ -243,7 +243,7 @@ namespace csi
         {
             const std::vector<partition_cursor> cursors = { { _partition, _next_offset } };
 
-            _client.fetch_async(_topic, cursors, _rx_timeout, 10, _max_packet_size, 0, [this, cb](rpc_result<csi::kafka::fetch_response> response)
+            _client.fetch_async(_topic, cursors, _rx_timeout, 10, _max_packet_size, [this, cb](rpc_result<csi::kafka::fetch_response> response)
             {
                 if (response)
                 {
@@ -293,22 +293,22 @@ namespace csi
 
         void lowlevel_consumer::get_metadata_async(get_metadata_callback cb)
         {
-            _client.get_metadata_async({ _topic }, 0, cb);
+            _client.get_metadata_async({ _topic }, cb);
         }
 
         rpc_result<metadata_response> lowlevel_consumer::get_metadata()
         {
-            return _client.get_metadata({ _topic }, 0);
+            return _client.get_metadata({ _topic });
         }
 
-        void lowlevel_consumer::get_cluster_metadata_async(const std::string& consumer_group, int32_t correlation_id, get_cluster_metadata_callback cb)
+        void lowlevel_consumer::get_group_coordinator_async(const std::string& consumer_group, get_group_coordinator_callback cb)
         {
-            _client.get_cluster_metadata_async(consumer_group, correlation_id, cb);
+            _client.get_group_coordinator_async(consumer_group, cb);
         }
 
-        rpc_result<cluster_metadata_response> lowlevel_consumer::get_cluster_metadata(const std::string& consumer_group, int32_t correlation_id)
+        rpc_result<group_coordinator_response> lowlevel_consumer::get_group_coordinator(const std::string& consumer_group)
         {
-            return _client.get_cluster_metadata(consumer_group, correlation_id);
+            return _client.get_group_coordinator(consumer_group);
         }
 
         /*

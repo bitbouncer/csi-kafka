@@ -84,7 +84,7 @@ namespace csi
 
         void highlevel_consumer::_connect_async(connect_callback cb)
         {
-            _meta_client.get_metadata_async({ _topic }, 0, [this, cb](rpc_result<metadata_response> result)
+            _meta_client.get_metadata_async({ _topic }, [this, cb](rpc_result<metadata_response> result)
             {
                 BOOST_LOG_TRIVIAL(trace) << "HLC _meta_client.get_metadata_async() CALLBACK ENTERED...";
                 handle_response(result);
@@ -302,13 +302,13 @@ namespace csi
             return f.get();
         }
 
-        // it's enought to get all data from one breker so we only use the last lowlevelconsumer - this could be done better...
-        void highlevel_consumer::get_cluster_metadata_async(const std::string& consumer_group, get_cluster_metadata_callback cb)
+        // it's enought to get all data from one broker so we only use the last lowlevelconsumer - this could be done better...
+        void highlevel_consumer::get_group_coordinator_async(const std::string& consumer_group, get_group_coordinator_callback cb)
         {
-            auto final_cb = std::make_shared<csi::async::destructor_callback<rpc_result<cluster_metadata_response>>>(cb);
+            auto final_cb = std::make_shared<csi::async::destructor_callback<rpc_result<group_coordinator_response>>>(cb);
             for (std::map<int, lowlevel_consumer*>::const_iterator i = _partition2consumers.begin(); i != _partition2consumers.end(); ++i)
             {
-                i->second->get_cluster_metadata_async(consumer_group, 43, [final_cb](rpc_result<cluster_metadata_response> response)
+                i->second->get_group_coordinator_async(consumer_group, [final_cb](rpc_result<group_coordinator_response> response)
                 {
                     if (!response.ec)
                         final_cb->value() = response;
@@ -316,11 +316,11 @@ namespace csi
             }
         }
 
-        rpc_result<cluster_metadata_response> highlevel_consumer::get_cluster_metadata(const std::string& consumer_group)
+        rpc_result<group_coordinator_response> highlevel_consumer::get_group_coordinator(const std::string& consumer_group)
         {
-            std::promise<rpc_result<cluster_metadata_response>> p;
-            std::future<rpc_result<cluster_metadata_response>>  f = p.get_future();
-            get_cluster_metadata_async(consumer_group, [&p](rpc_result<cluster_metadata_response> res)
+            std::promise<rpc_result<group_coordinator_response>> p;
+            std::future<rpc_result<group_coordinator_response>>  f = p.get_future();
+            get_group_coordinator_async(consumer_group, [&p](rpc_result<group_coordinator_response> res)
             {
                 p.set_value(res);
             });

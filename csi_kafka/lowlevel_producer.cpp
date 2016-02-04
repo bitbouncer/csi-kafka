@@ -151,7 +151,7 @@ namespace csi
             if (items_in_batch > 0)
             {
                 auto tick = boost::posix_time::microsec_clock::local_time();
-                _client.send_produce_async(_topic, _partition_id, _required_acks, _tx_timeout, v, 99, [this, tick, items_in_batch](rpc_result<produce_response> result)
+                _client.send_produce_async(_topic, _partition_id, _required_acks, _tx_timeout, v, [this, tick, items_in_batch](rpc_result<produce_response> result)
                 {
                     auto now = boost::posix_time::microsec_clock::local_time();
                     boost::posix_time::time_duration diff = now - tick;

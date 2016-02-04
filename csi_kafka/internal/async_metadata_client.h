@@ -22,8 +22,8 @@ namespace csi
             void                                           close();
             bool                                           is_connected() const;
 
-            void                                           get_metadata_async(const std::vector<std::string>& topics, int32_t correlation_id, get_metadata_callback);
-            rpc_result<metadata_response>                  get_metadata(const std::vector<std::string>& topics, int32_t correlation_id);
+            void                                           get_metadata_async(const std::vector<std::string>& topics, get_metadata_callback);
+            rpc_result<metadata_response>                  get_metadata(const std::vector<std::string>& topics);
 
         protected:
             void                                           _connect_async_next();

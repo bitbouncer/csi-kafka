@@ -304,13 +304,14 @@ namespace csi
         //Broker = > NodeId Host Port
 
 
-        struct cluster_metadata_response
+        struct group_coordinator_response
         {
-            cluster_metadata_response() : correlation_id(-1), error_code(-1), coordinator_id(-1) {}
+            group_coordinator_response() : correlation_id(-1), error_code(-1), coordinator_id(-1), coordinator_port(-1) {}
             int32_t     correlation_id;
             int16_t     error_code;
             int32_t     coordinator_id;
-            std::vector<broker_data> brokers;
+            std::string coordinator_host;
+            int32_t     coordinator_port;
         };
 
 
