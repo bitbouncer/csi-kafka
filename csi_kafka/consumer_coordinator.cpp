@@ -2,6 +2,7 @@
 #include <boost/log/trivial.hpp>
 #include <boost/thread.hpp>
 #include <boost/bind.hpp>
+#include <csi_kafka/internal/async.h>
 #include "consumer_coordinator.h"
 
 /*
@@ -31,14 +32,10 @@ namespace csi
 {
     namespace kafka
     {
-        consumer_coordinator::consumer_coordinator(boost::asio::io_service& io_service, const std::string& topic, const std::string& consumer_group, int32_t rx_timeout) :
+        consumer_coordinator::consumer_coordinator(boost::asio::io_service& io_service, const std::string& consumer_group) :
             _ios(io_service),
             _client(io_service),
-            _topic(topic),
-            _consumer_group(consumer_group),
-            _rx_timeout(rx_timeout),
-            _rx_in_progress(false),
-            _transient_failure(false)
+            _consumer_group(consumer_group)
         {
         }
 
@@ -47,25 +44,59 @@ namespace csi
             _client.close();
         }
 
-        void consumer_coordinator::connect_async(const broker_address& address, int32_t timeout, connect_callback cb)
+        // a bit complicated to know where to connect....
+        void consumer_coordinator::connect_async(const std::vector<broker_address>& brokers, int32_t timeout, connect_callback cb)
         {
-            _client.connect_async(address, timeout, cb);
+            _initial_brokers = brokers;
+
+            // move connect any to client. ???
+            std::shared_ptr<std::vector<csi::async::async_function>> work(new std::vector<csi::async::async_function>());
+            for (auto& i = brokers.begin(); i != brokers.end(); ++i)
+                work->push_back([this, timeout, i](csi::async::async_callback cb) { _client.connect_async(*i, timeout, [this, cb](const boost::system::error_code& ec) { cb(ec); }); });
+
+            csi::async::first_success(*work, [work, this, timeout, cb](const boost::system::error_code& ec)
+            {
+                if (ec)
+                {
+                    BOOST_LOG_TRIVIAL(error) << _consumer_group << ", consumer_coordinator, failed to connect to cluster: " << to_string(ec);
+                    cb(ec);
+                    return;
+                }
+                boost::system::error_code ignored;
+                BOOST_LOG_TRIVIAL(debug) << _consumer_group << ", consumer_coordinator, connected to cluster OK (" << _client.remote_endpoint(ignored).address().to_string() << ")";
+                _client.get_group_coordinator_async(_consumer_group, [this, timeout, cb](rpc_result<group_coordinator_response> result)
+                {
+                    if (result) // no matter the error - let's fake the error code
+                    {
+                        BOOST_LOG_TRIVIAL(error) << _consumer_group << ", consumer_coordinator, get_group_coordinator failed: " << to_string((csi::kafka::error_codes) result->error_code);
+                        cb(make_error_code(boost::system::errc::host_unreachable));
+                        return;
+                    }
+                    csi::kafka::broker_address coordinator_address(result.data->coordinator_host, result.data->coordinator_port);
+                    BOOST_LOG_TRIVIAL(debug) << _consumer_group << ", consumer_coordinator, get_group_coordinator OK (" << to_string(coordinator_address) << ")";
+                    _client.connect_async(coordinator_address, timeout, [this, cb](const boost::system::error_code& ec)
+                    {
+                        boost::system::error_code ignored;
+                        if (ec)
+                            BOOST_LOG_TRIVIAL(error) << _consumer_group << ", consumer_coordinator, failed to connect to group coordinator" << to_string(ec);
+                        else
+                            BOOST_LOG_TRIVIAL(debug) << _consumer_group << ", consumer_coordinator, connected to group coordinator (" << _client.remote_endpoint(ignored).address().to_string() << ")";
+                        cb(ec);
+                    });
+                });
+            });
         }
 
-        boost::system::error_code consumer_coordinator::connect(const broker_address& address, int32_t timeout)
+        boost::system::error_code consumer_coordinator::connect(const std::vector<broker_address>& brokers, int32_t timeout)
         {
-            return _client.connect(address, timeout);
-        }
-
-
-        void consumer_coordinator::connect_async(const boost::asio::ip::tcp::resolver::query& query, int32_t timeout, connect_callback cb)
-        {
-            _client.connect_async(query, timeout, cb);
-        }
-
-        boost::system::error_code consumer_coordinator::connect(const boost::asio::ip::tcp::resolver::query& query, int32_t timeout)
-        {
-            return _client.connect(query, timeout);
+            std::promise<boost::system::error_code> p;
+            std::future<boost::system::error_code>  f = p.get_future();
+            connect_async(brokers, timeout, [&p](const boost::system::error_code& error)
+            {
+                p.set_value(error);
+            });
+            f.wait();
+            return f.get();
         }
 
         void consumer_coordinator::close()
@@ -73,56 +104,91 @@ namespace csi
             _client.close();
         }
 
-        void consumer_coordinator::get_metadata_async(get_metadata_callback cb)
+        void consumer_coordinator::get_consumer_offset_async(std::string topic, get_consumer_offset_callback cb)
         {
-            _client.get_metadata_async({ _topic }, cb);
+            _client.get_consumer_offset_async(_consumer_group, topic, cb);
         }
 
-        rpc_result<metadata_response> consumer_coordinator::get_metadata()
+        rpc_result<offset_fetch_response> consumer_coordinator::get_consumer_offset(std::string topic)
         {
-            return _client.get_metadata({ _topic });
+            return _client.get_consumer_offset(_consumer_group, topic);
         }
 
-        void consumer_coordinator::get_group_coordinator_async(get_group_coordinator_callback cb)
+        void consumer_coordinator::get_consumer_offset_async(std::string topic, int32_t partition, get_consumer_offset_callback cb)
         {
-            _client.get_group_coordinator_async(_consumer_group, cb);
+            _client.get_consumer_offset_async(_consumer_group, topic, partition, cb);
         }
 
-        rpc_result<group_coordinator_response> consumer_coordinator::get_group_coordinator()
+        rpc_result<offset_fetch_response> consumer_coordinator::get_consumer_offset(std::string topic, int32_t partition)
         {
-            return _client.get_group_coordinator(_consumer_group);
-        }
-
-
-        void consumer_coordinator::get_consumer_offset_async(int32_t partition, get_consumer_offset_callback cb)
-        {
-            _client.get_consumer_offset_async(_consumer_group, _topic, partition, cb);
-        }
-
-        rpc_result<offset_fetch_response> consumer_coordinator::get_consumer_offset(int32_t partition)
-        {
-            return _client.get_consumer_offset(_consumer_group, _topic, partition);
+            return _client.get_consumer_offset(_consumer_group, topic, partition);
         }
 
         void consumer_coordinator::commit_consumer_offset_async(
             int32_t consumer_group_generation_id,
             const std::string& consumer_id,
-            int32_t partition,
-            int64_t offset,
+            std::string topic,
+            const std::vector<topic_offset>& offsets,
             const std::string& metadata,
             commit_offset_callback cb)
         {
-            _client.commit_consumer_offset_async(_consumer_group, consumer_group_generation_id, consumer_id, _topic, partition, offset, metadata, cb);
+            _client.commit_consumer_offset_async(_consumer_group, consumer_group_generation_id, consumer_id, topic, offsets, metadata, cb);
         }
 
         rpc_result<offset_commit_response> consumer_coordinator::commit_consumer_offset(
             int32_t consumer_group_generation_id,
             const std::string& consumer_id,
-            int32_t partition,
-            int64_t offset,
+            std::string topic,
+            const std::vector<topic_offset>& offsets,
             const std::string& metadata)
         {
-            return _client.commit_consumer_offset(_consumer_group, consumer_group_generation_id, consumer_id, _topic, partition, offset, metadata);
+            return _client.commit_consumer_offset(_consumer_group, consumer_group_generation_id, consumer_id, topic, offsets, metadata);
         }
+
+        void consumer_coordinator::commit_consumer_offset_async(
+            int32_t consumer_group_generation_id,
+            const std::string& consumer_id,
+            std::string topic,
+            const std::map<int32_t, int64_t>& offsets,
+            const std::string& metadata,
+            commit_offset_callback cb)
+        {
+            _client.commit_consumer_offset_async(_consumer_group, consumer_group_generation_id, consumer_id, topic, offsets, metadata, cb);
+        }
+
+        rpc_result<offset_commit_response> consumer_coordinator::commit_consumer_offset(
+            int32_t consumer_group_generation_id,
+            const std::string& consumer_id,
+            std::string topic,
+            const std::map<int32_t, int64_t>& offsets,
+            const std::string& metadata)
+        {
+            return _client.commit_consumer_offset(_consumer_group, consumer_group_generation_id, consumer_id, topic, offsets, metadata);
+        }
+
+        std::vector<topic_offset> parse(rpc_result<offset_fetch_response> result, std::string topic, int32_t& ec)
+        {
+            ec = 0;
+            std::vector<topic_offset>  r;
+            for (auto& i = result->topics.begin(); i != result->topics.end(); ++i)
+            {
+                if (i->topic_name == topic)
+                {
+                    for (auto& j = i->partitions.begin(); j != i->partitions.end(); ++j)
+                    {
+                        if (j->error_code)
+                        {
+                            ec = j->error_code;
+                        }
+                        else
+                        {
+                            r.emplace_back(j->partition_id, j->offset);
+                        }
+                    }
+                }
+            }
+            return r;
+        }
+
     } // kafka
 }; // csi

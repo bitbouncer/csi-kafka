@@ -3,81 +3,74 @@
 
 #pragma once
 
-namespace csi
-{
-    namespace kafka
-    {
+namespace csi {
+  namespace kafka {
 
-        class highlevel_producer
-        {
-        public:
-            struct metrics
-            {
-                int         partition;
-                std::string host;
-                int         port;
-                size_t      msg_in_queue;
-                size_t      bytes_in_queue;
-                uint32_t    tx_kb_sec;
-                uint32_t    tx_msg_sec;
-                double      tx_roundtrip;
-            };
+    class highlevel_producer {
+    public:
+      struct metrics {
+        int         partition;
+        std::string host;
+        int         port;
+        size_t      msg_in_queue;
+        size_t      bytes_in_queue;
+        uint32_t    tx_kb_sec;
+        uint32_t    tx_msg_sec;
+        double      tx_roundtrip;
+      };
 
-            typedef boost::function <void(const boost::system::error_code&)> connect_callback;
-            typedef boost::function <void(int32_t ec)>                       tx_ack_callback;
+      typedef boost::function <void(const boost::system::error_code&)> connect_callback;
+      typedef boost::function <void(int32_t ec)>                       tx_ack_callback;
 
-            highlevel_producer(boost::asio::io_service& io_service, const std::string& topic, int32_t required_acks, int32_t tx_timeout, int32_t max_packet_size=-1);
-            ~highlevel_producer();
-            
-            void connect_forever(const std::vector<broker_address>& brokers); // , connect_callback cb);  // stream of connection events??
-            void connect_async(const std::vector<broker_address>& brokers, connect_callback cb);
-            boost::system::error_code connect(const std::vector<broker_address>& brokers);
+      highlevel_producer(boost::asio::io_service& io_service, const std::string& topic, int32_t required_acks, int32_t tx_timeout, int32_t max_packet_size = -1);
+      ~highlevel_producer();
 
-            void send_async(std::shared_ptr<csi::kafka::basic_message> message, tx_ack_callback = NULL);
-            void send_async(std::vector<std::shared_ptr<csi::kafka::basic_message>>& messages, tx_ack_callback = NULL);
+      void connect_forever(const std::vector<broker_address>& brokers); // , connect_callback cb);  // stream of connection events??
+      void connect_async(const std::vector<broker_address>& brokers, connect_callback cb);
+      boost::system::error_code connect(const std::vector<broker_address>& brokers);
 
-            int32_t send_sync(std::shared_ptr<csi::kafka::basic_message> message);
-            int32_t send_sync(std::vector<std::shared_ptr<csi::kafka::basic_message>>& messages);
-        
-            void close(); 
+      void send_async(std::shared_ptr<csi::kafka::basic_message> message, tx_ack_callback = NULL);
+      void send_async(std::vector<std::shared_ptr<csi::kafka::basic_message>>& messages, tx_ack_callback = NULL);
 
-            size_t items_in_queue() const;
+      int32_t send_sync(std::shared_ptr<csi::kafka::basic_message> message);
+      int32_t send_sync(std::vector<std::shared_ptr<csi::kafka::basic_message>>& messages);
 
-            std::vector<metrics> get_metrics() const;
+      void close();
 
-            inline const std::string& topic() const { return _topic; }
+      size_t items_in_queue() const;
 
-        private:
-            struct tx_item
-            {
-                tx_item(uint32_t h, std::shared_ptr<csi::kafka::basic_message> message) : hash(h), msg(message) {}
-                tx_item(uint32_t h, std::shared_ptr<csi::kafka::basic_message> message, tx_ack_callback callback) : hash(h), msg(message), cb(callback) {}
-                uint32_t                                   hash;
-                std::shared_ptr<csi::kafka::basic_message> msg;
-                tx_ack_callback                            cb;
-            };
+      std::vector<metrics> get_metrics() const;
+
+      inline const std::string& topic() const { return _topic; }
+
+    private:
+      struct tx_item {
+        tx_item(uint32_t h, std::shared_ptr<csi::kafka::basic_message> message) : hash(h), msg(message) {}
+        tx_item(uint32_t h, std::shared_ptr<csi::kafka::basic_message> message, tx_ack_callback callback) : hash(h), msg(message), cb(callback) {}
+        uint32_t                                   hash;
+        std::shared_ptr<csi::kafka::basic_message> msg;
+        tx_ack_callback                            cb;
+      };
 
 
-            // asio callbacks
-            void handle_timer(const boost::system::error_code& ec);
-            void handle_response(rpc_result<metadata_response> result);
-            void _try_connect_brokers();
-            boost::asio::io_service&                                                 _ios;
-            const std::string                                                        _topic;
-            int32_t                                                                  _required_acks;
-            int32_t                                                                  _tx_timeout;
-            int32_t                                                                  _max_packet_size;
-
-            boost::asio::deadline_timer			                                     _timer;
-            boost::posix_time::time_duration	                                     _timeout;
-
-            // CLUSTER METADATA
-            csi::kafka::async_metadata_client                                        _meta_client;
-            csi::kafka::spinlock                                                     _spinlock; // protects the metadata below
-            std::map<int, broker_data>                                               _broker2brokers;
-            std::map<int, csi::kafka::metadata_response::topic_data::partition_data> _partition2partitions;
-            std::deque<tx_item>                                                      _tx_queue; // used when waiting for cluster
-            std::map<int, lowlevel_producer*>                                        _partition2producers;
-        };
+      // asio callbacks
+      void handle_timer(const boost::system::error_code& ec);
+      void handle_response(rpc_result<metadata_response> result);
+      void _try_connect_brokers();
+      boost::asio::io_service&                                                 _ios;
+      const std::string                                                        _topic;
+      int32_t                                                                  _required_acks;
+      int32_t                                                                  _tx_timeout;
+      int32_t                                                                  _max_packet_size;
+      boost::asio::deadline_timer			                                         _timer;
+      boost::posix_time::time_duration	                                       _timeout;
+      // CLUSTER METADATA
+      csi::kafka::async_metadata_client                                        _meta_client;
+      csi::kafka::spinlock                                                     _spinlock; // protects the metadata below
+      std::map<int, broker_data>                                               _broker2brokers;
+      std::map<int, csi::kafka::metadata_response::topic_data::partition_data> _partition2partitions;
+      std::deque<tx_item>                                                      _tx_queue; // used when waiting for cluster
+      std::map<int, lowlevel_producer*>                                        _partition2producers;
     };
+  };
 };

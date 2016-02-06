@@ -4,14 +4,8 @@
 #include <boost/log/expressions.hpp>
 #include <csi_kafka/kafka.h>
 #include <csi_kafka/highlevel_consumer.h>
-#include <csi_kafka/consumer_coordinator.h>
 
-
-#define CONSUMER_GROUP "csi-kafka.basic_sample"
 #define TOPIC_NAME     "csi-kafka.test-topic"
-#define CONSUMER_ID    "csi-kafka.basic_sample_consumer_id"
-//#define DEFAULT_BROKER_ADDRESS "10.1.3.239"
-//#define DEFAULT_BROKER_ADDRESS "52.17.87.118"
 #define DEFAULT_BROKER_ADDRESS "52.0.43.130"
 /*
     to get this working you have to prepare the broker
@@ -75,50 +69,7 @@ int main(int argc, char** argv)
     std::auto_ptr<boost::asio::io_service::work> work(new boost::asio::io_service::work(io_service));
     boost::thread bt(boost::bind(&boost::asio::io_service::run, &io_service));
 
-    csi::kafka::consumer_coordinator coordinator(io_service, TOPIC_NAME, CONSUMER_GROUP, 1000);
-
-    auto res0 = coordinator.connect(broker, 3000);
-    if (res0)
-    {
-        std::cerr << res0.message() << std::endl;
-        return -1;
-    }
-
-    auto res1 = coordinator.get_group_coordinator();
-    if (res1)
-    {
-        std::cerr << to_string(res1.ec) << std::endl;
-        return -1;
-    }
-    if (res1->error_code)
-    {
-        std::cerr << to_string(csi::kafka::error_codes(res1->error_code)) << std::endl;
-        return -1;
-    }
-
-    /*
-    auto res2 = client.connect(csi::kafka::broker_address(res1.data->host_name, res1.data->port), 3000);
-    if (res2)
-    {
-        std::cerr << res2.message() << std::endl;
-        return -1;
-    }
-
-    auto res3 = client.get_consumer_offset(CONSUMER_GROUP, TOPIC_NAME, 0, 44);
-    if (res3)
-    {
-        std::cerr << to_string(res3.ec) << std::endl;
-        return -1;
-    }
-
-    auto res4 = client.commit_consumer_offset(CONSUMER_GROUP, 1, CONSUMER_ID, TOPIC_NAME, 0, 22, "nisse", 44);
-    if (res4)
-    {
-        std::cerr << to_string(res4.ec) << std::endl;
-        return -1;
-    }
-    client.close();
-    */
+ 
 
 
     //HIGHLEVEL CONSUMER
