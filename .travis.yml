@@ -36,7 +36,7 @@ compiler:
 script: ./travis.sh
 env:
   matrix:
-    - GTEST_TARGET=csi-kafka SHARED_LIB=OFF STATIC_LIB=ON CMAKE_PKG=OFF BUILD_TYPE=debug VERBOSE_MAKE=true VERBOSE
+    - TARGET=csi-kafka SHARED_LIB=OFF STATIC_LIB=ON CMAKE_PKG=OFF BUILD_TYPE=debug VERBOSE_MAKE=true VERBOSE
 notifications:
   email: false
 sudo: false

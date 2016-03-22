@@ -3,9 +3,7 @@ set -evx
 env | sort
 
 mkdir build || true
-mkdir build/$GTEST_TARGET || true
-cd build/$GTEST_TARGET
-cmake -DCMAKE_CXX_FLAGS=$CXX_FLAGS \
-      ../../$GTEST_TARGET
+cd build
+cmake -DCMAKE_CXX_FLAGS=$CXX_FLAGS ..
 make
 #make test
