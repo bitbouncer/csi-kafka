@@ -12,7 +12,7 @@ mkdir win_build64
 cd win_build64
 
 
-cmake -G "Visual Studio 12 Win64" -D__BUILD_EXAMPLES__=1 .. 
+cmake -G "Visual Studio 12 Win64" -DBoost_INCLUDE_DIRS=../boost -DBoost_LIBRARY_DIRS=../boost/lib -D__BUILD_EXAMPLES__=1 .. 
 msbuild ALL_BUILD.vcxproj /p:Configuration=Debug /p:Platform=x64 /maxcpucount:12
 msbuild ALL_BUILD.vcxproj /p:Configuration=Release /p:Platform=x64 /maxcpucount:12
 cd ..
