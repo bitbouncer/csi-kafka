@@ -28,7 +28,7 @@ endif()
 
 if(__LINUX__)
 link_directories(${Boost_LIBRARY_DIRS})
-set(BOOST_LIBS ${BOOST_PATH}/stage/lib/libboost_log_setup.a ${BOOST_PATH}/stage/lib/libboost_log.a boost_date_time boost_timer boost_thread boost_system boost_program_options boost_filesystem boost_regex boost_chrono boost_iostreams)
+set(BOOST_LIBS ${Boost_LIBRARY_DIRS}/libboost_log_setup.a ${Boost_LIBRARY_DIRS}/libboost_log.a boost_date_time boost_timer boost_thread boost_system boost_program_options boost_filesystem boost_regex boost_chrono boost_iostreams)
 set(EXT_LIBS csi-kafka ${BOOST_LIBS} rt c)
 endif()
 
