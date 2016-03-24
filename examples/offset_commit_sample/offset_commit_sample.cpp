@@ -153,9 +153,9 @@ int main(int argc, char** argv) {
 
 
   //lots of errors can happen anyway here...
-  for(auto& i = res5->topics.begin(); i != res5->topics.end(); ++i) {
+  for(std::vector<csi::kafka::offset_commit_response::topic_data>::const_iterator i = res5->topics.begin(); i != res5->topics.end(); ++i) {
     assert(i->topic_name == topic);
-    for(auto& j = i->partitions.begin(); j != i->partitions.end(); ++j) {
+    for(std::vector<csi::kafka::offset_commit_response::topic_data::partition_data>::const_iterator j = i->partitions.begin(); j != i->partitions.end(); ++j) {
       if(j->error_code) {
         std::cerr << "partition " << j->partition_id << to_string((csi::kafka::error_codes) j->error_code) << std::endl;
       } else {
