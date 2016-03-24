@@ -1,10 +1,10 @@
 #!/usr/bin/bash
 rm -rf bin
 rm -rf lib
-rm -rf linux
-mkdir linux
-cd linux
-cmake -DCMAKE_BUILD_TYPE=Release -D__LINUX__=1 ..
+rm -rf build
+mkdir build
+cd build
+cmake -DCMAKE_BUILD_TYPE=Release -D__LINUX__=1 -DBoost_INCLUDE_DIRS=../boost -DBoost_LIBRARY_DIRS=../boost/stage/lib .. 
 make -j4
 cd ..
 
