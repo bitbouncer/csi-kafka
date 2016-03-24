@@ -44,7 +44,7 @@ link_directories(${Boost_LIBRARY_DIRS})
 if (NOT DEFINED BOOST_LIBS)
 set(BOOST_LIBS boost_log_setup boost_log boost_date_time boost_timer boost_thread boost_system boost_program_options boost_filesystem boost_regex boost_chrono boost_iostreams)
 endif()
-set(EXT_LIBS csi-kafka ${BOOST_LIBS} rt c)
+set(EXT_LIBS csi-kafka ${BOOST_LIBS} pthread rt c)
 endif()
 
 add_subdirectory(csi_kafka)
