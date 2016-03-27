@@ -14,5 +14,5 @@ cd ..
 mkdir build || true
 cd build
 
-cmake -D__LINUX__=1 -DBoost_INCLUDE_DIRS=../boost_1_59_0 -DBoost_LIBRARY_DIRS=../boost_1_59_0/stage/lib -D__BUILD_EXAMPLES__=1 .. 
+cmake -D__LINUX__=1 -DBoost_INCLUDE_DIRS=/home/travis/build/bitbouncer/csi-kafka/boost_1_59_0 -DBoost_LIBRARY_DIRS=/home/travis/build/bitbouncer/csi-kafka/boost_1_59_0/stage/lib -D__BUILD_EXAMPLES__=1 .. 
 make
