@@ -37,8 +37,8 @@ add_definitions(-Wno-deprecated)
 
 link_directories(${Boost_LIBRARY_DIRS})
 
-if (NOT DEFINED BOOST_LIBS)
-set(BOOST_LIBS boost_log_setup boost_log boost_date_time boost_timer boost_thread boost_system boost_program_options boost_filesystem boost_regex boost_chrono boost_iostreams)
+if (NOT DEFINED CSI_BOOST_LIBS)
+set(CSI_BOOST_LIBS boost_log_setup boost_log boost_date_time boost_timer boost_thread boost_system boost_program_options boost_filesystem boost_regex boost_chrono boost_iostreams)
 endif()
 endif()
 
