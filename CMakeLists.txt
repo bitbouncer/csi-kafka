@@ -3,9 +3,8 @@ cmake_policy(SET CMP0015 NEW)
 
 include_directories(${CSI_INCLUDE_PATH} ${CMAKE_SOURCE_DIR} ${Boost_INCLUDE_DIRS})
 
-add_definitions(-D_FILE_OFFSET_BITS=64 -D_REENTRANT -DEXTERNAL_LOCKS -DMULTITHREAD)
-add_definitions(-DBOOST_ASIO_HAS_STD_CHRONO)
-add_definitions(-DBOOST_ALL_STATIC_LINK)
+#add_definitions(-D_FILE_OFFSET_BITS=64 -D_REENTRANT -DEXTERNAL_LOCKS -DMULTITHREAD)
+#add_definitions(-DBOOST_ASIO_HAS_STD_CHRONO)
 
 if(WIN32)
 add_definitions(-DMARCH_x86_64) 
@@ -28,13 +27,12 @@ endif()
 
 if(__LINUX__)
 add_definitions(-D__LINUX__)
-add_definitions(-fPIC)
+#add_definitions(-fPIC)
 #if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "4.8.0")
 add_definitions(-std=c++11)
 #endif()
-add_definitions(-DBOOST_LOG_USE_NATIVE_SYSLOG)
-add_definitions(-Wno-deprecated)
-
+#add_definitions(-DBOOST_LOG_USE_NATIVE_SYSLOG)
+#add_definitions(-Wno-deprecated)
 link_directories(${Boost_LIBRARY_DIRS})
 
 if (NOT DEFINED CSI_BOOST_LIBS)
