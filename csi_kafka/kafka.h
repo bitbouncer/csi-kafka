@@ -90,7 +90,7 @@ namespace csi {
 
         payload_type(const uint8_t* begin, const uint8_t* end) :
           _value(begin, end),
-          _is_null(end - begin ? false : true) {}
+          _is_null((end - begin) ? false : true) {}
 
         payload_type(const char* buf, size_t len) :
           _value(buf, buf + len),
