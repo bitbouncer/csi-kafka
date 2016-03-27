@@ -26,6 +26,7 @@ addons:
     - g++-4.9
     - clang-3.7
     - valgrind
+    - libpq-dev
 os:
   - linux
   - osx
