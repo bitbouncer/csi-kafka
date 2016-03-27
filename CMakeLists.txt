@@ -36,8 +36,7 @@ add_definitions(-std=c++11)
 link_directories(${Boost_LIBRARY_DIRS})
 
 if (NOT DEFINED CSI_BOOST_LIBS)
-set(CSI_BOOST_LIBS boost_log boost_log_setup boost_date_time boost_timer boost_thread boost_system boost_program_options boost_filesystem boost_regex boost_chrono boost_iostreams pthread rt c)
-set(CSI_BOOST_LIBS ${CSI_BOOST_LIBS} ${CSI_BOOST_LIBS}) 
+set(CSI_BOOST_LIBS ${Boost_LIBRARY_DIRS}/libboost_log_setup.a ${Boost_LIBRARY_DIRS}/libboost_log.a boost_date_time boost_timer boost_thread boost_system boost_program_options boost_filesystem boost_regex boost_chrono boost_iostreams pthread rt c)
 endif()
 endif()
 
