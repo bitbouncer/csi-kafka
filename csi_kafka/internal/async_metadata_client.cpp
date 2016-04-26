@@ -4,14 +4,15 @@
 
 namespace csi {
   namespace kafka {
-    async_metadata_client::async_metadata_client(boost::asio::io_service& io_service) :
+    async_metadata_client::async_metadata_client(boost::asio::io_service& io_service, std::string topic) :
       _ios(io_service),
       _metadata_timer(io_service),
       _connect_retry_timer(io_service),
       _metadata_timeout(boost::posix_time::milliseconds(10000)),
       _current_retry_timeout(boost::posix_time::milliseconds(1000)),
       _max_retry_timeout(boost::posix_time::milliseconds(60000)),
-      _client(io_service) {}
+      _client(io_service),
+      _topic(topic) {}
 
     async_metadata_client::~async_metadata_client() {
       _metadata_timer.cancel();
@@ -57,7 +58,7 @@ namespace csi {
           _connect_retry_timer.expires_from_now(_current_retry_timeout);
           _connect_retry_timer.async_wait(boost::bind(&async_metadata_client::handle_connect_retry_timer, this, boost::asio::placeholders::error));
         } else {
-          _client.get_metadata_async({ "dummy_topic" }, boost::bind(&async_metadata_client::handle_get_metadata, this, _1));
+          _client.get_metadata_async({ _topic }, boost::bind(&async_metadata_client::handle_get_metadata, this, _1));
         }
       });
     }
@@ -75,7 +76,7 @@ namespace csi {
 
     void async_metadata_client::handle_get_metadata_timer(const boost::system::error_code& ec) {
       if(!ec)
-        _client.get_metadata_async({ "dummy_topic" }, boost::bind(&async_metadata_client::handle_get_metadata, this, _1));
+        _client.get_metadata_async({ _topic }, boost::bind(&async_metadata_client::handle_get_metadata, this, _1));
     }
 
     void async_metadata_client::handle_get_metadata(rpc_result<metadata_response> response) {

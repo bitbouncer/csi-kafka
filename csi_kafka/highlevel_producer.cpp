@@ -11,7 +11,7 @@ namespace csi {
       _ios(io_service),
       _timer(io_service),
       _timeout(boost::posix_time::milliseconds(5000)),
-      _meta_client(io_service),
+      _meta_client(io_service, topic),
       _topic(topic),
       _required_acks(required_acks),
       _tx_timeout(tx_timeout),

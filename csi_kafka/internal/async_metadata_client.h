@@ -9,7 +9,7 @@ namespace csi {
       typedef boost::function < void(const boost::system::error_code&)>       connect_callback;
       typedef boost::function <void(rpc_result<metadata_response>)>           get_metadata_callback;
 
-      async_metadata_client(boost::asio::io_service& io_service);
+      async_metadata_client(boost::asio::io_service& io_service, std::string topic);
       ~async_metadata_client();
 
       void                              connect_forever(const std::vector<broker_address>& brokers); // should maybee an event stream that we can subcribe to like change-events. TIMEOUT
@@ -41,6 +41,7 @@ namespace csi {
       std::vector<broker_address>::iterator                                    _next_broker;
       connect_callback                                                         _connect_cb;
       rpc_result<metadata_response>                                            _metadata;
+      std::string                                                              _topic;
       std::map<int, broker_data>                                               _broker2brokers;
       std::map<int, csi::kafka::metadata_response::topic_data::partition_data> _partition2partitions;
     };
