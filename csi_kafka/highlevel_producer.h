@@ -42,7 +42,7 @@ namespace csi {
       std::vector<metrics> get_metrics() const;
 
       inline const std::string& topic() const { return _topic; }
-      inline size_t partitions() const { _partition2partitions.size(); }
+      inline size_t partitions() const { return _partition2partitions.size(); }
 
     private:
       struct tx_item {
