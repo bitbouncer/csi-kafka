@@ -196,8 +196,12 @@ namespace csi {
           uint32_t keysize = (uint32_t) message->key.size();
           result.process_bytes(&message->key[0], message->key.size());
           hash = result.checksum();
-        } else {
-          BOOST_LOG_TRIVIAL(error) << "highlevel_producer no key -> enque in parition 0 FIXME";
+        } else if(!message->value.is_null()) {
+          // calc a hash to get partition
+          boost::crc_32_type result;
+          uint32_t valsize = (uint32_t) message->value.size();
+          result.process_bytes(&message->value[0], valsize);
+          hash = result.checksum();
         }
       } else {
         // a bit ugly - we use the partiton id as hash which should map to the same thing we get the producers.
