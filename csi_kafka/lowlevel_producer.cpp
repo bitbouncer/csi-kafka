@@ -148,6 +148,8 @@ namespace csi {
             return;
           }
 
+          BOOST_LOG_TRIVIAL(debug) << "kafka lowlevel_producer (" << _topic << ":" << _partition_id << ") _try_send send_produce_async completed items:" << items_in_batch;
+
           //TODO PARSE THE RESULT DEEP - WE MIGHT HAVE GOTTEN AN ERROR INSIDE
           //IF SO WE SHOULD PROBASBLY CLOSE THE CONNECTION
           for(std::vector<produce_response::topic_data>::const_iterator i = result->topics.begin(); i != result->topics.end(); ++i) {
