@@ -113,11 +113,7 @@ int main(int argc, char** argv) {
     "",
     "nisse"
     ));
-  msg->partition = 0;
-  auto pres = producer.send_sync({ msg });
-
-
-
+  auto pres = producer.send_sync(0, { msg });
 
   csi::kafka::consumer_coordinator coordinator(io_service, consumer_group);
 
