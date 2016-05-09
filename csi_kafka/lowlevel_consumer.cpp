@@ -152,7 +152,8 @@ namespace csi {
     }
 
     void lowlevel_consumer::_try_fetch() {
-      if(_rx_in_progress || !_client.is_connected() || _next_offset < 0 || !_cb || _transient_failure)
+      //if(_rx_in_progress || !_client.is_connected() || _next_offset < 0 || !_cb || _transient_failure) when initializing form commit cursor we get -1 first time...
+      if(_rx_in_progress || !_client.is_connected() || !_cb || _transient_failure)
         return;
 
       _rx_in_progress = true;
