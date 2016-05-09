@@ -141,7 +141,7 @@ namespace csi {
           _metrics_tx_roundtrip((double) diff.total_milliseconds());
 
           if(result) {
-            BOOST_LOG_TRIVIAL(error) << "lowlevel_producer::_try_send send_produce_async failed " << csi::kafka::to_string(result.ec);
+            BOOST_LOG_TRIVIAL(error) << "kafka lowlevel_producer (" << _topic << ":" << _partition_id  << ") _try_send send_produce_async failed, required acks: " << _required_acks  << ", ec: " << csi::kafka::to_string(result.ec);
             _tx_in_progress = false;
             _client.close();
             //_try_send();

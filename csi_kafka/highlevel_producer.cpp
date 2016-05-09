@@ -131,7 +131,7 @@ namespace csi {
               if(ec1) {
                 BOOST_LOG_TRIVIAL(warning) << _topic << ":" << partition << ", highlevel_producer can't connect to broker #" << leader << " (" << to_string(addr) << ") ec:" << ec1;
               } else {
-                BOOST_LOG_TRIVIAL(info) << _topic << ":" << partition << ", highlevel_producer connected to broker #" << leader << " (" << to_string(addr) << ")";
+                BOOST_LOG_TRIVIAL(debug) << _topic << ":" << partition << ", highlevel_producer connected to broker #" << leader << " (" << to_string(addr) << ")";
               }
             });
           }
