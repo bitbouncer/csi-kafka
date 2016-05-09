@@ -116,8 +116,7 @@ namespace csi {
       };
 
       basic_message() :
-        offset(0),
-        partition(-1) {}
+        offset(0) {}
 
       basic_message(const std::string& akey, const std::string& aval) :
         offset(0),
@@ -131,10 +130,9 @@ namespace csi {
 
       size_t size() const { return key.size() + value.size() + 26; } // estimated size for streaming TODO check if this is correct
 
-      int64_t                 offset;
-      payload_type            key;
-      payload_type            value;
-      int32_t                 partition;
+      int64_t      offset;
+      payload_type key;
+      payload_type value;
     };
 
     struct partition_cursor {

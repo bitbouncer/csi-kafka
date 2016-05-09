@@ -29,9 +29,11 @@ namespace csi {
       void connect_async(const std::vector<broker_address>& brokers, connect_callback cb);
       boost::system::error_code connect(const std::vector<broker_address>& brokers);
 
+      void send_async(uint32_t partition_hash, std::shared_ptr<csi::kafka::basic_message> message, tx_ack_callback = NULL);
       void send_async(std::shared_ptr<csi::kafka::basic_message> message, tx_ack_callback = NULL);
       void send_async(std::vector<std::shared_ptr<csi::kafka::basic_message>>& messages, tx_ack_callback = NULL);
-
+      
+      int32_t send_sync(uint32_t partition_hash, std::shared_ptr<csi::kafka::basic_message> message);
       int32_t send_sync(std::shared_ptr<csi::kafka::basic_message> message);
       int32_t send_sync(std::vector<std::shared_ptr<csi::kafka::basic_message>>& messages);
 
@@ -52,7 +54,6 @@ namespace csi {
         std::shared_ptr<csi::kafka::basic_message> msg;
         tx_ack_callback                            cb;
       };
-
 
       // asio callbacks
       void handle_timer(const boost::system::error_code& ec);
