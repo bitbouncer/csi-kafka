@@ -47,7 +47,7 @@ namespace csi {
       _meta_client.close();
       _consumer_meta_client.close();
       for(std::map<int, lowlevel_consumer*>::iterator i = _partition2consumers.begin(); i != _partition2consumers.end(); ++i) {
-        i->second->close();
+        i->second->close("highlevel_consumer::close()");
       }
     }
 

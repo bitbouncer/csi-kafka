@@ -28,7 +28,7 @@ namespace csi {
 
       void                                   connect_async(const boost::asio::ip::tcp::resolver::query& query, int32_t timeout, connect_callback cb);
       boost::system::error_code              connect(const boost::asio::ip::tcp::resolver::query& query, int32_t timeout);
-      void                                   close();
+      void                                   close(std::string reason);
 
       void                                   get_metadata_async(get_metadata_callback cb);
       rpc_result<metadata_response>          get_metadata();

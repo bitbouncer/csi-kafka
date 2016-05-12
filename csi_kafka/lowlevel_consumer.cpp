@@ -76,7 +76,9 @@ namespace csi {
       return _client.connect(query, timeout);
     }
 
-    void lowlevel_consumer::close() {
+    void lowlevel_consumer::close(std::string reason) {
+      boost::system::error_code ignored;
+      BOOST_LOG_TRIVIAL(debug) << "LLC " << _client.remote_endpoint(ignored).address().to_string() << " " << _topic << ":" << _partition << " closing, reason: " << reason;
       _client.close();
     }
 
@@ -126,8 +128,8 @@ namespace csi {
       _client.fetch_async(_topic, cursors, _rx_timeout, 10, _max_packet_size, [this, cb](rpc_result<fetch_response> response) {
         if(response) {
           boost::system::error_code ignored;
-          BOOST_LOG_TRIVIAL(error) << "lowlevel_consumer::fetch " << _client.remote_endpoint(ignored).address().to_string() << " " << _topic << ":" << _partition << " failed: " << to_string(response.ec);
-          close();
+          BOOST_LOG_TRIVIAL(error) << "lowlevel_consumer::fetch() " << _client.remote_endpoint(ignored).address().to_string() << " " << _topic << ":" << _partition << " failed: " << to_string(response.ec);
+          close("fetch() failed");
           cb(response.ec.ec1, response.ec.ec2, NULL);
         } else {
           for(std::vector<csi::kafka::fetch_response::topic_data>::const_iterator i = response->topics.begin(); i != response->topics.end(); ++i) {
@@ -167,9 +169,9 @@ namespace csi {
 
         if(response) {
           boost::system::error_code ignored;
-          BOOST_LOG_TRIVIAL(error) << "lowlevel_consumer::fetch " << _client.remote_endpoint(ignored).address().to_string() << " " << _topic << ":" << _partition << " fetch error: " << to_string(response.ec);
+          BOOST_LOG_TRIVIAL(error) << "lowlevel_consumer::fetch_async()" << _client.remote_endpoint(ignored).address().to_string() << " " << _topic << ":" << _partition << " fetch error: " << to_string(response.ec);
           //_transient_failure = true;
-          close();
+          close("fetch_async failed()");
           _cb(response.ec.ec1, response.ec.ec2, NULL);
         } else {
           for(std::vector<csi::kafka::fetch_response::topic_data>::const_iterator i = response->topics.begin(); i != response->topics.end(); ++i) {
@@ -208,7 +210,7 @@ namespace csi {
         if(response) {
           boost::system::error_code ignored;
           BOOST_LOG_TRIVIAL(warning) << "lowlevel_consumer::fetch " << _client.remote_endpoint(ignored).address().to_string() << " " << _topic << ":" << _partition << " failed: " << to_string(response.ec);
-          close();
+          close("fetch2 failed");
           cb(response);
         }
         for(std::vector<csi::kafka::fetch_response::topic_data>::const_iterator i = response->topics.begin(); i != response->topics.end(); ++i) {
