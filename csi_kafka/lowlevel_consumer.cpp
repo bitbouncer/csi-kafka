@@ -205,14 +205,32 @@ namespace csi {
 
     void lowlevel_consumer::fetch2(fetch2_callback cb) {
       const std::vector<partition_cursor> cursors = { { _partition, _next_offset } };
-
       _client.fetch_async(_topic, cursors, _rx_timeout, 10, _max_packet_size, [this, cb](rpc_result<csi::kafka::fetch_response> response) {
         if(response) {
-          boost::system::error_code ignored;
-          BOOST_LOG_TRIVIAL(warning) << "lowlevel_consumer::fetch " << _client.remote_endpoint(ignored).address().to_string() << " " << _topic << ":" << _partition << " failed: " << to_string(response.ec);
-          close("fetch2 failed");
-          cb(response);
+          if(response.ec.ec2 == csi::kafka::OffsetOutOfRange) { // retry OffsetOutOfRange from beginning of stream... are we sure this is ALWAYS what we want???
+            BOOST_LOG_TRIVIAL(warning) << "lowlevel_consumer: " << _topic << ":" << _partition << " resetting offset to earliest_available_offset";
+            set_offset_time_async(csi::kafka::earliest_available_offset, [this, cb](rpc_result<void> response) {
+              if(response.ec) {
+                rpc_result<csi::kafka::fetch_response> dummy;
+                dummy.ec.ec2 = response.ec.ec2;
+                cb(dummy);
+                return;
+              } else {
+                BOOST_LOG_TRIVIAL(warning) << "lowlevel_consumer: " << _topic << ":" << _partition << " retrying fetch2()";
+                fetch2(cb);
+              }
+            });
+            return;
+          }
+          else {
+            boost::system::error_code ignored;
+            BOOST_LOG_TRIVIAL(warning) << "lowlevel_consumer::fetch " << _client.remote_endpoint(ignored).address().to_string() << " " << _topic << ":" << _partition << " failed: " << to_string(response.ec);
+            close("fetch2 failed");
+            cb(response);
+            return;
+          }
         }
+
         for(std::vector<csi::kafka::fetch_response::topic_data>::const_iterator i = response->topics.begin(); i != response->topics.end(); ++i) {
           // this should always be true.
           if(i->topic_name == _topic) {
