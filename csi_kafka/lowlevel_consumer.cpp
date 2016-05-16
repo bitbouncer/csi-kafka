@@ -123,35 +123,35 @@ namespace csi {
       _next_offset = offset;
     }
 
-    void lowlevel_consumer::fetch(fetch_callback cb) {
-      const std::vector<partition_cursor> cursors = { { _partition, _next_offset } };
-      _client.fetch_async(_topic, cursors, _rx_timeout, 10, _max_packet_size, [this, cb](rpc_result<fetch_response> response) {
-        if(response) {
-          boost::system::error_code ignored;
-          BOOST_LOG_TRIVIAL(error) << "lowlevel_consumer::fetch() " << _client.remote_endpoint(ignored).address().to_string() << " " << _topic << ":" << _partition << " failed: " << to_string(response.ec);
-          close("fetch() failed");
-          cb(response.ec.ec1, response.ec.ec2, NULL);
-        } else {
-          for(std::vector<csi::kafka::fetch_response::topic_data>::const_iterator i = response->topics.begin(); i != response->topics.end(); ++i) {
-            // this should always be true.
-            if(i->topic_name == _topic) {
-              for(std::vector<std::shared_ptr<csi::kafka::fetch_response::topic_data::partition_data>>::const_iterator j = i->partitions.begin(); j != i->partitions.end(); ++j) {
-                if((*j)->partition_id == _partition)  // a partition that have been closed will not exist here so it will not be added again in the next read loop  TBD handle error here....
-                {
-                  // there might be a better way of doing this on lower level since we know the socket rx size.... TBD
-                  for(std::vector<std::shared_ptr<basic_message>>::const_iterator k = (*j)->messages.begin(); k != (*j)->messages.end(); ++k)
-                    _metrics_total_rx_kb += ((*k)->key.size() + (*k)->value.size());
-                  _metrics_total_rx_msg += (*j)->messages.size();
-                  if((*j)->messages.size())
-                    _next_offset = (*j)->messages[(*j)->messages.size() - 1]->offset + 1;
-                  cb(response.ec.ec1, ((csi::kafka::error_codes) (*j)->error_code), *j);
-                }
-              }
-            }
-          }
-        }
-      });
-    }
+    //void lowlevel_consumer::fetch1(fetch_callback cb) {
+    //  const std::vector<partition_cursor> cursors = { { _partition, _next_offset } };
+    //  _client.fetch_async(_topic, cursors, _rx_timeout, 10, _max_packet_size, [this, cb](rpc_result<fetch_response> response) {
+    //    if(response) {
+    //      boost::system::error_code ignored;
+    //      BOOST_LOG_TRIVIAL(error) << "lowlevel_consumer::fetch() " << _client.remote_endpoint(ignored).address().to_string() << " " << _topic << ":" << _partition << " failed: " << to_string(response.ec);
+    //      close("fetch() failed");
+    //      cb(response.ec.ec1, response.ec.ec2, NULL);
+    //    } else {
+    //      for(std::vector<csi::kafka::fetch_response::topic_data>::const_iterator i = response->topics.begin(); i != response->topics.end(); ++i) {
+    //        // this should always be true.
+    //        if(i->topic_name == _topic) {
+    //          for(std::vector<std::shared_ptr<csi::kafka::fetch_response::topic_data::partition_data>>::const_iterator j = i->partitions.begin(); j != i->partitions.end(); ++j) {
+    //            if((*j)->partition_id == _partition)  // a partition that have been closed will not exist here so it will not be added again in the next read loop  TBD handle error here....
+    //            {
+    //              // there might be a better way of doing this on lower level since we know the socket rx size.... TBD
+    //              for(std::vector<std::shared_ptr<basic_message>>::const_iterator k = (*j)->messages.begin(); k != (*j)->messages.end(); ++k)
+    //                _metrics_total_rx_kb += ((*k)->key.size() + (*k)->value.size());
+    //              _metrics_total_rx_msg += (*j)->messages.size();
+    //              if((*j)->messages.size())
+    //                _next_offset = (*j)->messages[(*j)->messages.size() - 1]->offset + 1;
+    //              cb(response.ec.ec1, ((csi::kafka::error_codes) (*j)->error_code), *j);
+    //            }
+    //          }
+    //        }
+    //      }
+    //    }
+    //  });
+    //}
 
     void lowlevel_consumer::_try_fetch() {
       //if(_rx_in_progress || !_client.is_connected() || _next_offset < 0 || !_cb || _transient_failure) when initializing form commit cursor we get -1 first time...
@@ -168,11 +168,29 @@ namespace csi {
         }
 
         if(response) {
-          boost::system::error_code ignored;
-          BOOST_LOG_TRIVIAL(error) << "lowlevel_consumer::fetch_async()" << _client.remote_endpoint(ignored).address().to_string() << " " << _topic << ":" << _partition << " fetch error: " << to_string(response.ec);
-          //_transient_failure = true;
-          close("fetch_async failed()");
-          _cb(response.ec.ec1, response.ec.ec2, NULL);
+          if(response.ec.ec2 == csi::kafka::OffsetOutOfRange) { // retry OffsetOutOfRange from beginning of stream... are we sure this is ALWAYS what we want???
+            BOOST_LOG_TRIVIAL(warning) << "lowlevel_consumer: " << _topic << ":" << _partition << " resetting offset to earliest_available_offset";
+            set_offset_time_async(csi::kafka::earliest_available_offset, [this](rpc_result<void> response) {
+              if(response.ec) {
+                close("set_offset_time_async failed()");
+                _rx_in_progress = false;
+                _cb(response.ec.ec1, response.ec.ec2, NULL);
+                return;
+              } else {
+                BOOST_LOG_TRIVIAL(warning) << "lowlevel_consumer: " << _topic << ":" << _partition << " retrying _try_fetch()";
+                _rx_in_progress = false;
+                _try_fetch();
+                return;
+              }
+            });
+            return;
+          } else {
+            boost::system::error_code ignored;
+            BOOST_LOG_TRIVIAL(error) << "lowlevel_consumer::fetch_async()" << _client.remote_endpoint(ignored).address().to_string() << " " << _topic << ":" << _partition << " fetch error: " << to_string(response.ec);
+            //_transient_failure = true;
+            close("fetch_async failed()");
+            _cb(response.ec.ec1, response.ec.ec2, NULL);
+          }
         } else {
           for(std::vector<csi::kafka::fetch_response::topic_data>::const_iterator i = response->topics.begin(); i != response->topics.end(); ++i) {
             // this should always be true.
@@ -202,8 +220,7 @@ namespace csi {
       _ios.post([this]() {_try_fetch(); });
     }
 
-
-    void lowlevel_consumer::fetch2(fetch2_callback cb) {
+    void lowlevel_consumer::fetch(fetch_callback cb) {
       const std::vector<partition_cursor> cursors = { { _partition, _next_offset } };
       _client.fetch_async(_topic, cursors, _rx_timeout, 10, _max_packet_size, [this, cb](rpc_result<csi::kafka::fetch_response> response) {
         if(response) {
@@ -217,7 +234,7 @@ namespace csi {
                 return;
               } else {
                 BOOST_LOG_TRIVIAL(warning) << "lowlevel_consumer: " << _topic << ":" << _partition << " retrying fetch2()";
-                fetch2(cb);
+                fetch(cb);
               }
             });
             return;
@@ -225,7 +242,7 @@ namespace csi {
           else {
             boost::system::error_code ignored;
             BOOST_LOG_TRIVIAL(warning) << "lowlevel_consumer::fetch " << _client.remote_endpoint(ignored).address().to_string() << " " << _topic << ":" << _partition << " failed: " << to_string(response.ec);
-            close("fetch2 failed");
+            close("fetch failed");
             cb(response);
             return;
           }
@@ -257,6 +274,16 @@ namespace csi {
         }
         cb(response);
       });
+    }
+
+    rpc_result<csi::kafka::fetch_response> lowlevel_consumer::fetch() {
+      std::promise<rpc_result<csi::kafka::fetch_response>> p;
+      std::future<rpc_result<csi::kafka::fetch_response>>  f = p.get_future();
+      fetch([&p](rpc_result<csi::kafka::fetch_response> result) {
+        p.set_value(result);
+      });
+      f.wait();
+      return f.get();
     }
 
     void lowlevel_consumer::get_metadata_async(get_metadata_callback cb) {

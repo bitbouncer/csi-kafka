@@ -14,9 +14,9 @@ namespace csi {
       typedef boost::function <void(rpc_result<metadata_response>)>          get_metadata_callback;
       typedef boost::function <void(rpc_result<group_coordinator_response>)> get_group_coordinator_callback;
       typedef boost::function <void(const boost::system::error_code& ec1, csi::kafka::error_codes ec2, std::shared_ptr<csi::kafka::fetch_response::topic_data::partition_data>)> datastream_callback;
-      typedef boost::function <void(const boost::system::error_code& ec1, csi::kafka::error_codes ec2, std::shared_ptr<csi::kafka::fetch_response::topic_data::partition_data>)> fetch_callback;
+      //typedef boost::function <void(const boost::system::error_code& ec1, csi::kafka::error_codes ec2, std::shared_ptr<csi::kafka::fetch_response::topic_data::partition_data>)> fetch_callback;
 
-      typedef boost::function <void(rpc_result<csi::kafka::fetch_response>)>   fetch2_callback;
+      typedef boost::function <void(rpc_result<csi::kafka::fetch_response>)>   fetch_callback;
 
       enum { MAX_FETCH_SIZE = basic_call_context::MAX_BUFFER_SIZE };
 
@@ -40,10 +40,10 @@ namespace csi {
       void                                   set_offset(int64_t offset);
 
       void                                   stream_async(datastream_callback cb);
-      void                                   fetch(fetch_callback cb);
+      //void                                   fetch1(fetch_callback cb);
 
-      void                                   fetch2(fetch2_callback cb);
-      rpc_result<csi::kafka::fetch_response> fetch2();
+      void                                   fetch(fetch_callback cb);
+      rpc_result<csi::kafka::fetch_response> fetch();
 
 
       inline bool                            is_connected() const { return _client.is_connected(); }

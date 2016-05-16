@@ -212,7 +212,7 @@ namespace csi {
     void highlevel_consumer::fetch(fetch_callback cb) {
       auto final_cb = std::make_shared<csi::async::destructor_callback<std::vector<rpc_result<csi::kafka::fetch_response>>>>(cb);
       for(std::map<int, lowlevel_consumer*>::const_iterator i = _partition2consumers.begin(); i != _partition2consumers.end(); ++i) {
-        i->second->fetch2([final_cb](rpc_result<csi::kafka::fetch_response> response) {
+        i->second->fetch([final_cb](rpc_result<csi::kafka::fetch_response> response) {
           final_cb->value().push_back(response);
         });
       }
