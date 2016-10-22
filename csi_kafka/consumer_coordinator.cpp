@@ -4,6 +4,7 @@
 #include <boost/bind.hpp>
 #include <csi_kafka/internal/async.h>
 #include "consumer_coordinator.h"
+#include <csi-async/async.h>
 
 /*
 * https://cwiki.apache.org/confluence/display/KAFKA/Kafka+Detailed+Consumer+Coordinator+Design
@@ -44,12 +45,17 @@ namespace csi {
       _initial_brokers = brokers;
 
       // move connect any to client. ???
-      std::shared_ptr<std::vector<csi::async::async_function>> work(new std::vector<csi::async::async_function>());
-      for(std::vector<broker_address>::const_iterator i = brokers.begin(); i != brokers.end(); ++i)
-        work->push_back([this, timeout, i](csi::async::async_callback cb) { _client.connect_async(*i, timeout, [this, cb](const boost::system::error_code& ec) { cb(ec); }); });
+      auto work(std::make_shared<csi::async::work<boost::system::error_code>>(csi::async::PARALLEL, csi::async::FIRST_SUCCESS));
+      //for(std::vector<broker_address>::const_iterator i = brokers.begin(); i != brokers.end(); ++i)
+      for (auto const& i : brokers)
+        work->push_back([this, timeout, i](csi::async::work<boost::system::error_code>::callback cb) {
+        _client.connect_async(i, timeout, [this, cb](boost::system::error_code ec) { 
+          cb(ec); 
+        }); 
+      });
 
-      csi::async::first_success(*work, [work, this, timeout, cb](const boost::system::error_code& ec) {
-        if(ec) {
+      (*work)([work, this, timeout, cb](boost::system::error_code ec) {
+        if (ec) {
           BOOST_LOG_TRIVIAL(error) << _consumer_group << ", consumer_coordinator, failed to connect to cluster: " << to_string(ec);
           cb(ec);
           return;
@@ -57,7 +63,7 @@ namespace csi {
         boost::system::error_code ignored;
         BOOST_LOG_TRIVIAL(debug) << _consumer_group << ", consumer_coordinator, connected to cluster OK (" << _client.remote_endpoint(ignored).address().to_string() << ")";
         _client.get_group_coordinator_async(_consumer_group, [this, timeout, cb](rpc_result<group_coordinator_response> result) {
-          if(result) // no matter the error - let's fake the error code
+          if (result) // no matter the error - let's fake the error code
           {
             BOOST_LOG_TRIVIAL(error) << _consumer_group << ", consumer_coordinator, get_group_coordinator failed: " << to_string((csi::kafka::error_codes) result->error_code);
             cb(make_error_code(boost::system::errc::host_unreachable));

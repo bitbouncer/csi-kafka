@@ -38,8 +38,11 @@ namespace csi {
       void                                   set_offset_time_async(int64_t start_time, set_offset_callback cb);
       rpc_result<void>                       set_offset_time(int64_t start_time);
       void                                   set_offset(int64_t offset);
-
+      int64_t                                get_next_offset() const { return _next_offset; }
       void                                   stream_async(datastream_callback cb);
+      void                                   pause();
+      void                                   resume();
+
       //void                                   fetch1(fetch_callback cb);
 
       void                                   fetch(fetch_callback cb);
@@ -69,6 +72,7 @@ namespace csi {
       int64_t                         _next_offset;
       bool                            _transient_failure;
       size_t                          _max_packet_size;
+      bool                            _pause_streaming;
 
       //METRICS
       typedef boost::accumulators::accumulator_set<double, boost::accumulators::stats<boost::accumulators::tag::rolling_mean> >   metrics_accumulator_t;

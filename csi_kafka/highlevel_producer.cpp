@@ -4,6 +4,8 @@
 #include <boost/log/trivial.hpp>
 #include <csi_kafka/internal/async.h>
 #include "highlevel_producer.h"
+#include <csi-async/async.h>
+#include <csi-async/destructor_callback.h>
 
 namespace csi {
   namespace kafka {
@@ -54,10 +56,9 @@ namespace csi {
               //std::vector < boost::function <void( const boost::system::error_code&)>> f;
               //vector of async functions having callback on completion
 
-              std::shared_ptr<std::vector<csi::async::async_function>> work(new std::vector<csi::async::async_function>());
-
+              auto work(std::make_shared<csi::async::work<boost::system::error_code>>(csi::async::PARALLEL, csi::async::ALL));
               for(std::map<int, lowlevel_producer*>::iterator i = _partition2producers.begin(); i != _partition2producers.end(); ++i) {
-                work->push_back([this, i](csi::async::async_callback cb) {
+                work->push_back([this, i](csi::async::work<boost::system::error_code>::callback cb) {
                   int partition = i->first;
                   int leader = _partition2partitions[partition].leader;
                   auto bd = _broker2brokers[leader];
@@ -74,15 +75,15 @@ namespace csi {
                 });
               }
 
-              BOOST_LOG_TRIVIAL(trace) << "highlevel_producer connect_async / waterfall START";
-              csi::async::waterfall(*work, [work, cb](const boost::system::error_code& ec) // add iterator for last function
+              BOOST_LOG_TRIVIAL(trace) << "highlevel_producer connect_async / PARALLEL start";
+              (*work)([work, cb](const boost::system::error_code& ec) // add iterator for last function
               {
-                BOOST_LOG_TRIVIAL(trace) << "highlevel_producer connect_async / waterfall CB ec=" << ec;
+                BOOST_LOG_TRIVIAL(trace) << "highlevel_producer connect_async / PARALLEL CB ec=" << ec;
                 if(ec) {
-                  BOOST_LOG_TRIVIAL(warning) << "highlevel_producer connect_async can't connect to broker ec:" << ec;
+                  BOOST_LOG_TRIVIAL(warning) << "highlevel_producer connect_async at least one failed, ec:" << ec;
                 }
                 cb(ec);
-                BOOST_LOG_TRIVIAL(trace) << "highlevel_producer connect_async / waterfall EXIT";
+                BOOST_LOG_TRIVIAL(trace) << "highlevel_producer connect_async / PARALLEL EXIT";
               }); //waterfall
               BOOST_LOG_TRIVIAL(trace) << "highlevel_producer _meta_client.get_metadata_async() CB EXIT";
             } // get_metadata_async ok?
@@ -144,7 +145,7 @@ namespace csi {
     void highlevel_producer::handle_response(rpc_result<metadata_response> result) {
       if(!result) {
         {
-          csi::kafka::spinlock::scoped_lock xxx(_spinlock);
+          csi::spinlock::scoped_lock xxx(_spinlock);
           //_metadata = result;
 
           //changes?
@@ -189,7 +190,7 @@ namespace csi {
     void highlevel_producer::send_async(uint32_t partition_hash, std::shared_ptr<csi::kafka::basic_message> message, tx_ack_callback cb)
     {
       // enqueu in partition queue or store if we don't have a connection the cluster.
-      csi::kafka::spinlock::scoped_lock xxx(_spinlock);
+      csi::spinlock::scoped_lock xxx(_spinlock);
 
       // TBD change below when we can accept repartitioning - for now it's okay to store initial data and send it when we find the cluster.
       //if (_meta_client.is_connected() && _partition2producers.size())
@@ -268,7 +269,7 @@ namespace csi {
     size_t highlevel_producer::items_in_queue() const {
       size_t items = 0;
       items += _tx_queue.size();
-      csi::kafka::spinlock xx;
+      csi::spinlock::scoped_lock xx(_spinlock);
       for(std::map<int, lowlevel_producer*>::const_iterator i = _partition2producers.begin(); i != _partition2producers.end(); ++i)
         items += i->second->items_in_queue();
       return items;

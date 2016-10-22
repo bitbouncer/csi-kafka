@@ -3,6 +3,8 @@
 #include <boost/log/trivial.hpp>
 #include <csi_kafka/internal/async.h>
 #include "highlevel_consumer.h"
+#include <csi-async/async.h>
+#include <csi-async/destructor_callback.h>
 
 namespace csi {
   namespace kafka {
@@ -77,11 +79,10 @@ namespace csi {
           //std::vector < boost::function <void( const boost::system::error_code&)>> f;
           //vector of async functions having callback on completion
 
-          std::shared_ptr<std::vector<csi::async::async_function>> work(new std::vector<csi::async::async_function>());
-
+          auto work(std::make_shared<csi::async::work<boost::system::error_code>>(csi::async::PARALLEL, csi::async::ALL));
           for(std::map<int, lowlevel_consumer*>::iterator i = _partition2consumers.begin(); i != _partition2consumers.end(); ++i) {
             if(!i->second->is_connected() && !i->second->is_connection_in_progress()) {
-              work->push_back([this, i](csi::async::async_callback cb) {
+              work->push_back([this, i](csi::async::work<boost::system::error_code>::callback cb) {
                 int partition = i->first;
                 int leader = _partition2partitions[partition].leader;
                 auto bd = _broker2brokers[leader];
@@ -99,15 +100,15 @@ namespace csi {
             }
           }
 
-          BOOST_LOG_TRIVIAL(trace) << "highlevel_consumer connect_async / waterfall START";
-          csi::async::waterfall(*work, [work, cb](const boost::system::error_code& ec) // add iterator for last function
+          BOOST_LOG_TRIVIAL(trace) << "highlevel_consumer connect_async / PARALLEL START";
+          (*work)([work, cb](const boost::system::error_code& ec) // add iterator for last function
           {
-            BOOST_LOG_TRIVIAL(trace) << "highlevel_consumer connect_async / waterfall CB ec=" << ec;
+            BOOST_LOG_TRIVIAL(trace) << "highlevel_consumer connect_async / PARALLEL CB ec=" << ec;
             if(ec) {
               BOOST_LOG_TRIVIAL(warning) << "highlevel_consumer connect_async can't connect to broker ec:" << ec;
             }
             cb(ec);
-            BOOST_LOG_TRIVIAL(trace) << "highlevel_consumer connect_async / waterfall EXIT";
+            BOOST_LOG_TRIVIAL(trace) << "highlevel_consumer connect_async / PARALLEL EXIT";
           }); //waterfall
           BOOST_LOG_TRIVIAL(trace) << "highlevel_consumer _meta_client.get_metadata_async() CB EXIT";
         } // get_metadata_async ok?
@@ -151,6 +152,13 @@ namespace csi {
       }
     }
 
+    std::map<int32_t, int64_t> highlevel_consumer::get_next_offset() const {
+      std::map<int32_t, int64_t> res;
+      for (std::map<int, lowlevel_consumer*>::const_iterator i = _partition2consumers.begin(); i != _partition2consumers.end(); ++i)
+        res[i->first] = i->second->get_next_offset();
+      return res;
+    }
+
     // we should probably have a good return value here.. a map of partiones to ec ?
     void highlevel_consumer::set_offset(const std::vector<topic_offset>& offsets) {
       for(std::vector<topic_offset>::const_iterator i = offsets.begin(); i != offsets.end(); ++i) {
@@ -171,7 +179,7 @@ namespace csi {
     void highlevel_consumer::handle_response(rpc_result<metadata_response> result) {
       if(!result) {
         {
-          csi::kafka::spinlock::scoped_lock xxx(_spinlock);
+          csi::spinlock::scoped_lock xxx(_spinlock);
 
           if(_partition2consumers.size() == 0) {
             for(std::vector<csi::kafka::metadata_response::topic_data>::const_iterator i = result->topics.begin(); i != result->topics.end(); ++i) {
@@ -209,6 +217,18 @@ namespace csi {
       }
     }
 
+    void highlevel_consumer::pause() {
+      for (std::map<int, lowlevel_consumer*>::const_iterator i = _partition2consumers.begin(); i != _partition2consumers.end(); ++i) {
+        i->second->pause();
+      }
+    }
+
+    void highlevel_consumer::resume() {
+      for (std::map<int, lowlevel_consumer*>::const_iterator i = _partition2consumers.begin(); i != _partition2consumers.end(); ++i) {
+        i->second->resume();
+      }
+    }
+    
     void highlevel_consumer::fetch(fetch_callback cb) {
       auto final_cb = std::make_shared<csi::async::destructor_callback<std::vector<rpc_result<csi::kafka::fetch_response>>>>(cb);
       for(std::map<int, lowlevel_consumer*>::const_iterator i = _partition2consumers.begin(); i != _partition2consumers.end(); ++i) {

@@ -5,7 +5,7 @@
 #include <boost/function.hpp>
 #include <boost/bind.hpp>
 #include <csi_kafka/internal/call_context.h>
-#include <csi_kafka/internal/spinlock.h>
+#include <csi-async/spinlock.h>
 #include <csi_kafka/kafka.h>
 #include <csi_kafka/kafka_error_code.h>
 #include <csi_kafka/protocol_decoder.h>
@@ -94,7 +94,7 @@ namespace csi {
       void socket_tx_cb(const boost::system::error_code& e, basic_call_context::handle handle);
 
       boost::asio::io_service&	                _io_service;
-      csi::kafka::spinlock                      _spinlock;
+      mutable csi::spinlock                     _spinlock;
       boost::asio::ip::tcp::resolver            _resolver;
       boost::asio::deadline_timer			          _timer;
       boost::posix_time::time_duration	        _timeout;

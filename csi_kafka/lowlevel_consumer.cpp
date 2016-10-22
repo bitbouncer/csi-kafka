@@ -16,6 +16,7 @@ namespace csi {
       _rx_timeout(rx_timeout),
       _rx_in_progress(false),
       _transient_failure(false),
+      _pause_streaming(false),
       _metrics_rx_kb_sec(boost::accumulators::tag::rolling_window::window_size = 10),
       _metrics_rx_msg_sec(boost::accumulators::tag::rolling_window::window_size = 10),
       _metrics_rx_roundtrip(boost::accumulators::tag::rolling_window::window_size = 10),
@@ -155,7 +156,7 @@ namespace csi {
 
     void lowlevel_consumer::_try_fetch() {
       //if(_rx_in_progress || !_client.is_connected() || _next_offset < 0 || !_cb || _transient_failure) when initializing form commit cursor we get -1 first time...
-      if(_rx_in_progress || !_client.is_connected() || !_cb || _transient_failure)
+      if(_rx_in_progress || !_client.is_connected() || !_cb || _transient_failure || _pause_streaming)
         return;
 
       _rx_in_progress = true;
@@ -218,6 +219,15 @@ namespace csi {
     void lowlevel_consumer::stream_async(datastream_callback cb) {
       _cb = cb;
       _ios.post([this]() {_try_fetch(); });
+    }
+
+    void lowlevel_consumer::pause(){
+      _pause_streaming = true;
+    }
+
+    void lowlevel_consumer::resume() {
+      _pause_streaming = false;
+      _try_fetch();
     }
 
     void lowlevel_consumer::fetch(fetch_callback cb) {

@@ -79,7 +79,7 @@ namespace csi {
 
     void lowlevel_producer::send_async(std::shared_ptr<basic_message> message, tx_ack_callback cb) {
       {
-        csi::kafka::spinlock::scoped_lock xxx(_spinlock);
+        csi::spinlock::scoped_lock xxx(_spinlock);
         _tx_queue_byte_size += message ? message->size() : 0; // callback markers
         _tx_queue.push_front(tx_item(message, cb));
       }
@@ -114,7 +114,7 @@ namespace csi {
       // it should be included in the nr of items sent so we can remove it after completion
       size_t items_in_batch = 0;
       {
-        csi::kafka::spinlock::scoped_lock xxx(_spinlock);
+        csi::spinlock::scoped_lock xxx(_spinlock);
         size_t remaining = _max_packet_size;
         {
           std::deque<tx_item> ::reverse_iterator cursor = _tx_queue.rbegin();
@@ -157,7 +157,7 @@ namespace csi {
 
           std::vector<tx_ack_callback> callbacks; // we cant run the callbacks when the spinlock is locked so copy those and run them after
           {
-            csi::kafka::spinlock::scoped_lock xxx(_spinlock);
+            csi::spinlock::scoped_lock xxx(_spinlock);
             {
               assert(_tx_queue.size() >= items_in_batch);
               size_t tx_size = 0;

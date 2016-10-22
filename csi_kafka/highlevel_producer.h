@@ -68,7 +68,7 @@ namespace csi {
       boost::posix_time::time_duration	                                       _timeout;
       // CLUSTER METADATA
       csi::kafka::async_metadata_client                                        _meta_client;
-      csi::kafka::spinlock                                                     _spinlock; // protects the metadata below
+      mutable csi::spinlock                                                    _spinlock; // protects the metadata below
       std::map<int, broker_data>                                               _broker2brokers;
       std::map<int, csi::kafka::metadata_response::topic_data::partition_data> _partition2partitions;
       std::deque<tx_item>                                                      _tx_queue; // used when waiting for cluster

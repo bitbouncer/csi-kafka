@@ -36,7 +36,7 @@ namespace csi {
       boost::posix_time::time_duration                                         _current_retry_timeout;
       boost::posix_time::time_duration                                         _max_retry_timeout;
       csi::kafka::lowlevel_client                                              _client;
-      csi::kafka::spinlock                                                     _spinlock; // protects the metadata below
+      mutable csi::spinlock                                                    _spinlock; // protects the metadata below
       std::vector<broker_address>                                              _known_brokers;
       std::vector<broker_address>::iterator                                    _next_broker;
       connect_callback                                                         _connect_cb;

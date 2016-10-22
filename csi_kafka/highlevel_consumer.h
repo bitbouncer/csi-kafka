@@ -35,8 +35,13 @@ namespace csi {
       void                                                set_offset(int64_t start_time);
       void                                                set_offset(const std::vector<topic_offset>& offsets);
       void                                                set_offset(const std::map<int32_t, int64_t>&);
+      std::map<int32_t, int64_t>                          get_next_offset() const;
       void                                                close();
+
       void                                                stream_async(datastream_callback cb);
+      void                                                pause();
+      void                                                resume();
+
       void                                                fetch(fetch_callback cb);
       std::vector<rpc_result<csi::kafka::fetch_response>> fetch();
       std::vector<metrics>                                get_metrics() const;
@@ -57,7 +62,7 @@ namespace csi {
 
       // CLUSTER METADATA
       csi::kafka::async_metadata_client                                           _meta_client;
-      csi::kafka::spinlock                                                        _spinlock; // protects the metadata below
+      mutable csi::spinlock                                                       _spinlock; // protects the metadata below
       std::vector<int>                                                            _partitions_mask;
       std::map<int, broker_data>                                                  _broker2brokers;
       std::map<int, csi::kafka::metadata_response::topic_data::partition_data>    _partition2partitions; // partition->partition_dat

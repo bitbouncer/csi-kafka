@@ -56,7 +56,7 @@ namespace csi {
       const std::string                          _topic;
       const int32_t                              _partition_id;
       //TX queue
-      csi::kafka::spinlock                       _spinlock;
+      mutable csi::spinlock                      _spinlock;
       std::deque<tx_item>                        _tx_queue;
       size_t                                     _tx_queue_byte_size;
       bool                                       _tx_in_progress;

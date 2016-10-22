@@ -85,7 +85,7 @@ namespace csi {
         _connect_retry_timer.expires_from_now(_current_retry_timeout);
         _connect_retry_timer.async_wait(boost::bind(&async_metadata_client::handle_connect_retry_timer, this, boost::asio::placeholders::error));
       } else {
-        csi::kafka::spinlock::scoped_lock xxx(_spinlock);
+        csi::spinlock::scoped_lock xxx(_spinlock);
         _metadata = response;
 
         for(std::vector<csi::kafka::broker_data>::const_iterator i = _metadata->brokers.begin(); i != _metadata->brokers.end(); ++i) {
