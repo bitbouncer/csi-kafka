@@ -36,12 +36,13 @@ namespace csi {
       inline bool                            is_connection_in_progress() const { return _client.is_connection_in_progress(); }
       const std::string&                     consumer_group() const { return _consumer_group; }
     protected:
-      boost::asio::io_service&        _ios;
-      csi::kafka::lowlevel_client     _client;
-      const std::string               _consumer_group;
-      std::vector<broker_address>     _initial_brokers;
+      boost::asio::io_service&    _ios;
+      csi::kafka::lowlevel_client _client;
+      const std::string           _consumer_group;
+      std::vector<broker_address> _initial_brokers;
     };
 
-    std::vector<topic_offset> parse(rpc_result<offset_fetch_response>, std::string topic, int32_t& ec);
+    std::map<int32_t, int64_t> parse(rpc_result<offset_fetch_response> result, std::string topic, int32_t& ec);
+    //std::vector<topic_offset> parse(rpc_result<offset_fetch_response>, std::string topic, int32_t& ec);     
   }
 };
