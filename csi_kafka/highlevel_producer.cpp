@@ -166,7 +166,7 @@ namespace csi {
 
             while(_tx_queue.size()) {
               tx_item& item = *(_tx_queue.end() - 1);
-              uint32_t partition = item.hash % _partition2producers.size();
+              uint32_t partition = item.msg->partition_hash % _partition2producers.size();
               _partition2producers[partition]->send_async(item.msg, item.cb);
               _tx_queue.pop_back();
             }
@@ -186,49 +186,36 @@ namespace csi {
         }
       }
     }
+  
+    // if you give a partition id in message it will end up there - otherwise calc a crc32 on key and place it in hash % nr_of_partitions
+    void highlevel_producer::send_async(std::shared_ptr<basic_message> message, tx_ack_callback cb) {
+      if (!message->has_partition_hash) {
+        if (!message->key.is_null()) {
+          // calc a hash to get partition
+          boost::crc_32_type result;
+          uint32_t keysize = (uint32_t) message->key.size();
+          result.process_bytes(&message->key[0], message->key.size());
+          message->partition_hash = result.checksum();
+        } else if (!message->value.is_null()) {
+          // calc a hash to get partition
+          boost::crc_32_type result;
+          uint32_t valsize = (uint32_t) message->value.size();
+          result.process_bytes(&message->value[0], valsize);
+          message->partition_hash = result.checksum();
+        }
+      }
 
-    void highlevel_producer::send_async(uint32_t partition_hash, std::shared_ptr<csi::kafka::basic_message> message, tx_ack_callback cb)
-    {
       // enqueu in partition queue or store if we don't have a connection the cluster.
       csi::spinlock::scoped_lock xxx(_spinlock);
 
       // TBD change below when we can accept repartitioning - for now it's okay to store initial data and send it when we find the cluster.
       //if (_meta_client.is_connected() && _partition2producers.size())
-      if(_partition2producers.size()) {
-        uint32_t partition = partition_hash % _partition2producers.size();
+      if (_partition2producers.size()) {
+        uint32_t partition = message->partition_hash % _partition2producers.size();
         _partition2producers[partition]->send_async(message, cb);
       } else {
-        _tx_queue.push_front(tx_item(partition_hash, message, cb));
+        _tx_queue.push_front(tx_item(message, cb));
       }
-    }
-
-    int32_t highlevel_producer::send_sync(uint32_t partition_hash, std::shared_ptr<csi::kafka::basic_message> message) {
-      std::promise<int32_t> p;
-      std::future<int32_t>  f = p.get_future();
-      send_async(partition_hash, message, [&p](int32_t result) {
-        p.set_value(result);
-      });
-      f.wait();
-      return f.get();
-    }
-
-    // if you give a partition id in message it will end up there - otherwise calc a crc32 on key and place it in hash % nr_of_partitions
-    void highlevel_producer::send_async(std::shared_ptr<basic_message> message, tx_ack_callback cb) {
-      uint32_t hash = 0;
-      if(!message->key.is_null()) {
-        // calc a hash to get partition
-        boost::crc_32_type result;
-        uint32_t keysize = (uint32_t) message->key.size();
-        result.process_bytes(&message->key[0], message->key.size());
-        hash = result.checksum();
-      } else if(!message->value.is_null()) {
-        // calc a hash to get partition
-        boost::crc_32_type result;
-        uint32_t valsize = (uint32_t) message->value.size();
-        result.process_bytes(&message->value[0], valsize);
-        hash = result.checksum();
-      }
-      send_async(hash, message, cb);
     }
 
     void highlevel_producer::send_async(std::vector<std::shared_ptr<basic_message>>& messages, tx_ack_callback cb) {

@@ -122,25 +122,45 @@ struct basic_message
   };
 
   basic_message() :
+    has_partition_hash(false),
+    partition_hash(-1),
     offset(0) {}
 
-  basic_message(const std::string& akey, const std::string& aval) :
+  basic_message(uint32_t partition_hash, const std::string& akey, const std::string& aval) :
+    has_partition_hash(true),
+    partition_hash(partition_hash),
     offset(0),
     key(akey.data(), akey.size()),
     value(aval.data(), aval.size()) {}
 
-  basic_message(const std::string& akey) :
+  /*
+   basic_message(const std::string& akey) :
+    has_partition_hash(false),
+    partition_hash(-1),
     offset(0),
     key(akey.data(), akey.size()) {}
+  */
 
-
+  /*
   basic_message(const payload_type& akey, const payload_type& aval) :
+    has_partition_hash(false),
+    partition_hash(-1),
+    offset(0),
+    key(akey.data(), akey.data() + akey.size()),
+    value(aval.data(), aval.data() + aval.size()) {}
+ */
+
+  basic_message(uint32_t partition_hash, const payload_type& akey, const payload_type& aval) :
+    has_partition_hash(true),
+    partition_hash(partition_hash),
     offset(0),
     key(akey.data(), akey.data() + akey.size()),
     value(aval.data(), aval.data() + aval.size()) {}
 
   size_t size() const { return key.size() + value.size() + 26; } // estimated size for streaming TODO check if this is correct
 
+  bool         has_partition_hash;
+  uint32_t     partition_hash;
   int64_t      offset;
   payload_type key;
   payload_type value;

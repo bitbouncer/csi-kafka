@@ -29,11 +29,11 @@ namespace csi {
       void connect_async(const std::vector<broker_address>& brokers, connect_callback cb);
       boost::system::error_code connect(const std::vector<broker_address>& brokers);
 
-      void send_async(uint32_t partition_hash, std::shared_ptr<csi::kafka::basic_message> message, tx_ack_callback = NULL);
+      //void send_async(uint32_t partition_hash, std::shared_ptr<csi::kafka::basic_message> message, tx_ack_callback = NULL);
       void send_async(std::shared_ptr<csi::kafka::basic_message> message, tx_ack_callback = NULL);
       void send_async(std::vector<std::shared_ptr<csi::kafka::basic_message>>& messages, tx_ack_callback = NULL);
       
-      int32_t send_sync(uint32_t partition_hash, std::shared_ptr<csi::kafka::basic_message> message);
+      //int32_t send_sync(uint32_t partition_hash, std::shared_ptr<csi::kafka::basic_message> message);
       int32_t send_sync(std::shared_ptr<csi::kafka::basic_message> message);
       int32_t send_sync(std::vector<std::shared_ptr<csi::kafka::basic_message>>& messages);
 
@@ -48,9 +48,8 @@ namespace csi {
 
     private:
       struct tx_item {
-        tx_item(uint32_t h, std::shared_ptr<csi::kafka::basic_message> message) : hash(h), msg(message) {}
-        tx_item(uint32_t h, std::shared_ptr<csi::kafka::basic_message> message, tx_ack_callback callback) : hash(h), msg(message), cb(callback) {}
-        uint32_t                                   hash;
+        tx_item(std::shared_ptr<csi::kafka::basic_message> message) : msg(message) {}
+        tx_item(std::shared_ptr<csi::kafka::basic_message> message, tx_ack_callback callback) : msg(message), cb(callback) {}
         std::shared_ptr<csi::kafka::basic_message> msg;
         tx_ack_callback                            cb;
       };
