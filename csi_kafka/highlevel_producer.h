@@ -19,33 +19,24 @@ namespace csi {
         double      tx_roundtrip;
       };
 
-      typedef boost::function <void(const boost::system::error_code&)> connect_callback;
-      typedef boost::function <void(int32_t ec)>                       tx_ack_callback;
+      typedef std::function <void(const boost::system::error_code&)> connect_callback;
+      typedef std::function <void(int32_t ec)>                       tx_ack_callback;
 
       highlevel_producer(boost::asio::io_service& io_service, const std::string& topic, int32_t required_acks, int32_t tx_timeout, int32_t max_packet_size = -1);
       ~highlevel_producer();
-
-      void connect_forever(const std::vector<broker_address>& brokers); // , connect_callback cb);  // stream of connection events??
-      void connect_async(const std::vector<broker_address>& brokers, connect_callback cb);
+      void                      close();
+      boost::asio::io_service&  io_service() { return _ios; }
+      void                      connect_forever(const std::vector<broker_address>& brokers); // , connect_callback cb);  // stream of connection events??
+      void                      connect_async(const std::vector<broker_address>& brokers, connect_callback cb);
       boost::system::error_code connect(const std::vector<broker_address>& brokers);
-
-      //void send_async(uint32_t partition_hash, std::shared_ptr<csi::kafka::basic_message> message, tx_ack_callback = NULL);
-      void send_async(std::shared_ptr<csi::kafka::basic_message> message, tx_ack_callback = NULL);
-      void send_async(std::vector<std::shared_ptr<csi::kafka::basic_message>>& messages, tx_ack_callback = NULL);
-      
-      //int32_t send_sync(uint32_t partition_hash, std::shared_ptr<csi::kafka::basic_message> message);
-      int32_t send_sync(std::shared_ptr<csi::kafka::basic_message> message);
-      int32_t send_sync(std::vector<std::shared_ptr<csi::kafka::basic_message>>& messages);
-
-      void close();
-
-      size_t items_in_queue() const;
-
-      std::vector<metrics> get_metrics() const;
-
+      void                      send_async(std::shared_ptr<csi::kafka::basic_message> message, tx_ack_callback = NULL);
+      void                      send_async(std::vector<std::shared_ptr<csi::kafka::basic_message>>& messages, tx_ack_callback = NULL);
+      int32_t                   send_sync(std::shared_ptr<csi::kafka::basic_message> message);
+      int32_t                   send_sync(std::vector<std::shared_ptr<csi::kafka::basic_message>>& messages);
+      size_t                    items_in_queue() const;
+      std::vector<metrics>      get_metrics() const;
       inline const std::string& topic() const { return _topic; }
-      inline size_t partitions() const { return _partition2partitions.size(); }
-
+      inline size_t             partitions() const { return _partition2partitions.size(); }
     private:
       struct tx_item {
         tx_item(std::shared_ptr<csi::kafka::basic_message> message) : msg(message) {}

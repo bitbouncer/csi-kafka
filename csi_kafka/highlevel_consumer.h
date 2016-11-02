@@ -17,18 +17,19 @@ namespace csi {
         double      rx_roundtrip;
       };
 
-      typedef boost::function <void(const boost::system::error_code&)> connect_callback;
-      typedef boost::function <void(const boost::system::error_code& ec1, csi::kafka::error_codes ec2, std::shared_ptr<csi::kafka::fetch_response::topic_data::partition_data>)> datastream_callback;
+      typedef std::function <void(const boost::system::error_code&)> connect_callback;
+      typedef std::function <void(const boost::system::error_code& ec1, csi::kafka::error_codes ec2, std::shared_ptr<csi::kafka::fetch_response::topic_data::partition_data>)> datastream_callback;
 
-      typedef boost::function <void(std::vector<rpc_result<csi::kafka::fetch_response>>)> fetch_callback;
-      typedef boost::function <void(rpc_result<group_coordinator_response>)>              get_group_coordinator_callback;
+      typedef std::function <void(std::vector<rpc_result<csi::kafka::fetch_response>>)> fetch_callback;
+      typedef std::function <void(rpc_result<group_coordinator_response>)>              get_group_coordinator_callback;
 
       enum { MAX_FETCH_SIZE = basic_call_context::MAX_BUFFER_SIZE };
 
       highlevel_consumer(boost::asio::io_service& io_service, const std::string& topic, int32_t rx_timeout, size_t max_packet_size = MAX_FETCH_SIZE);
       highlevel_consumer(boost::asio::io_service& io_service, const std::string& topic, const std::vector<int>& partion_mask, int32_t rx_timeout, size_t max_packet_size = MAX_FETCH_SIZE);
       ~highlevel_consumer();
-
+      boost::asio::io_service&                            io_service() { return _ios; }
+      void                                                close();
       void                                                connect_forever(const std::vector<broker_address>& brokers); // , connect_callback cb);  // stream of connection events??
       void                                                connect_async(const std::vector<broker_address>& brokers, connect_callback cb);
       boost::system::error_code                           connect(const std::vector<broker_address>& brokers);
@@ -36,12 +37,10 @@ namespace csi {
       void                                                set_offset(const std::vector<topic_offset>& offsets);
       void                                                set_offset(const std::map<int32_t, int64_t>&);
       std::map<int32_t, int64_t>                          get_next_offset() const;
-      void                                                close();
 
       void                                                stream_async(datastream_callback cb);
       void                                                pause();
       void                                                resume();
-
       void                                                fetch(fetch_callback cb);
       std::vector<rpc_result<csi::kafka::fetch_response>> fetch();
       std::vector<metrics>                                get_metrics() const;

@@ -6,8 +6,8 @@ namespace csi {
   namespace kafka {
     class async_metadata_client {
     public:
-      typedef boost::function < void(const boost::system::error_code&)>       connect_callback;
-      typedef boost::function <void(rpc_result<metadata_response>)>           get_metadata_callback;
+      typedef std::function <void(const boost::system::error_code&)> connect_callback;
+      typedef std::function <void(rpc_result<metadata_response>)>    get_metadata_callback;
 
       async_metadata_client(boost::asio::io_service& io_service, std::string topic);
       ~async_metadata_client();

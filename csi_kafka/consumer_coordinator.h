@@ -9,9 +9,9 @@ namespace csi {
   namespace kafka {
     class consumer_coordinator {
     public:
-      typedef boost::function <void(const boost::system::error_code&)>   connect_callback;
-      typedef boost::function <void(rpc_result<offset_fetch_response>)>  get_consumer_offset_callback;
-      typedef boost::function <void(rpc_result<offset_commit_response>)> commit_offset_callback;
+      typedef std::function <void(const boost::system::error_code&)>   connect_callback;
+      typedef std::function <void(rpc_result<offset_fetch_response>)>  get_consumer_offset_callback;
+      typedef std::function <void(rpc_result<offset_commit_response>)> commit_offset_callback;
 
       consumer_coordinator(boost::asio::io_service& io_service, const std::string& consumer_group);
       ~consumer_coordinator();

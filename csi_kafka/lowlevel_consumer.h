@@ -9,20 +9,18 @@ namespace csi {
   namespace kafka {
     class lowlevel_consumer {
     public:
-      typedef boost::function <void(const boost::system::error_code&)>       connect_callback;
-      typedef boost::function <void(rpc_result<void>)>                       set_offset_callback;
-      typedef boost::function <void(rpc_result<metadata_response>)>          get_metadata_callback;
-      typedef boost::function <void(rpc_result<group_coordinator_response>)> get_group_coordinator_callback;
-      typedef boost::function <void(const boost::system::error_code& ec1, csi::kafka::error_codes ec2, std::shared_ptr<csi::kafka::fetch_response::topic_data::partition_data>)> datastream_callback;
-      //typedef boost::function <void(const boost::system::error_code& ec1, csi::kafka::error_codes ec2, std::shared_ptr<csi::kafka::fetch_response::topic_data::partition_data>)> fetch_callback;
-
-      typedef boost::function <void(rpc_result<csi::kafka::fetch_response>)>   fetch_callback;
+      typedef std::function <void(const boost::system::error_code&)>       connect_callback;
+      typedef std::function <void(rpc_result<void>)>                       set_offset_callback;
+      typedef std::function <void(rpc_result<metadata_response>)>          get_metadata_callback;
+      typedef std::function <void(rpc_result<group_coordinator_response>)> get_group_coordinator_callback;
+      typedef std::function <void(const boost::system::error_code& ec1, csi::kafka::error_codes ec2, std::shared_ptr<csi::kafka::fetch_response::topic_data::partition_data>)> datastream_callback;
+      typedef std::function <void(rpc_result<csi::kafka::fetch_response>)>  fetch_callback;
 
       enum { MAX_FETCH_SIZE = basic_call_context::MAX_BUFFER_SIZE };
 
       lowlevel_consumer(boost::asio::io_service& io_service, const std::string& topic, int32_t partition, int32_t rx_timeout, size_t max_packet_size = MAX_FETCH_SIZE);
       ~lowlevel_consumer();
-
+      boost::asio::io_service&               io_service() { return _ios; }
       void                                   connect_async(const broker_address& address, int32_t timeout, connect_callback);
       boost::system::error_code              connect(const broker_address& address, int32_t timeout);
 
