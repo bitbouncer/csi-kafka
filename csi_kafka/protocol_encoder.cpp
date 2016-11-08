@@ -1,3 +1,7 @@
+#ifdef WIN32 
+#define BOOST_ASIO_ERROR_CATEGORY_NOEXCEPT noexcept(true)
+#endif
+
 #include <boost/endian/arithmetic.hpp>
 #include <boost/iostreams/stream.hpp>
 #include <boost/crc.hpp>

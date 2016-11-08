@@ -1,3 +1,7 @@
+#ifdef WIN32 
+#define BOOST_ASIO_ERROR_CATEGORY_NOEXCEPT noexcept(true)
+#endif
+
 #include "kafka.h"
 
 namespace csi {

@@ -1,3 +1,7 @@
+#ifdef WIN32 
+#define BOOST_ASIO_ERROR_CATEGORY_NOEXCEPT noexcept(true)
+#endif
+
 #include <future>
 #include <boost/lexical_cast.hpp>
 #include <csi_kafka/kafka.h>
