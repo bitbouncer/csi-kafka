@@ -14,9 +14,11 @@ namespace csi {
         int         port;
         size_t      msg_in_queue;
         size_t      bytes_in_queue;
-        uint32_t    tx_kb_sec;
-        uint32_t    tx_msg_sec;
-        double      tx_roundtrip;
+        uint64_t    total_tx_bytes;
+        uint64_t    total_tx_msg;
+        //uint32_t    tx_kb_sec;
+        //uint32_t    tx_msg_sec;
+        //double      tx_roundtrip;
       };
 
       typedef std::function <void(const boost::system::error_code&)> connect_callback;

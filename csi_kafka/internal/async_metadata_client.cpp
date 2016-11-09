@@ -59,6 +59,7 @@ namespace csi {
 
       _client.connect_async(query, 1000, [this](const boost::system::error_code& ec) {
         if(ec) {
+          BOOST_LOG_TRIVIAL(error) << "async_metadata_client::connect_async() " << _next_broker->host_name << ":" << _next_broker->port << " failed ec: " << to_string(ec);
           _connect_retry_timer.expires_from_now(_current_retry_timeout);
           _connect_retry_timer.async_wait(boost::bind(&async_metadata_client::handle_connect_retry_timer, this, boost::asio::placeholders::error));
         } else {

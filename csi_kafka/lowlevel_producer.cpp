@@ -21,15 +21,16 @@ namespace csi {
       _tx_queue_byte_size(0),
       _tx_in_progress(false),
       _try_send_posted(false),
-      _metrics_tx_kb_sec(boost::accumulators::tag::rolling_window::window_size = 50),
-      _metrics_tx_msg_sec(boost::accumulators::tag::rolling_window::window_size = 50),
-      _metrics_tx_roundtrip(boost::accumulators::tag::rolling_window::window_size = 10),
+      //_metrics_tx_kb_sec(boost::accumulators::tag::rolling_window::window_size = 10),
+      //_metrics_tx_msg_sec(boost::accumulators::tag::rolling_window::window_size = 10),
+      //_metrics_tx_roundtrip(boost::accumulators::tag::rolling_window::window_size = 10),
       _metrics_timer(io_service),
       _metrics_timeout(boost::posix_time::milliseconds(100)),
-      _metrics_total_tx_kb(0),
-      _metrics_total_tx_msg(0),
-      __metrics_last_total_tx_kb(0),
-      __metrics_last_total_tx_msg(0) {
+      __metrics_total_tx_bytes(0),
+      __metrics_total_tx_msg(0)
+      //__metrics_last_total_tx_kb(0),
+      //__metrics_last_total_tx_msg(0) 
+    {
       if(_max_packet_size <0)
         _max_packet_size = (csi::kafka::basic_call_context::MAX_BUFFER_SIZE - 1000);
       if(_max_packet_size >(csi::kafka::basic_call_context::MAX_BUFFER_SIZE - 1000))
@@ -52,12 +53,15 @@ namespace csi {
       if(ec)
         return;
 
+      /*
       uint64_t kb_sec = 10 * (_metrics_total_tx_kb - __metrics_last_total_tx_kb) / 1024;
       uint64_t msg_sec = 10 * (_metrics_total_tx_msg - __metrics_last_total_tx_msg);
       _metrics_tx_kb_sec((double) kb_sec);
       _metrics_tx_msg_sec((double) msg_sec);
       __metrics_last_total_tx_kb = _metrics_total_tx_kb;
       __metrics_last_total_tx_msg = _metrics_total_tx_msg;
+      */
+
       _metrics_timer.expires_from_now(_metrics_timeout);
       _metrics_timer.async_wait([this](const boost::system::error_code& ec) { handle_metrics_timer(ec); });
 
@@ -138,11 +142,11 @@ namespace csi {
 
 
       if(items_in_batch > 0) {
-        auto tick = boost::posix_time::microsec_clock::local_time();
-        _client.send_produce_async(_topic, _partition_id, _required_acks, _tx_timeout, v, [this, tick, items_in_batch](rpc_result<produce_response> result) {
-          auto now = boost::posix_time::microsec_clock::local_time();
-          boost::posix_time::time_duration diff = now - tick;
-          _metrics_tx_roundtrip((double) diff.total_milliseconds());
+        //auto tick = boost::posix_time::microsec_clock::local_time();
+        _client.send_produce_async(_topic, _partition_id, _required_acks, _tx_timeout, v, [this, items_in_batch](rpc_result<produce_response> result) {
+          //auto now = boost::posix_time::microsec_clock::local_time();
+          //boost::posix_time::time_duration diff = now - tick;
+          //_metrics_tx_roundtrip((double) diff.total_milliseconds());
 
           if(result) {
             BOOST_LOG_TRIVIAL(error) << "kafka lowlevel_producer (" << _topic << ":" << _partition_id  << ") _try_send send_produce_async failed, required acks: " << _required_acks  << ", ec: " << csi::kafka::to_string(result.ec);
@@ -170,14 +174,14 @@ namespace csi {
                 if(item.msg) // we might have a callback marker (NULL message)
                 {
                   tx_size += item.msg->size();
-                  ++_metrics_total_tx_msg;
+                  ++__metrics_total_tx_msg;
                 }
                 if(item.cb)
                   callbacks.push_back(item.cb);
                 _tx_queue.pop_back();
               }
               _tx_queue_byte_size -= tx_size;
-              _metrics_total_tx_kb += tx_size;
+              __metrics_total_tx_bytes += tx_size;
             }
           }
           for(std::vector<tx_ack_callback>::const_iterator i = callbacks.begin(); i != callbacks.end(); ++i)

@@ -67,11 +67,14 @@ namespace csi {
 
       BOOST_LOG_TRIVIAL(trace) << "highlevel_consumer connect_async START";
       _meta_client.connect_async(brokers, [this, cb](const boost::system::error_code& ec) {
-        BOOST_LOG_TRIVIAL(trace) << "highlevel_consumer METADATA connect_async CB";
-        if(!ec) {
-          BOOST_LOG_TRIVIAL(trace) << "highlevel_consumer _connect_async STARTING";
-          _connect_async(cb);
-        } // connect ok?
+        if (ec)
+        {
+          BOOST_LOG_TRIVIAL(debug) << "highlevel_consumer::connect_async failed " << to_string(ec);
+          cb(ec);
+          return;
+        }
+        BOOST_LOG_TRIVIAL(trace) << "highlevel_consumer _connect_async STARTING";
+        _connect_async(cb);
       }); //connect_async
     }
 
@@ -257,9 +260,8 @@ namespace csi {
       for(std::map<int, lowlevel_consumer*>::const_iterator i = _partition2consumers.begin(); i != _partition2consumers.end(); ++i) {
         highlevel_consumer::metrics item;
         item.partition = (*i).second->partition();
-        item.rx_kb_sec = (*i).second->metrics_kb_sec();
-        item.rx_msg_sec = (*i).second->metrics_msg_sec();
-        item.rx_roundtrip = (*i).second->metrics_rx_roundtrip();
+        item.total_rx_bytes = (*i).second->total_rx_bytes();
+        item.total_rx_msg = (*i).second->total_rx_msg();
         metrics.push_back(item);
       }
       return metrics;

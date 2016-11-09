@@ -51,9 +51,15 @@ namespace csi {
       BOOST_LOG_TRIVIAL(trace) << "highlevel_producer ::connect_async START";
       _meta_client.connect_async(brokers, [this, cb](const boost::system::error_code& ec) {
         BOOST_LOG_TRIVIAL(trace) << "highlevel_producer connect_async CB";
-        if(!ec) {
-          BOOST_LOG_TRIVIAL(trace) << "highlevel_producer _meta_client.get_metadata_async() STARTING";
-          _meta_client.get_metadata_async({ _topic }, [this, cb](rpc_result<metadata_response> result) {
+		if (ec)
+		{
+			BOOST_LOG_TRIVIAL(debug) << "highlevel_producer _meta_client.connect_async() failed ec:" << to_string(ec);
+			cb(ec);
+			return;
+		}
+
+		BOOST_LOG_TRIVIAL(trace) << "highlevel_producer _meta_client.get_metadata_async() STARTING";
+        _meta_client.get_metadata_async({ _topic }, [this, cb](rpc_result<metadata_response> result) {
             BOOST_LOG_TRIVIAL(trace) << "highlevel_producer _meta_client.get_metadata_async() CALLBACK ENTERED...";
             handle_response(result);
             if(!result) {
@@ -96,7 +102,6 @@ namespace csi {
               cb(result.ec.ec1);
             }
           }); // get_metadata_async
-        } // connect ok?
       }); //connect_async
     }
 
@@ -273,9 +278,12 @@ namespace csi {
         item.partition = (*i).second->partition();
         item.bytes_in_queue = (*i).second->bytes_in_queue();
         item.msg_in_queue = (*i).second->items_in_queue();
-        item.tx_kb_sec = (*i).second->metrics_kb_sec();
-        item.tx_msg_sec = (*i).second->metrics_msg_sec();
-        item.tx_roundtrip = (*i).second->metrics_tx_roundtrip();
+        item.total_tx_bytes = (*i).second->total_tx_bytes();
+        item.total_tx_msg = (*i).second->total_tx_msg();
+
+        //item.tx_kb_sec = (*i).second->metrics_kb_sec();
+        //item.tx_msg_sec = (*i).second->metrics_msg_sec();
+        //item.tx_roundtrip = (*i).second->metrics_tx_roundtrip();
         metrics.push_back(item);
       }
       return metrics;

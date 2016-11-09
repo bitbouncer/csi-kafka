@@ -33,10 +33,12 @@ namespace csi {
 
       size_t                            items_in_queue() const { return _tx_queue.size(); } // no lock but should not matter
       size_t                            bytes_in_queue() const { return _tx_queue_byte_size; } // no lock but should not matter
+      size_t                            total_tx_bytes() const { return __metrics_total_tx_bytes; }
+      size_t                            total_tx_msg() const { return __metrics_total_tx_msg; }
 
-      uint32_t                          metrics_kb_sec() const { return (uint32_t) boost::accumulators::rolling_mean(_metrics_tx_kb_sec); } // lock ???
-      uint32_t                          metrics_msg_sec() const { return (uint32_t) boost::accumulators::rolling_mean(_metrics_tx_msg_sec); } // lock ???
-      double                            metrics_tx_roundtrip() const { return boost::accumulators::rolling_mean(_metrics_tx_roundtrip); } // lock ???
+      //uint32_t                          metrics_kb_sec() const { return (uint32_t) boost::accumulators::rolling_mean(_metrics_tx_kb_sec); } // lock ???
+      //uint32_t                          metrics_msg_sec() const { return (uint32_t) boost::accumulators::rolling_mean(_metrics_tx_msg_sec); } // lock ???
+      //double                            metrics_tx_roundtrip() const { return boost::accumulators::rolling_mean(_metrics_tx_roundtrip); } // lock ???
 
     protected:
       struct tx_item {
@@ -68,13 +70,15 @@ namespace csi {
       //METRICS
       boost::asio::deadline_timer	               _metrics_timer;
       boost::posix_time::time_duration           _metrics_timeout;
-      uint64_t                                   __metrics_last_total_tx_kb;
-      uint64_t                                   __metrics_last_total_tx_msg;
-      uint64_t                                   _metrics_total_tx_kb;
-      uint64_t                                   _metrics_total_tx_msg;
-      metrics_accumulator_t                      _metrics_tx_kb_sec;
-      metrics_accumulator_t                      _metrics_tx_msg_sec;
-      metrics_accumulator_t                      _metrics_tx_roundtrip;
+      //uint64_t                                   __metrics_last_total_tx_kb;
+      //uint64_t                                   __metrics_last_total_tx_msg;
+      //uint64_t                                   _metrics_total_tx_kb;
+      uint64_t                                   __metrics_total_tx_bytes;
+      uint64_t                                   __metrics_total_tx_msg;
+      //boost::asio::deadline_timer              _last_metrics_time;
+      //metrics_accumulator_t                      _metrics_tx_kb_sec;
+      //metrics_accumulator_t                      _metrics_tx_msg_sec;
+      //metrics_accumulator_t                      _metrics_tx_roundtrip;
     };
   }
 };

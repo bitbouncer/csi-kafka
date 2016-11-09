@@ -52,9 +52,13 @@ namespace csi {
       int32_t                                partition() const { return _partition; }
       const std::string&                     topic() const { return _topic; }
 
+      /*
       uint32_t                               metrics_kb_sec() const { return (uint32_t) boost::accumulators::rolling_mean(_metrics_rx_kb_sec); } // lock ???
       uint32_t                               metrics_msg_sec() const { return (uint32_t) boost::accumulators::rolling_mean(_metrics_rx_msg_sec); } // lock ???
       double                                 metrics_rx_roundtrip() const { return boost::accumulators::rolling_mean(_metrics_rx_roundtrip); } // lock ???
+      */
+      size_t                                 total_rx_bytes() const { return __metrics_total_rx_bytes; }
+      size_t                                 total_rx_msg() const { return __metrics_total_rx_msg; }
 
     protected:
       void _try_fetch();
@@ -73,18 +77,18 @@ namespace csi {
       bool                            _pause_streaming;
 
       //METRICS
-      typedef boost::accumulators::accumulator_set<double, boost::accumulators::stats<boost::accumulators::tag::rolling_mean> >   metrics_accumulator_t;
+      //typedef boost::accumulators::accumulator_set<double, boost::accumulators::stats<boost::accumulators::tag::rolling_mean> >   metrics_accumulator_t;
       void handle_metrics_timer(const boost::system::error_code& ec);
 
       boost::asio::deadline_timer	               _metrics_timer;
       boost::posix_time::time_duration           _metrics_timeout;
-      uint64_t                                   __metrics_last_total_rx_kb;
-      uint64_t                                   __metrics_last_total_rx_msg;
-      uint64_t                                   _metrics_total_rx_kb;
+      uint64_t                                   __metrics_total_rx_bytes;
+      uint64_t                                   __metrics_total_rx_msg;
+     /* uint64_t                                   _metrics_total_rx_kb;
       uint64_t                                   _metrics_total_rx_msg;
       metrics_accumulator_t                      _metrics_rx_kb_sec;
       metrics_accumulator_t                      _metrics_rx_msg_sec;
-      metrics_accumulator_t                      _metrics_rx_roundtrip;
+      metrics_accumulator_t                      _metrics_rx_roundtrip;*/
     };
   }
 };

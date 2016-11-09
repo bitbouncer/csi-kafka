@@ -21,15 +21,20 @@ namespace csi {
       _rx_in_progress(false),
       _transient_failure(false),
       _pause_streaming(false),
-      _metrics_rx_kb_sec(boost::accumulators::tag::rolling_window::window_size = 10),
-      _metrics_rx_msg_sec(boost::accumulators::tag::rolling_window::window_size = 10),
-      _metrics_rx_roundtrip(boost::accumulators::tag::rolling_window::window_size = 10),
+      //_metrics_rx_kb_sec(boost::accumulators::tag::rolling_window::window_size = 10),
+      //_metrics_rx_msg_sec(boost::accumulators::tag::rolling_window::window_size = 10),
+      //_metrics_rx_roundtrip(boost::accumulators::tag::rolling_window::window_size = 10),
       _metrics_timer(io_service),
       _metrics_timeout(boost::posix_time::milliseconds(1000)),
+      __metrics_total_rx_bytes(0),
+      __metrics_total_rx_msg(0)
+      /*
       _metrics_total_rx_kb(0),
       _metrics_total_rx_msg(0),
       __metrics_last_total_rx_kb(0),
-      __metrics_last_total_rx_msg(0) {
+      __metrics_last_total_rx_msg(0)
+      */
+      {
       _metrics_timer.expires_from_now(_metrics_timeout);
       _metrics_timer.async_wait([this](const boost::system::error_code& ec) { handle_metrics_timer(ec); });
     }
@@ -44,12 +49,14 @@ namespace csi {
         return;
 
       // todo meassure the actual time  - do not assume 1000
+      /*
       uint64_t kb_sec = (_metrics_total_rx_kb - __metrics_last_total_rx_kb) / 1024;
       uint64_t msg_sec = (_metrics_total_rx_msg - __metrics_last_total_rx_msg);
       _metrics_rx_kb_sec((double) kb_sec);
       _metrics_rx_msg_sec((double) msg_sec);
       __metrics_last_total_rx_kb = _metrics_total_rx_kb;
       __metrics_last_total_rx_msg = _metrics_total_rx_msg;
+      */
       _metrics_timer.expires_from_now(_metrics_timeout);
       _metrics_timer.async_wait([this](const boost::system::error_code& ec) { handle_metrics_timer(ec); });
 
@@ -205,8 +212,8 @@ namespace csi {
                 {
                   // there might be a better way of doiung this on lower leverl since we know the socket rx size.... TBD
                   for(std::vector<std::shared_ptr<basic_message>>::const_iterator k = (*j)->messages.begin(); k != (*j)->messages.end(); ++k)
-                    _metrics_total_rx_kb += ((*k)->key.size() + (*k)->value.size());
-                  _metrics_total_rx_msg += (*j)->messages.size();
+                    __metrics_total_rx_bytes += ((*k)->key.size() + (*k)->value.size());
+                  __metrics_total_rx_msg += (*j)->messages.size();
                   if((*j)->messages.size())
                     _next_offset = (*j)->messages[(*j)->messages.size() - 1]->offset + 1;
                   _cb(response.ec.ec1, ((csi::kafka::error_codes) (*j)->error_code), *j);
@@ -280,8 +287,8 @@ namespace csi {
               {
                 // there might be a better way of doing this on lower level since we know the socket rx size.... TBD
                 for(std::vector<std::shared_ptr<basic_message>>::const_iterator k = (*j)->messages.begin(); k != (*j)->messages.end(); ++k)
-                  _metrics_total_rx_kb += ((*k)->key.size() + (*k)->value.size());
-                _metrics_total_rx_msg += (*j)->messages.size();
+                  __metrics_total_rx_bytes += ((*k)->key.size() + (*k)->value.size());
+                __metrics_total_rx_msg += (*j)->messages.size();
               }
             }
           }

@@ -12,9 +12,8 @@ namespace csi {
         int         partition;
         std::string host;
         int         port;
-        uint32_t    rx_kb_sec;
-        uint32_t    rx_msg_sec;
-        double      rx_roundtrip;
+        int64_t     total_rx_bytes;
+        int64_t     total_rx_msg;
       };
 
       typedef std::function <void(const boost::system::error_code&)> connect_callback;
