@@ -47,8 +47,11 @@ namespace csi {
     }
 
     std::string to_string(const rpc_error_code& e) {
-      return std::string("system:") + e.ec1.message() + ", kafka:" + to_string(e.ec2);
+      if (e.ec1)
+        return e.ec1.message();
+      if (e.ec2)
+        return to_string(e.ec2);
+      return "Ok (no error)";
     }
-
   };
 };
