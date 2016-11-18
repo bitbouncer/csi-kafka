@@ -141,18 +141,15 @@ struct basic_message
     key(akey.data(), akey.size()) {}
   */
 
-  /*
-  basic_message(const payload_type& akey, const payload_type& aval) :
-    has_partition_hash(false),
-    partition_hash(-1),
-    offset(0),
-    key(akey.data(), akey.data() + akey.size()),
-    value(aval.data(), aval.data() + aval.size()) {}
- */
-
   basic_message(uint32_t partition_hash, const payload_type& akey, const payload_type& aval) :
     has_partition_hash(true),
     partition_hash(partition_hash),
+    offset(0),
+    key(akey.data(), akey.data() + akey.size()),
+    value(aval.data(), aval.data() + aval.size()) {}
+
+  basic_message(const payload_type& akey, const payload_type& aval) :
+    has_partition_hash(false),
     offset(0),
     key(akey.data(), akey.data() + akey.size()),
     value(aval.data(), aval.data() + aval.size()) {}
