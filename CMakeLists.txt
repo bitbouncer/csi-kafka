@@ -15,10 +15,7 @@ if (NOT DEFINED CSI_INCLUDE_PATH)
 SET(CSI_INCLUDE_PATH ${CMAKE_SOURCE_DIR}/../csi-async)
 endif()
 
-include_directories(${CSI_INCLUDE_PATH} ${CMAKE_SOURCE_DIR} ${Boost_INCLUDE_DIRS})
-
-#add_definitions(-D_FILE_OFFSET_BITS=64 -D_REENTRANT -DEXTERNAL_LOCKS -DMULTITHREAD)
-#add_definitions(-DBOOST_ASIO_HAS_STD_CHRONO)
+include_directories(${CMAKE_SOURCE_DIR} ${CSI_INCLUDE_PATH} ${Boost_INCLUDE_DIRS})
 
 if(WIN32)
 add_definitions(-DMARCH_x86_64) 
@@ -35,20 +32,13 @@ add_definitions(-DSECURITY_WIN32)
 add_definitions(/wd4996) #'strdup': The POSIX name for this item is deprecated
 add_definitions(/wd4197) # 'cf_atomic32' : top-level volatile in cast is ignored
 add_definitions(/wd4200) #nonstandard extension used : zero-sized array in struct/union 
-
 link_directories(${Boost_LIBRARY_DIRS}/$(Platform)/lib)
 endif()
 
 if(__LINUX__)
 add_definitions(-D__LINUX__)
-#add_definitions(-fPIC)
-#if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "4.8.0")
 add_definitions(-std=c++11)
-#endif()
-#add_definitions(-DBOOST_LOG_USE_NATIVE_SYSLOG)
-#add_definitions(-Wno-deprecated)
 link_directories(${Boost_LIBRARY_DIRS})
-
 if (NOT DEFINED CSI_BOOST_LIBS)
 set(CSI_BOOST_LIBS ${Boost_LIBRARY_DIRS}/libboost_log_setup.a ${Boost_LIBRARY_DIRS}/libboost_log.a boost_date_time boost_timer boost_thread boost_system boost_program_options boost_filesystem boost_regex boost_chrono boost_iostreams pthread rt c)
 endif()
