@@ -54,7 +54,7 @@ make
 
 Install build tools
 ```
-sudo apt-get install -y automake autogen shtool libtool git wget cmake unzip build-essential g++ python-dev autotools-dev libicu-dev zlib1g-dev openssl libssl-dev libcurl4-openssl-dev libbz2-dev libcurl3
+sudo apt-get install -y automake autogen shtool libtool git wget cmake unzip build-essential g++ libboost-all-dev python-dev autotools-dev openssl libssl-dev libbz2-dev 
 
 ```
 Build
