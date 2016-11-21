@@ -28,7 +28,7 @@ int main(int argc, char** argv) {
   int32_t port = (argc >= 3) ? atoi(argv[2]) : 9092;
 
   boost::asio::io_service io_service;
-  std::auto_ptr<boost::asio::io_service::work> work(new boost::asio::io_service::work(io_service));
+  std::unique_ptr<boost::asio::io_service::work> work(new boost::asio::io_service::work(io_service));
   boost::thread bt(boost::bind(&boost::asio::io_service::run, &io_service));
 
   csi::kafka::highlevel_producer producer(io_service, "perf-8-new", -1, 500, 20000);

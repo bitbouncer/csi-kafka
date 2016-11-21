@@ -68,7 +68,7 @@ int main(int argc, char** argv) {
 
 
   boost::asio::io_service io_service;
-  std::auto_ptr<boost::asio::io_service::work> work(new boost::asio::io_service::work(io_service));
+  std::unique_ptr<boost::asio::io_service::work> work(new boost::asio::io_service::work(io_service));
   boost::thread bt(boost::bind(&boost::asio::io_service::run, &io_service));
 
   csi::kafka::highlevel_consumer consumer(io_service, topic, 500, 1000000);
