@@ -23,12 +23,6 @@ Missing
 Platforms: Windows / Linux
 
 Building
-see
-https://github.com/bitbouncer/build-scripts
-
-
-If you only need kafka on ubuntu14 you can also do
-
 ## Ubuntu 14 x64:
 
 Install build tools
@@ -47,12 +41,13 @@ cd boost_1_59_0
 ./b2 -j 8
 cd ..
 
-git clone https://github.com/bitbouncer/build-scripts.git
+git clone https://github.com/bitbouncer/csi-async.git
 git clone https://github.com/bitbouncer/csi-kafka.git
 
 cd csi-kafka
-bash -e build_linux.sh
-cd ..
+mkdir build && cd build
+cmake -D__LINUX__=1 -DCSI_INCLUDE_PATH=../csi-async -DBoost_INCLUDE_DIRS=../boost_1_59_0 -DBoost_LIBRARY_DIRS=$(pwd)/../../boost_1_59_0/stage/lib -D__BUILD_EXAMPLES__=1 .. 
+make
 ```
 
  
