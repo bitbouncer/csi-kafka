@@ -11,8 +11,10 @@ if [ ! -f "./b2" ]; then ./bootstrap.sh; fi
 ./b2 -j 4 link=static --with-log --with-thread --with-timer --with-program_options --with-iostreams
 cd ..
 
+git clone https://github.com/bitbouncer/csi-async.git
+
 mkdir build || true
 cd build
 
-cmake -D__LINUX__=1 -DBoost_INCLUDE_DIRS=/home/travis/build/bitbouncer/csi-kafka/boost_1_59_0 -DBoost_LIBRARY_DIRS=/home/travis/build/bitbouncer/csi-kafka/boost_1_59_0/stage/lib -D__BUILD_EXAMPLES__=1 .. 
+cmake -D__LINUX__=1 -DCSI_INCLUDE_PATH=/home/travis/build/bitbouncer/csi-kafka/csi-async -DBoost_INCLUDE_DIRS=/home/travis/build/bitbouncer/csi-kafka/boost_1_59_0 -DBoost_LIBRARY_DIRS=/home/travis/build/bitbouncer/csi-kafka/boost_1_59_0/stage/lib -D__BUILD_EXAMPLES__=1 .. 
 make

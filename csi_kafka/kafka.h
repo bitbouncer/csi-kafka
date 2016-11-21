@@ -126,6 +126,13 @@ struct basic_message
     partition_hash(-1),
     offset(0) {}
 
+  basic_message(const std::string& akey, const std::string& aval) :
+    has_partition_hash(false),
+    partition_hash(-1),
+    offset(0),
+    key(akey.data(), akey.size()),
+    value(aval.data(), aval.size()) {}
+
   basic_message(uint32_t partition_hash, const std::string& akey, const std::string& aval) :
     has_partition_hash(true),
     partition_hash(partition_hash),
@@ -133,13 +140,11 @@ struct basic_message
     key(akey.data(), akey.size()),
     value(aval.data(), aval.size()) {}
 
-  /*
    basic_message(const std::string& akey) :
     has_partition_hash(false),
     partition_hash(-1),
     offset(0),
     key(akey.data(), akey.size()) {}
-  */
 
   basic_message(uint32_t partition_hash, const payload_type& akey, const payload_type& aval) :
     has_partition_hash(true),

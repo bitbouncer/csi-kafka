@@ -113,7 +113,7 @@ int main(int argc, char** argv) {
     "",
     "nisse"
     ));
-  auto pres = producer.send_sync(0, { msg });
+  auto pres = producer.send_sync(msg);
 
   csi::kafka::consumer_coordinator coordinator(io_service, consumer_group);
 
@@ -137,8 +137,8 @@ int main(int argc, char** argv) {
   }
 
   // resert the offsets
-  for(std::vector<csi::kafka::topic_offset>::iterator i = offsets.begin(); i != offsets.end(); ++i)
-    i->offset = csi::kafka::earliest_available_offset;
+  for(auto & i : offsets)
+    i.second = csi::kafka::earliest_available_offset;
 
   auto res5 = coordinator.commit_consumer_offset(-1, "my test prog", topic, offsets, "graff");
 

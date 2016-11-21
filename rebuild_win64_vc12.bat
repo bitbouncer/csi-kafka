@@ -11,9 +11,9 @@ call "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\vcvarsall.bat" amd6
 mkdir  build 
 cd build
 
-cmake -G "Visual Studio 12 Win64" -DBoost_INCLUDE_DIRS=../boost -DBoost_LIBRARY_DIRS=../boost/stage/lib -D__BUILD_EXAMPLES__=1 .. 
-msbuild ALL_BUILD.vcxproj /p:Configuration=Debug /p:Platform=x64 /maxcpucount:12
-msbuild ALL_BUILD.vcxproj /p:Configuration=Release /p:Platform=x64 /maxcpucount:12
+cmake -G "Visual Studio 12 Win64" -DCSI_INCLUDE_PATH=../csi-async -DBoost_INCLUDE_DIRS=../boost -DBoost_LIBRARY_DIRS=../boost/stage/lib -D__BUILD_EXAMPLES__=1 .. 
+msbuild ALL_BUILD.vcxproj /p:Configuration=Debug /p:Platform=x64 
+msbuild ALL_BUILD.vcxproj /p:Configuration=Release /p:Platform=x64 
 cd ..
 
 

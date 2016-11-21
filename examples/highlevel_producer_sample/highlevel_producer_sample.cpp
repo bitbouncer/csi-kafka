@@ -45,20 +45,36 @@ int main(int argc, char** argv) {
   producer.connect_forever(brokers);
 
   boost::thread do_log([&producer] {
-    while(true) {
+
+    uint64_t last_tx_msg_total = 0;
+    uint64_t last_tx_bytes_total = 0;
+
+    while (true)
+    {
       boost::this_thread::sleep(boost::posix_time::seconds(1));
 
       std::vector<csi::kafka::highlevel_producer::metrics>  metrics = producer.get_metrics();
 
       size_t total_queue = 0;
-      uint32_t tx_msg_sec_total = 0;
-      uint32_t tx_kb_sec_total = 0;
-      for(std::vector<csi::kafka::highlevel_producer::metrics>::const_iterator i = metrics.begin(); i != metrics.end(); ++i) {
+      uint64_t tx_msg_total = 0;
+      uint64_t tx_bytes_total = 0;
+      for (std::vector<csi::kafka::highlevel_producer::metrics>::const_iterator i = metrics.begin(); i != metrics.end(); ++i)
+      {
         total_queue += (*i).msg_in_queue;
-        tx_msg_sec_total += (*i).tx_msg_sec;
-        tx_kb_sec_total += (*i).tx_kb_sec;
+        tx_msg_total += (*i).total_tx_msg;
+        tx_bytes_total += (*i).total_tx_bytes;
       }
-      std::cerr << "\t        \tqueue:" << total_queue << "\t" << tx_msg_sec_total << " msg/s \t" << (tx_kb_sec_total / 1024) << "MB/s" << std::endl;
+
+      uint64_t msg_per_sec = (tx_msg_total - last_tx_msg_total);
+      uint64_t bytes_per_sec = (tx_bytes_total - last_tx_bytes_total);
+
+      last_tx_msg_total = tx_msg_total;
+      last_tx_bytes_total = tx_bytes_total;
+
+      if (msg_per_sec)
+      {
+        BOOST_LOG_TRIVIAL(info) << "kafka: topic: " << producer.topic() << ", tx queue:" << total_queue << ", tx " << msg_per_sec << " msg/sec, (" << (bytes_per_sec / (1024 * 1024)) << " MB/s)";
+      }
     }
   });
 

@@ -1,6 +1,20 @@
 cmake_minimum_required(VERSION 2.8.1)
 cmake_policy(SET CMP0015 NEW)
 
+
+#if running this cmake selfcontained...
+if (NOT DEFINED Boost_INCLUDE_DIRS)
+SET(Boost_INCLUDE_DIRS ${CMAKE_SOURCE_DIR}/../boost)
+endif()
+
+if (NOT DEFINED Boost_LIBRARY_DIRS)
+SET(Boost_LIBRARY_DIRS ${CMAKE_SOURCE_DIR}/../boost/stage/lib)
+endif()
+
+if (NOT DEFINED CSI_INCLUDE_PATH)
+SET(CSI_INCLUDE_PATH ${CMAKE_SOURCE_DIR}/../csi-async)
+endif()
+
 include_directories(${CSI_INCLUDE_PATH} ${CMAKE_SOURCE_DIR} ${Boost_INCLUDE_DIRS})
 
 #add_definitions(-D_FILE_OFFSET_BITS=64 -D_REENTRANT -DEXTERNAL_LOCKS -DMULTITHREAD)
