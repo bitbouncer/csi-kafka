@@ -50,4 +50,24 @@ cmake -D__LINUX__=1 -DCSI_INCLUDE_PATH=../csi-async -DBoost_INCLUDE_DIRS=../boos
 make
 ```
 
+## Ubuntu 16 x64:
+
+Install build tools
+```
+sudo apt-get install -y automake autogen shtool libtool git wget cmake unzip build-essential g++ python-dev autotools-dev libicu-dev zlib1g-dev openssl libssl-dev libcurl4-openssl-dev libbz2-dev libcurl3
+
+```
+Build
+```
+mkdir source && cd source
+
+git clone https://github.com/bitbouncer/csi-async.git
+git clone https://github.com/bitbouncer/csi-kafka.git
+
+cd csi-kafka
+mkdir build && cd build
+cmake -D__LINUX__=1 -DCSI_INCLUDE_PATH=../csi-async -D__BUILD_EXAMPLES__=1 .. 
+make
+```
+
  
