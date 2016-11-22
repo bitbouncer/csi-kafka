@@ -7,8 +7,8 @@ tar xf boost_1_59_0.tar.gz
 
 cd boost_1_59_0
 if [ ! -f "./b2" ]; then ./bootstrap.sh; fi
-./b2 -j 4 link=static headers log_setup log date_time timer thread system program_options filesystem regex chrono 
-./b2 -j 4 link=static --with-log --with-thread --with-timer --with-program_options --with-iostreams
+./b2 -j 4 link=dynamic headers log_setup log date_time timer thread system program_options filesystem regex chrono 
+./b2 -j 4 link=dynamic --with-log --with-thread --with-timer --with-program_options --with-iostreams
 cd ..
 
 git clone https://github.com/bitbouncer/csi-async.git
