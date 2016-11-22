@@ -29,7 +29,7 @@ addons:
     - libpq-dev
 os:
   - linux
-  - osx
+  #- osx
 language: cpp
 compiler:
   - gcc

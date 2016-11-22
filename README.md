@@ -72,3 +72,41 @@ make
 ```
 
  
+## Windows x64
+
+Install build tools
+```
+CMake, Visual Studio 14
+```
+Build
+```
+mkdir source && cd source
+
+set VISUALSTUDIO_VERSION_MAJOR=14
+call "C:\Program Files (x86)\Microsoft Visual Studio %VISUALSTUDIO_VERSION_MAJOR%.0\VC\vcvarsall.bat" amd64
+
+
+wget --no-check-certificate http://downloads.sourceforge.net/project/boost/boost/1.62.0/boost_1_62_0.zip
+unzip boost_1_62_0.zip
+
+git clone https://github.com/madler/zlib.git
+
+cd zlib
+mkdir build & cd build
+cmake -G "Visual Studio 14 Win64" ..
+msbuild zlib.sln
+msbuild zlib.sln /p:Configuration=Release
+cd ../..
+
+cd boost_1_62_0
+call bootstrap.bat
+.\b2.exe -toolset=msvc-%VisualStudioVersion% variant=release,debug link=static address-model=64 architecture=x86 --stagedir=stage\lib\x64 stage -s ZLIB_SOURCE=%CD%\..\zlib headers log_setup log date_time timer thread system program_options filesystem regex chrono
+cd ..
+
+git clone https://github.com/bitbouncer/csi-async.git
+git clone https://github.com/bitbouncer/csi-kafka.git
+
+cd csi-kafka
+call rebuild_win64_vc14.bat
+```
+
