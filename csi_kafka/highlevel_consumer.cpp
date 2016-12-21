@@ -58,15 +58,15 @@ namespace csi {
     }
 
     void highlevel_consumer::connect_forever(const std::vector<broker_address>& brokers) {
-      _meta_client.connect_async(brokers, [this](const boost::system::error_code& ec) {
-        _ios.post([this] { _try_connect_brokers(); });
-      });
+      //meta_client.connect_async(brokers, [this](const boost::system::error_code& ec) {
+      //  _ios.post([this] { _try_connect_brokers(); });
+      //});
     }
 
-    void highlevel_consumer::connect_async(const std::vector<broker_address>& brokers, connect_callback cb) {
+    void highlevel_consumer::connect_async(const std::vector<broker_address>& brokers, int32_t timeout, connect_callback cb) {
 
       BOOST_LOG_TRIVIAL(trace) << "highlevel_consumer connect_async START";
-      _meta_client.connect_async(brokers, [this, cb](const boost::system::error_code& ec) {
+      _meta_client.connect_async(brokers, timeout, [this, cb](const boost::system::error_code& ec) {
         if (ec)
         {
           BOOST_LOG_TRIVIAL(debug) << "highlevel_consumer::connect_async failed " << to_string(ec);
@@ -126,10 +126,10 @@ namespace csi {
       });
     }
 
-    boost::system::error_code highlevel_consumer::connect(const std::vector<broker_address>& brokers) {
+    boost::system::error_code highlevel_consumer::connect(const std::vector<broker_address>& brokers, int32_t timeout) {
       std::promise<boost::system::error_code> p;
       std::future<boost::system::error_code>  f = p.get_future();
-      connect_async(brokers, [&p](const boost::system::error_code& error) {
+      connect_async(brokers, timeout, [&p](const boost::system::error_code& error) {
         p.set_value(error);
       });
       f.wait();

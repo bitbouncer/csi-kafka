@@ -20,7 +20,11 @@ int main(int argc, char** argv) {
 
   csi::kafka::lowlevel_consumer consumer(io_service, "saka.test.sample2", 0, 1000, 100000);
 
-  consumer.connect(addr, 1000);
+  auto ec = consumer.connect(addr, 1000);
+  if (ec) {
+    std::cerr << "connect failed :" << ec.message() << std::endl;
+    return 1;
+  }
 
   consumer.set_offset(csi::kafka::earliest_available_offset);
 

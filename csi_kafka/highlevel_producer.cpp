@@ -42,14 +42,14 @@ namespace csi {
     }
 
     void highlevel_producer::connect_forever(const std::vector<broker_address>& brokers) {
-      _meta_client.connect_async(brokers, [this](const boost::system::error_code& ec) {
+    /*  _meta_client.connect_async(brokers, [this](const boost::system::error_code& ec) {
         _ios.post([this] { _try_connect_brokers(); });
-      });
+      });*/
     }
 
-    void highlevel_producer::connect_async(const std::vector<broker_address>& brokers, connect_callback cb) {
+    void highlevel_producer::connect_async(const std::vector<broker_address>& brokers, int32_t timeout, connect_callback cb) {
       BOOST_LOG_TRIVIAL(trace) << "highlevel_producer ::connect_async START";
-      _meta_client.connect_async(brokers, [this, cb](const boost::system::error_code& ec) {
+      _meta_client.connect_async(brokers, timeout, [this, cb](const boost::system::error_code& ec) {
         BOOST_LOG_TRIVIAL(trace) << "highlevel_producer connect_async CB";
 		if (ec)
 		{
@@ -105,11 +105,11 @@ namespace csi {
       }); //connect_async
     }
 
-    boost::system::error_code highlevel_producer::connect(const std::vector<broker_address>& brokers) {
+    boost::system::error_code highlevel_producer::connect(const std::vector<broker_address>& brokers, int32_t timeout) {
       BOOST_LOG_TRIVIAL(trace) << _topic << ", highlevel_producer connect START";
       std::promise<boost::system::error_code> p;
       std::future<boost::system::error_code>  f = p.get_future();
-      connect_async(brokers, [&p](const boost::system::error_code& error) {
+      connect_async(brokers, timeout, [&p](const boost::system::error_code& error) {
         p.set_value(error);
       });
       f.wait();

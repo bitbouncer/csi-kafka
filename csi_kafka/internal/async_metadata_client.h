@@ -13,8 +13,8 @@ namespace csi {
       ~async_metadata_client();
 
       void                              connect_forever(const std::vector<broker_address>& brokers); // should maybee an event stream that we can subcribe to like change-events. TIMEOUT
-      void                              connect_async(const std::vector<broker_address>& brokers, connect_callback cb); // should maybee an event stream that we can subcribe to like change-events. TIMEOUT
-      boost::system::error_code         connect(const std::vector<broker_address>& brokers);
+      void                              connect_async(const std::vector<broker_address>& brokers, int32_t timeout, connect_callback cb); // should maybee an event stream that we can subcribe to like change-events. TIMEOUT
+      boost::system::error_code         connect(const std::vector<broker_address>& brokers, int32_t timeout);
       void                              close();
       bool                              is_connected() const;
 

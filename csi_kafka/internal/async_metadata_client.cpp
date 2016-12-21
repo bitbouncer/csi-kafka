@@ -4,6 +4,7 @@
 
 #include <boost/log/core.hpp>
 #include <boost/log/trivial.hpp>
+#include <csi-async/async.h>
 #include "async_metadata_client.h"
 
 namespace csi {
@@ -13,7 +14,7 @@ namespace csi {
       _metadata_timer(io_service),
       _connect_retry_timer(io_service),
       _metadata_timeout(boost::posix_time::milliseconds(10000)),
-      _current_retry_timeout(boost::posix_time::milliseconds(1000)),
+      _current_retry_timeout(boost::posix_time::milliseconds(500)),
       _max_retry_timeout(boost::posix_time::milliseconds(60000)),
       _client(io_service),
       _topic(topic) {}
@@ -32,17 +33,37 @@ namespace csi {
       return _client.is_connected();
     }
 
-    void async_metadata_client::connect_async(const std::vector<broker_address>& brokers, connect_callback cb) {
+    void async_metadata_client::connect_async(const std::vector<broker_address>& brokers, int32_t timeout, connect_callback cb) {
       _known_brokers = brokers;
       _connect_cb = cb;
-      _next_broker = _known_brokers.begin();
-      _connect_async_next();
+
+      auto outer(std::make_shared<csi::async::work<boost::system::error_code>>(csi::async::SEQUENTIAL, csi::async::FIRST_SUCCESS));
+      for (auto broker : _known_brokers) {
+        auto inner(std::make_shared<csi::async::work<boost::system::error_code>>(csi::async::SEQUENTIAL, csi::async::FIRST_FAIL));
+          inner->push_back([this, broker, timeout](csi::async::work<boost::system::error_code>::callback cb) {
+            _client.connect_async(boost::asio::ip::tcp::resolver::query(broker.host_name, std::to_string(broker.port)), timeout, cb);
+          });
+          inner->push_back([this, broker, timeout](csi::async::work<boost::system::error_code>::callback cb) {
+            _client.get_metadata_async({ _topic }, [this, cb](rpc_result<metadata_response> r) {
+              handle_get_metadata(r);
+              cb(r.ec.ec1); // this will only report back transport errors to connect but that seems somewhat ok??
+            });
+          });
+          outer->push_back(*inner);
+      }
+      outer->async_call([outer, cb](int64_t duration, boost::system::error_code& ec) {
+        if (ec)
+          BOOST_LOG_TRIVIAL(warning) << "connect_async failed, duration " << duration << " ms, " << ec.message();
+        else
+          BOOST_LOG_TRIVIAL(debug) << "connect_async done, duration " << duration << " ms, ";
+        cb(ec);
+      });
     }
 
-    boost::system::error_code async_metadata_client::connect(const std::vector<broker_address>& brokers) {
+    boost::system::error_code async_metadata_client::connect(const std::vector<broker_address>& brokers, int32_t timeout) {
       std::promise<boost::system::error_code> p;
       std::future<boost::system::error_code>  f = p.get_future();
-      connect_async(brokers, [&p](const boost::system::error_code& error) {
+      connect_async(brokers, timeout, [&p](const boost::system::error_code& error) {
         p.set_value(error);
       });
       f.wait();
@@ -57,7 +78,7 @@ namespace csi {
       if(_next_broker == _known_brokers.end())
         _next_broker = _known_brokers.begin();
 
-      _client.connect_async(query, 1000, [this](const boost::system::error_code& ec) {
+      _client.connect_async(query, 500, [this](const boost::system::error_code& ec) {
         if(ec) {
           BOOST_LOG_TRIVIAL(error) << "async_metadata_client::connect_async() " << _next_broker->host_name << ":" << _next_broker->port << " failed ec: " << to_string(ec);
           _connect_retry_timer.expires_from_now(_current_retry_timeout);
@@ -133,10 +154,12 @@ namespace csi {
           _next_broker = _known_brokers.begin();
         }
 
+        /*
         if(_connect_cb) {
           _connect_cb(response.ec.ec1);
           _connect_cb = NULL;
         }
+        */
 
         _metadata_timer.expires_from_now(_metadata_timeout);
         _metadata_timer.async_wait(boost::bind(&async_metadata_client::handle_get_metadata_timer, this, boost::asio::placeholders::error));

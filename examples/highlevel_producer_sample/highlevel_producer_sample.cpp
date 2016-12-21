@@ -18,10 +18,10 @@ void start_send(csi::kafka::highlevel_producer& producer) {
       )));
   }
   producer.send_async(v, [&producer](int32_t ec) {
-    start_send(producer); // send another
+    if (!ec)
+      start_send(producer); // send another
   });
 }
-
 
 int main(int argc, char** argv) {
   boost::log::core::get()->set_filter(boost::log::trivial::severity >= boost::log::trivial::info);
@@ -42,7 +42,12 @@ int main(int argc, char** argv) {
     brokers.push_back(csi::kafka::broker_address("192.168.0.110", port));
   }
 
-  producer.connect_forever(brokers);
+  while (producer.connect(brokers, 1000)) {
+    boost::this_thread::sleep(boost::posix_time::seconds(5));
+    BOOST_LOG_TRIVIAL(info) << "retrying to connect";
+  } 
+
+  //producer.connect_forever(brokers); this is not working anymore - we have to add something like a connection lost event callback and let the user reconnect...
 
   boost::thread do_log([&producer] {
 

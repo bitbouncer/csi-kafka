@@ -29,8 +29,8 @@ namespace csi {
       void                      close();
       boost::asio::io_service&  io_service() { return _ios; }
       void                      connect_forever(const std::vector<broker_address>& brokers); // , connect_callback cb);  // stream of connection events??
-      void                      connect_async(const std::vector<broker_address>& brokers, connect_callback cb);
-      boost::system::error_code connect(const std::vector<broker_address>& brokers);
+      void                      connect_async(const std::vector<broker_address>& brokers, int32_t timeout, connect_callback cb);
+      boost::system::error_code connect(const std::vector<broker_address>& brokers, int32_t timeout=1000);
       void                      send_async(std::shared_ptr<csi::kafka::basic_message> message, tx_ack_callback = NULL);
       void                      send_async(std::vector<std::shared_ptr<csi::kafka::basic_message>>& messages, tx_ack_callback = NULL);
       int32_t                   send_sync(std::shared_ptr<csi::kafka::basic_message> message);
