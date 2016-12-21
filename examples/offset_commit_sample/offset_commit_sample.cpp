@@ -107,7 +107,11 @@ int main(int argc, char** argv) {
 
 
   csi::kafka::highlevel_producer producer(io_service, topic, -1, 500, 20000);
-  producer.connect(brokers);
+
+  while (producer.connect(brokers, 1000)) {
+    boost::this_thread::sleep(boost::posix_time::seconds(5));
+    BOOST_LOG_TRIVIAL(info) << "retrying to connect";
+  }
 
   std::shared_ptr<csi::kafka::basic_message> msg(new csi::kafka::basic_message(
     "",

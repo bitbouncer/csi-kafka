@@ -73,7 +73,11 @@ int main(int argc, char** argv) {
 
   csi::kafka::highlevel_consumer consumer(io_service, topic, 500, 1000000);
 
-  consumer.connect(brokers);
+  while (consumer.connect(brokers, 1000)) {
+    boost::this_thread::sleep(boost::posix_time::seconds(5));
+    BOOST_LOG_TRIVIAL(info) << "retrying to connect";
+  }
+
   consumer.connect_forever(brokers);
   consumer.set_offset(csi::kafka::earliest_available_offset);
 

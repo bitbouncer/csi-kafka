@@ -74,7 +74,12 @@ int main(int argc, char** argv)
 
     //HIGHLEVEL CONSUMER
     csi::kafka::highlevel_consumer consumer(io_service, TOPIC_NAME, 1000, 10000);
-    consumer.connect( { broker } );
+
+    while (consumer.connect({ broker }, 1000)) {
+      boost::this_thread::sleep(boost::posix_time::seconds(5));
+      BOOST_LOG_TRIVIAL(info) << "retrying to connect";
+    }
+
     //std::vector<int64_t> result = consumer.get_offsets();
     consumer.connect_forever({ broker } );
 
