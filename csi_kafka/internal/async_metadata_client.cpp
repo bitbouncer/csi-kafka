@@ -51,7 +51,7 @@ namespace csi {
           });
           outer->push_back(*inner);
       }
-      outer->async_call([outer, cb](int64_t duration, boost::system::error_code& ec) {
+      outer->async_call([outer, cb](int64_t duration, boost::system::error_code ec) {
         if (ec)
           BOOST_LOG_TRIVIAL(warning) << "connect_async failed, duration " << duration << " ms, " << ec.message();
         else
