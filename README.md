@@ -46,9 +46,7 @@ git clone https://github.com/bitbouncer/csi-async.git
 git clone https://github.com/bitbouncer/csi-kafka.git
 
 cd csi-kafka
-mkdir build && cd build
-cmake -D__LINUX__=1 -DCSI_INCLUDE_PATH=../csi-async -DBoost_INCLUDE_DIRS=../boost_1_59_0 -DBoost_LIBRARY_DIRS=$(pwd)/../../boost_1_59_0/stage/lib -D__BUILD_EXAMPLES__=1 .. 
-make
+bash rebuild_linux.sh
 ```
 
 ## Ubuntu 16 x64:
@@ -66,8 +64,7 @@ git clone https://github.com/bitbouncer/csi-async.git
 git clone https://github.com/bitbouncer/csi-kafka.git
 
 cd csi-kafka
-mkdir build && cd build
-cmake -D__LINUX__=1 -DCSI_INCLUDE_PATH=../csi-async -D__BUILD_EXAMPLES__=1 .. 
+bash rebuild_linux.sh
 make
 ```
 
