@@ -24,6 +24,7 @@ struct broker_address
 };
 
 std::string to_string(const broker_address&);
+std::vector<broker_address> string_to_brokers(std::string s);
 
 struct topic_offset
 {

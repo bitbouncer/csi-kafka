@@ -33,6 +33,9 @@ add_definitions(/wd4996) #'strdup': The POSIX name for this item is deprecated
 add_definitions(/wd4197) # 'cf_atomic32' : top-level volatile in cast is ignored
 add_definitions(/wd4200) #nonstandard extension used : zero-sized array in struct/union 
 link_directories(${Boost_LIBRARY_DIRS}/$(Platform)/lib)
+
+SET(LIBRARY_OUTPUT_PATH     ${CMAKE_SOURCE_DIR}/lib/$(Platform))
+SET(EXECUTABLE_OUTPUT_PATH  ${CMAKE_SOURCE_DIR}/bin/$(Platform))
 endif()
 
 if(__LINUX__)
@@ -44,6 +47,8 @@ if (NOT DEFINED CSI_BOOST_LIBS)
 #set(CSI_BOOST_LIBS ${Boost_LIBRARY_DIRS}/libboost_log_setup.a ${Boost_LIBRARY_DIRS}/libboost_log.a boost_date_time boost_timer boost_thread boost_system boost_program_options boost_filesystem boost_regex boost_chrono boost_iostreams pthread rt c)
 set(CSI_BOOST_LIBS boost_log_setup boost_log boost_date_time boost_timer boost_thread boost_system boost_program_options boost_filesystem boost_regex boost_chrono boost_iostreams pthread rt c)
 endif()
+set(LIBRARY_OUTPUT_PATH     ${CMAKE_SOURCE_DIR}/lib)
+SET(EXECUTABLE_OUTPUT_PATH  ${CMAKE_SOURCE_DIR}/bin)
 endif()
 
 add_subdirectory(csi_kafka)

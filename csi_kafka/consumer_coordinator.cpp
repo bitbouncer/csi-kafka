@@ -9,6 +9,7 @@
 #include <csi_kafka/internal/async.h>
 #include "consumer_coordinator.h"
 #include <csi-async/async.h>
+#include <csi_kafka/kafka.h>
 
 /*
 * https://cwiki.apache.org/confluence/display/KAFKA/Kafka+Detailed+Consumer+Coordinator+Design
@@ -98,6 +99,10 @@ namespace csi {
       });
       f.wait();
       return f.get();
+    }
+
+    boost::system::error_code consumer_coordinator::connect(std::string brokers, int32_t timeout) {
+      return connect(string_to_brokers(brokers), timeout);
     }
 
     void consumer_coordinator::close() {

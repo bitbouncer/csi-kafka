@@ -18,6 +18,7 @@ namespace csi {
 
       void                                   connect_async(const std::vector<broker_address>& brokers, int32_t timeout, connect_callback cb);
       boost::system::error_code              connect(const std::vector<broker_address>& brokers, int32_t timeout);
+      boost::system::error_code              connect(std::string brokers, int32_t timeout);
 
       void                                   close();
       void                                   get_consumer_offset_async(std::string topic, get_consumer_offset_callback);

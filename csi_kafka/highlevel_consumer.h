@@ -30,8 +30,10 @@ namespace csi {
       boost::asio::io_service&                            io_service() { return _ios; }
       void                                                close();
       void                                                connect_forever(const std::vector<broker_address>& brokers); // , connect_callback cb);  // stream of connection events??
+      void                                                connect_forever(std::string brokers);
       void                                                connect_async(const std::vector<broker_address>& brokers, int32_t timeout, connect_callback cb);
       boost::system::error_code                           connect(const std::vector<broker_address>& brokers, int32_t timeout=1000);
+      boost::system::error_code                           connect(std::string brokers, int32_t timeout = 1000);
       void                                                set_offset(int64_t start_time);
       void                                                set_offset(const std::vector<topic_offset>& offsets);
       void                                                set_offset(const std::map<int32_t, int64_t>&);
