@@ -10,11 +10,17 @@
 #include <vector>
 #include <cstring>
 #include <string>
+#include <chrono>
 #include <memory>
 #include "kafka_error_code.h"
 
 namespace csi {
   namespace kafka {
+    inline int64_t milliseconds_since_epoch() {
+      return std::chrono::duration_cast<std::chrono::milliseconds>
+        (std::chrono::system_clock::now().time_since_epoch()).count();
+    }
+
     struct broker_address
     {
       broker_address() : port(-1) {}
@@ -36,9 +42,9 @@ namespace csi {
     //v0(supported in 0.8.1 or later)
     //v1(supported in 0.8.2 or later)
     //v2(supported in 0.8.3 or later)
-    enum { 
-      ApiVersionV0 = 0, 
-      ApiVersionV1 = 1, 
+    enum {
+      ApiVersionV0 = 0,
+      ApiVersionV1 = 1,
       ApiVersionV2 = 2
     };
 
@@ -126,49 +132,57 @@ namespace csi {
         bool                 _is_null;
       };
 
-      basic_message() :
-        has_partition_hash(false),
-        partition_hash(-1),
-        offset(0) {}
+      basic_message()
+        : has_partition_hash(false)
+        , partition_hash(-1)
+        , offset(0)
+        , timestamp(milliseconds_since_epoch()) {
+      }
 
-      basic_message(const std::string& akey, const std::string& aval) :
-        has_partition_hash(false),
-        partition_hash(-1),
-        offset(0),
-        key(akey.data(), akey.size()),
-        value(aval.data(), aval.size()) {}
+      basic_message(const std::string& akey, const std::string& aval, int64_t ts = milliseconds_since_epoch())
+        : has_partition_hash(false)
+        , partition_hash(-1)
+        , offset(0)
+        , timestamp(ts)
+        , key(akey.data(), akey.size())
+        , value(aval.data(), aval.size()) {}
 
-      basic_message(uint32_t partition_hash, const std::string& akey, const std::string& aval) :
-        has_partition_hash(true),
-        partition_hash(partition_hash),
-        offset(0),
-        key(akey.data(), akey.size()),
-        value(aval.data(), aval.size()) {}
+      basic_message(uint32_t partition_hash, const std::string& akey, const std::string& aval, int64_t ts = milliseconds_since_epoch())
+        : has_partition_hash(true)
+        , partition_hash(partition_hash)
+        , offset(0)
+        , timestamp(ts)
+        , key(akey.data(), akey.size())
+        , value(aval.data(), aval.size()) {}
 
-      basic_message(const std::string& akey) :
-        has_partition_hash(false),
-        partition_hash(-1),
-        offset(0),
-        key(akey.data(), akey.size()) {}
+      basic_message(const std::string& akey, int64_t ts = milliseconds_since_epoch())
+        : has_partition_hash(false)
+        , partition_hash(-1)
+        , offset(0)
+        , timestamp(ts)
+        , key(akey.data(), akey.size()) {}
 
-      basic_message(uint32_t partition_hash, const payload_type& akey, const payload_type& aval) :
-        has_partition_hash(true),
-        partition_hash(partition_hash),
-        offset(0),
-        key(akey.data(), akey.data() + akey.size()),
-        value(aval.data(), aval.data() + aval.size()) {}
+      basic_message(uint32_t partition_hash, const payload_type& akey, const payload_type& aval, int64_t ts = milliseconds_since_epoch())
+        : has_partition_hash(true)
+        , partition_hash(partition_hash)
+        , offset(0)
+        , timestamp(ts)
+        , key(akey.data(), akey.data() + akey.size())
+        , value(aval.data(), aval.data() + aval.size()) {}
 
-      basic_message(const payload_type& akey, const payload_type& aval) :
-        has_partition_hash(false),
-        offset(0),
-        key(akey.data(), akey.data() + akey.size()),
-        value(aval.data(), aval.data() + aval.size()) {}
+      basic_message(const payload_type& akey, const payload_type& aval, int64_t ts = milliseconds_since_epoch())
+        : has_partition_hash(false)
+        , offset(0)
+        , timestamp(ts)
+        , key(akey.data(), akey.data() + akey.size())
+        , value(aval.data(), aval.data() + aval.size()) {}
 
-      size_t size() const { return key.size() + value.size() + 26; } // estimated size for streaming TODO check if this is correct
+      size_t size() const { return key.size() + value.size() + 34; } // estimated size for streaming TODO check if this is correct
 
       bool         has_partition_hash;
       uint32_t     partition_hash;
       int64_t      offset;
+      int64_t      timestamp;
       payload_type key;
       payload_type value;
     };
@@ -188,11 +202,19 @@ namespace csi {
       {
         struct partition_data
         {
-          partition_data() : partition_id(-1), _error_code(0), offset(-1) {}
+          partition_data() 
+            : partition_id(-1)
+            , _error_code(0)
+            , offset(-1)
+            , timestamp(-1)
+            , throttletime(0) {
+          }
           inline error_codes error_code() const { return (error_codes)_error_code; }
           int32_t partition_id;
           int16_t _error_code;
           int64_t offset;
+          int64_t timestamp;
+          int32_t throttletime;
         };
 
         std::string                 topic_name;
@@ -205,12 +227,19 @@ namespace csi {
     //FetchResponse = >[TopicName[Partition ErrorCode HighwaterMarkOffset MessageSetSize MessageSet]]
     struct fetch_response
     {
-      fetch_response() : correlation_id(-1) {}
+      fetch_response() 
+        : correlation_id(-1)
+        , throttletime(0) {
+      }
       struct topic_data
       {
         struct partition_data
         {
-          partition_data() : partition_id(-1), error_code(-1), highwater_mark_offset(-1) {}
+          partition_data() 
+            : partition_id(-1)
+            , error_code(-1)
+            , highwater_mark_offset(-1) {
+          }
           int32_t                                     partition_id;
           int16_t                                     error_code;
           int64_t                                     highwater_mark_offset;
@@ -220,6 +249,7 @@ namespace csi {
         std::vector<std::shared_ptr<partition_data>> partitions;
       };
       int32_t                 correlation_id;
+      int32_t                 throttletime;
       std::vector<topic_data> topics;
     };
 

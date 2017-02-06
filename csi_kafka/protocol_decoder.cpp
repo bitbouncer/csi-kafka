@@ -132,7 +132,9 @@ namespace csi {
           produce_response::topic_data::partition_data pr_item;
           internal::decode_i32(str, pr_item.partition_id);
           internal::decode_i16(str, pr_item._error_code);
-          internal::decode_i64(str, pr_item.offset); // should we read this field if error_code != 0 ???? TBD KOLLA
+          internal::decode_i64(str, pr_item.offset); // should we read this field if error_code != 0 ???? TBD
+          internal::decode_i64(str, pr_item.timestamp); // should we read this field if error_code != 0 ???? TBD
+          internal::decode_i32(str, pr_item.throttletime); // should we read this field if error_code != 0 ????
           item.partitions.push_back(pr_item);
         }
         response->topics.push_back(item);
@@ -171,7 +173,10 @@ namespace csi {
         int8_t attributes = 0;
         str.read((char*) &magic_byte, 1);
         str.read((char*) &attributes, 1);
-
+        if (magic_byte == 0)
+          item->timestamp = -1;
+        else
+          internal::decode_i64(str, item->timestamp);
         internal::decode_arr(str, item->key);
         internal::decode_arr(str, item->value);
 
@@ -200,6 +205,7 @@ namespace csi {
 
       int16_t resulting_error_code = 0;
       int32_t nr_of_topics;
+      internal::decode_i32(str, response->throttletime);
       internal::decode_i32(str, nr_of_topics);
       response->topics.reserve(nr_of_topics);
 
