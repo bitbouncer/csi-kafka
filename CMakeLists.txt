@@ -48,7 +48,6 @@ set(LIBRARY_OUTPUT_PATH     ${CMAKE_SOURCE_DIR}/lib)
 SET(EXECUTABLE_OUTPUT_PATH  ${CMAKE_SOURCE_DIR}/bin)
 
 add_definitions(-D_FILE_OFFSET_BITS=64 -D_REENTRANT -DEXTERNAL_LOCKS -DMULTITHREAD)
-add_definitions(-D__LINUX__)
 add_definitions(-fPIC)
 add_definitions(-std=c++11)
 add_definitions(-DBOOST_LOG_DYN_LINK)
@@ -59,7 +58,6 @@ set(CSI_BOOST_LIBS boost_log_setup-mt boost_log-mt boost_date_time-mt boost_time
 
 #linux
 else()
-add_definitions(-D__LINUX__)
 add_definitions(-std=c++11)
 add_definitions(-DBOOST_LOG_DYN_LINK)
 set(CSI_BOOST_LIBS boost_log_setup boost_log boost_date_time boost_timer boost_thread boost_system boost_program_options boost_filesystem boost_regex boost_chrono boost_iostreams pthread rt c)
