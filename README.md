@@ -62,7 +62,35 @@ cd csi-kafka
 bash rebuild_linux.sh
 make
 ```
+## alpine x64:
 
+Enable edge repos
+```
+apk add nano
+nano /etc/apk/repositories
+enable all 3 of the edge repos
+```
+
+Install build tools
+```
+apk upgrade --update-cache --available
+apk add git bash wget tar perl cmake boost-dev alpine-sdk snappy-dev build-base linux-headers zlib zlib-dev bzip2 bzip2-dev
+
+```
+Build
+```
+
+mkdir source
+cd source
+
+git clone https://github.com/bitbouncer/csi-kafka.git
+git clone https://github.com/bitbouncer/csi-async.git
+git clone https://github.com/bitbouncer/csi-hcl-asio.git
+
+cd csi-kafka
+bash rebuild_alpine.sh
+cd ..
+```
  
 ## Windows x64
 
