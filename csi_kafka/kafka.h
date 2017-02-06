@@ -113,8 +113,8 @@ namespace csi {
           _value(buf, buf + len),
           _is_null(len ? false : true) {}
 
-        inline void set(const uint8_t* begin, const uint8_t* end) { _value.reserve(end - begin); _value.assign(begin, end); _is_null = end - begin ? false : true; }
-        inline void set(const uint8_t* begin, size_t len) { _value.reserve(len); _value.assign(begin, begin + len); _is_null = len ? false : true; }
+        inline void set(const uint8_t* begin, const uint8_t* end) { _value.reserve(end - begin); _value.assign(begin, end); _is_null = ((end - begin) ? false : true); }
+        inline void set(const uint8_t* begin, size_t len) { _value.reserve(len); _value.assign(begin, begin + len); _is_null = (len ? false : true); }
         inline void set_string(const char* ch) { set((const uint8_t*)ch, strlen(ch)); }
         inline void reserve(size_t len) { _value.reserve(len); }
         inline void resize(size_t len) { _value.resize(len); }
