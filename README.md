@@ -85,12 +85,26 @@ cd source
 
 git clone https://github.com/bitbouncer/csi-kafka.git
 git clone https://github.com/bitbouncer/csi-async.git
-git clone https://github.com/bitbouncer/csi-hcl-asio.git
 
 cd csi-kafka
 bash rebuild_alpine.sh
 cd ..
 ```
+
+## MacOSX:
+
+Build
+```
+mkdir source && cd source
+
+git clone https://github.com/bitbouncer/csi-kafka.git
+git clone https://github.com/bitbouncer/csi-async.git
+
+cd csi-kafka
+bash rebuild_macos.sh
+cd ..
+``` 
+ 
  
 ## Windows x64
 
