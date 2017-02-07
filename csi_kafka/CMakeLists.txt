@@ -1,9 +1,7 @@
 SET(LIB_SRCS
-	internal/async.h
   internal/async_metadata_client.h
   internal/async_metadata_client.cpp
   internal/call_context.h
-  internal/utility.h
   consumer_coordinator.h
   consumer_coordinator.cpp
   lowlevel_client.h

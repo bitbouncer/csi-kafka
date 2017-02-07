@@ -2,6 +2,7 @@
 #define BOOST_ASIO_ERROR_CATEGORY_NOEXCEPT noexcept(true)
 #endif
 
+#include <boost/bind.hpp>
 #include <boost/log/core.hpp>
 #include <boost/log/trivial.hpp>
 #include <csi-async/async.h>
@@ -9,15 +10,16 @@
 
 namespace csi {
   namespace kafka {
-    async_metadata_client::async_metadata_client(boost::asio::io_service& io_service, std::string topic) :
-      _ios(io_service),
-      _metadata_timer(io_service),
-      _connect_retry_timer(io_service),
-      _metadata_timeout(boost::posix_time::milliseconds(10000)),
-      _current_retry_timeout(boost::posix_time::milliseconds(500)),
-      _max_retry_timeout(boost::posix_time::milliseconds(60000)),
-      _client(io_service),
-      _topic(topic) {}
+    async_metadata_client::async_metadata_client(boost::asio::io_service& io_service, std::string topic) 
+      : _ios(io_service)
+      , _metadata_timer(io_service)
+      , _connect_retry_timer(io_service)
+      , _metadata_timeout(boost::posix_time::milliseconds(10000))
+      , _current_retry_timeout(boost::posix_time::milliseconds(500))
+      , _max_retry_timeout(boost::posix_time::milliseconds(60000))
+      , _client(io_service)
+      , _topic(topic) {
+    }
 
     async_metadata_client::~async_metadata_client() {
       _metadata_timer.cancel();

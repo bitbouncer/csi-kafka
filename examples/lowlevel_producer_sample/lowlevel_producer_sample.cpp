@@ -1,4 +1,5 @@
-#include <boost/thread.hpp>
+#include <thread>
+#include <iostream>
 #include <boost/bind.hpp>
 #include <boost/log/core.hpp>
 #include <boost/log/trivial.hpp>
@@ -15,7 +16,7 @@ int main(int argc, char** argv) {
 
   boost::asio::io_service io_service;
   std::unique_ptr<boost::asio::io_service::work> work(new boost::asio::io_service::work(io_service));
-  boost::thread bt(boost::bind(&boost::asio::io_service::run, &io_service));
+  std::thread bt([&io_service] { io_service.run(); });
 
 
   csi::kafka::lowlevel_consumer consumer(io_service, "saka.test.sample2", 0, 1000, 100000);
@@ -76,7 +77,7 @@ int main(int argc, char** argv) {
     }
   }
 
-  boost::this_thread::sleep(boost::posix_time::seconds(1000));
+  std::this_thread::sleep_for(std::chrono::seconds(1000));
 
   work.reset();
   io_service.stop();

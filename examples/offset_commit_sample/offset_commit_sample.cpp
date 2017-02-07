@@ -1,4 +1,5 @@
-#include <boost/thread.hpp>
+#include <thread>
+#include <iostream>
 #include <boost/log/core.hpp>
 #include <boost/log/trivial.hpp>
 #include <boost/log/expressions.hpp>
@@ -103,13 +104,12 @@ int main(int argc, char** argv) {
 
   boost::asio::io_service io_service;
   std::unique_ptr<boost::asio::io_service::work> work(new boost::asio::io_service::work(io_service));
-  boost::thread bt(boost::bind(&boost::asio::io_service::run, &io_service));
-
+  std::thread bt([&io_service] { io_service.run(); });
 
   csi::kafka::highlevel_producer producer(io_service, topic, -1, 500, 20000);
 
   while (producer.connect(brokers, 1000)) {
-    boost::this_thread::sleep(boost::posix_time::seconds(5));
+    std::this_thread::sleep_for(std::chrono::seconds(5));
     BOOST_LOG_TRIVIAL(info) << "retrying to connect";
   }
 

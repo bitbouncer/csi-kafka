@@ -1,4 +1,5 @@
-#include <boost/thread.hpp>
+#include <thread>
+#include <iostream>
 #include <boost/log/core.hpp>
 #include <boost/log/trivial.hpp>
 #include <boost/log/expressions.hpp>
@@ -69,25 +70,24 @@ int main(int argc, char** argv) {
 
   boost::asio::io_service io_service;
   std::unique_ptr<boost::asio::io_service::work> work(new boost::asio::io_service::work(io_service));
-  boost::thread bt(boost::bind(&boost::asio::io_service::run, &io_service));
+  std::thread bt([&io_service] { io_service.run(); });
 
   csi::kafka::highlevel_consumer consumer(io_service, topic, 500, 1000000);
 
   while (consumer.connect(brokers, 1000)) {
-    boost::this_thread::sleep(boost::posix_time::seconds(5));
+    std::this_thread::sleep_for(std::chrono::seconds(5));
     BOOST_LOG_TRIVIAL(info) << "retrying to connect";
   }
 
-  consumer.connect_forever(brokers);
   consumer.set_offset(csi::kafka::earliest_available_offset);
 
-  boost::thread do_log([&consumer] {
+  std::thread do_log([&consumer] {
     uint64_t last_rx_msg_total = 0;
     uint64_t last_rx_bytes_total = 0;
 
     while (true)
     {
-      boost::this_thread::sleep(boost::posix_time::seconds(1));
+      std::this_thread::sleep_for(std::chrono::seconds(1));
 
       std::vector<csi::kafka::highlevel_consumer::metrics>  metrics = consumer.get_metrics();
 
@@ -121,7 +121,7 @@ int main(int argc, char** argv) {
   });
 
   while(true)
-    boost::this_thread::sleep(boost::posix_time::seconds(30));
+    std::this_thread::sleep_for(std::chrono::seconds(30));
 
   consumer.close();
 

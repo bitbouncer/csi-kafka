@@ -1,4 +1,4 @@
-#include <boost/thread.hpp>
+#include <thread>
 #include <boost/log/core.hpp>
 #include <boost/log/trivial.hpp>
 #include <boost/log/expressions.hpp>
@@ -29,7 +29,7 @@ int main(int argc, char** argv) {
 
   boost::asio::io_service io_service;
   std::unique_ptr<boost::asio::io_service::work> work(new boost::asio::io_service::work(io_service));
-  boost::thread bt(boost::bind(&boost::asio::io_service::run, &io_service));
+  std::thread run_thread([&io_service] { io_service.run(); });
 
   csi::kafka::highlevel_producer producer(io_service, "perf-8-new", -1, 500, 20000);
 
@@ -43,20 +43,20 @@ int main(int argc, char** argv) {
   }
 
   while (producer.connect(brokers, 1000)) {
-    boost::this_thread::sleep(boost::posix_time::seconds(5));
+    std::this_thread::sleep_for(std::chrono::seconds(5));
     BOOST_LOG_TRIVIAL(info) << "retrying to connect";
   } 
 
   //producer.connect_forever(brokers); this is not working anymore - we have to add something like a connection lost event callback and let the user reconnect...
 
-  boost::thread do_log([&producer] {
+  std::thread do_log([&producer] {
 
     uint64_t last_tx_msg_total = 0;
     uint64_t last_tx_bytes_total = 0;
 
     while (true)
     {
-      boost::this_thread::sleep(boost::posix_time::seconds(1));
+      std::this_thread::sleep_for(std::chrono::seconds(1));
 
       std::vector<csi::kafka::highlevel_producer::metrics>  metrics = producer.get_metrics();
 
@@ -86,7 +86,7 @@ int main(int argc, char** argv) {
   start_send(producer);
 
   while(true)
-    boost::this_thread::sleep(boost::posix_time::seconds(30));
+    std::this_thread::sleep_for(std::chrono::seconds(30));
 
   producer.close();
 
