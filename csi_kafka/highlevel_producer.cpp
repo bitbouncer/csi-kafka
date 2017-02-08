@@ -21,7 +21,11 @@ highlevel_producer::highlevel_producer(boost::asio::io_service& io_service, cons
   , _topic(topic)
   , _required_acks(required_acks)
   , _tx_timeout(tx_timeout)
-  , _max_packet_size(max_packet_size) {}
+  , _max_packet_size(max_packet_size) {
+  if (required_acks < -1 || required_acks > 1) {
+    BOOST_LOG_TRIVIAL(error) << "highlevel_producer required_acks invalid value: " << required_acks;
+  }
+}
 
 highlevel_producer::~highlevel_producer() {
   _timer.cancel();
@@ -40,16 +44,6 @@ void highlevel_producer::close() {
     i->second->close();
   }
 }
-
-//void highlevel_producer::connect_forever(std::string broker) {
-//  connect_forever(string_to_brokers(broker));
-//}
-
-//void highlevel_producer::connect_forever(const std::vector<broker_address>& brokers) {
-///*  _meta_client.connect_async(brokers, [this](const boost::system::error_code& ec) {
-//    _ios.post([this] { _try_connect_brokers(); });
-//  });*/
-//}
 
 void highlevel_producer::connect_async(const std::vector<broker_address>& brokers, int32_t timeout, connect_callback cb) {
   BOOST_LOG_TRIVIAL(trace) << "highlevel_producer ::connect_async START";
@@ -287,10 +281,6 @@ std::vector<highlevel_producer::metrics>  highlevel_producer::get_metrics() cons
     item.msg_in_queue = (*i).second->items_in_queue();
     item.total_tx_bytes = (*i).second->total_tx_bytes();
     item.total_tx_msg = (*i).second->total_tx_msg();
-
-    //item.tx_kb_sec = (*i).second->metrics_kb_sec();
-    //item.tx_msg_sec = (*i).second->metrics_msg_sec();
-    //item.tx_roundtrip = (*i).second->metrics_tx_roundtrip();
     metrics.push_back(item);
   }
   return metrics;

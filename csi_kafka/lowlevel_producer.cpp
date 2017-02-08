@@ -25,6 +25,9 @@ lowlevel_producer::lowlevel_producer(boost::asio::io_service& io_service, const 
   , _metrics_timeout(boost::posix_time::milliseconds(100))
   , __metrics_total_tx_bytes(0)
   , __metrics_total_tx_msg(0) {
+  if (required_acks < -1 || required_acks > 1) {
+    BOOST_LOG_TRIVIAL(error) << "lowlevel_producer required_acks invalid value: " << required_acks;
+  }
   if (_max_packet_size < 0)
     _max_packet_size = (csi::kafka::basic_call_context::MAX_BUFFER_SIZE - 1000);
   if (_max_packet_size > (csi::kafka::basic_call_context::MAX_BUFFER_SIZE - 1000))
@@ -46,16 +49,6 @@ void  lowlevel_producer::close() {
 void lowlevel_producer::handle_metrics_timer(const boost::system::error_code& ec) {
   if (ec)
     return;
-
-  /*
-  uint64_t kb_sec = 10 * (_metrics_total_tx_kb - __metrics_last_total_tx_kb) / 1024;
-  uint64_t msg_sec = 10 * (_metrics_total_tx_msg - __metrics_last_total_tx_msg);
-  _metrics_tx_kb_sec((double) kb_sec);
-  _metrics_tx_msg_sec((double) msg_sec);
-  __metrics_last_total_tx_kb = _metrics_total_tx_kb;
-  __metrics_last_total_tx_msg = _metrics_total_tx_msg;
-  */
-
   _metrics_timer.expires_from_now(_metrics_timeout);
   _metrics_timer.async_wait([this](const boost::system::error_code& ec) { handle_metrics_timer(ec); });
 
