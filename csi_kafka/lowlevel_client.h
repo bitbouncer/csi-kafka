@@ -82,7 +82,7 @@ class lowlevel_client
   void handle_timer(const boost::system::error_code& ec);
   void handle_connect_timeout(const boost::system::error_code& ec);
 
-  void _perform(basic_call_context::handle handle);       // will be called in context of worker thread
+  void _perform(basic_call_context::handle handle); // will be called in context of worker thread
 
   void handle_resolve(const boost::system::error_code& error_code, boost::asio::ip::tcp::resolver::iterator endpoints);
   void handle_connect(const boost::system::error_code& error_code, boost::asio::ip::tcp::resolver::iterator endpoints);
@@ -93,10 +93,10 @@ class lowlevel_client
   boost::asio::io_service&	                _io_service;
   mutable csi::spinlock                     _spinlock;
   boost::asio::ip::tcp::resolver            _resolver;
-  boost::asio::deadline_timer			          _timer;
-  boost::posix_time::time_duration	        _timeout;
+  boost::asio::deadline_timer               _timer;
+  boost::posix_time::time_duration          _timeout;
 
-  boost::asio::deadline_timer			          _connect_timeout_timer;
+  boost::asio::deadline_timer               _connect_timeout_timer;
   boost::asio::ip::tcp::socket              _socket;
   std::deque<basic_call_context::handle>    _tx_queue;
   std::deque<basic_call_context::handle>    _rx_queue;
